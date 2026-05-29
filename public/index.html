@@ -72,110 +72,8 @@
                     <h2>Trending Documents</h2>
                 </div>
 
-                <div class="doc-grid" id="primary-feed-target">
-                    <!-- Dynamic database content injects here and replaces placeholders -->
-                    <!-- Document Card 1 -->
-                    <div class="doc-card" id="doc-1">
-                        <div class="card-meta-top">
-                            <span class="doc-subject">Data Structures</span>
-                            <span class="lock-indicator status-text">🔒 LOCKED</span>
-                        </div>
-                        <h3 class="doc-title">Exam Summary: Trees & Graphs</h3>
-                        <p class="doc-author">By: Alex • 🌟 4.8/5 (12 reviews)</p>
-
-                        <button class="toggle-comments-btn">// View Reviews & Comments (2)</button>
-
-                        <div class="card-comments-tray hidden">
-                            <div class="comments-list">
-                                <div class="comment-item"><strong>Moe:</strong> Verified. Contains clean recursive trace
-                                    diagrams for AVL balancing!</div>
-                                <div class="comment-item"><strong>Alex:</strong> Added sample practice problems to page
-                                    4 as well.</div>
-                            </div>
-                            <div class="comment-input-box">
-                                <input type="text" placeholder="Ask a question or leave a review..."
-                                    class="inline-comment-input">
-                                <button class="post-comment-btn">Send</button>
-                            </div>
-                        </div>
-
-                        <div class="card-footer">
-                            <div class="voting-system">
-                                <button class="vote-arrow up">▲</button>
-                                <span class="vote-count">42</span>
-                                <button class="vote-arrow down">▼</button>
-                            </div>
-                            <button class="unlock-action-btn buy-document-trigger">Unlock (-1 Token)</button>
-                        </div>
-                    </div>
-
-                    <!-- Document Card 2 -->
-                    <div class="doc-card" id="doc-2">
-                        <div class="card-meta-top">
-                            <span class="doc-subject">Organic Chemistry</span>
-                            <span class="lock-indicator status-text">🔒 LOCKED</span>
-                        </div>
-                        <h3 class="doc-title">Reaction Mechanisms Cheat Sheet</h3>
-                        <p class="doc-author">By: Sarah • 🌟 5.0/5 (34 reviews)</p>
-
-                        <button class="toggle-comments-btn">// View Reviews & Comments (1)</button>
-
-                        <div class="card-comments-tray hidden">
-                            <div class="comments-list">
-                                <div class="comment-item"><strong>Zayn:</strong> Lifesaver for SN1/SN2. Everything is
-                                    completely accurate.</div>
-                            </div>
-                            <div class="comment-input-box">
-                                <input type="text" placeholder="Ask a question or leave a review..."
-                                    class="inline-comment-input">
-                                <button class="post-comment-btn">Send</button>
-                            </div>
-                        </div>
-
-                        <div class="card-footer">
-                            <div class="voting-system">
-                                <button class="vote-arrow up">▲</button>
-                                <span class="vote-count">128</span>
-                                <button class="vote-arrow down">▼</button>
-                            </div>
-                            <button class="unlock-action-btn buy-document-trigger">Unlock (-1 Token)</button>
-                        </div>
-                    </div>
-                </div>
+                <div class="doc-grid" id="primary-feed-target"></div>
             </div>
-
-            <!-- Right Side: Weekly Leaderboard -->
-            <aside class="sidebar-column">
-                <div class="section-header">
-                    <span class="section-tag">// WEEKLY TOP CONTRIBUTORS</span>
-                    <h2>Leaderboard</h2>
-                    <p style="font-size: 11px; color: var(--text-muted); margin-top:2px;">Calculated weekly from reviews
-                        & uploads</p>
-                </div>
-                <div class="leaderboard-card">
-                    <div class="leaderboard-item">
-                        <span class="rank-num">#1</span>
-                        <div class="rank-profile">
-                            <span class="rank-name">Sarah_Chem99</span>
-                            <span class="rank-meta">Score: 98.4 (🌟 5.0 • 14 Uploads this week)</span>
-                        </div>
-                    </div>
-                    <div class="leaderboard-item">
-                        <span class="rank-num">#2</span>
-                        <div class="rank-profile">
-                            <span class="rank-name">Alex_Dev</span>
-                            <span class="rank-meta">Score: 89.1 (🌟 4.8 • 9 Uploads this week)</span>
-                        </div>
-                    </div>
-                    <div class="leaderboard-item">
-                        <span class="rank-num">#3</span>
-                        <div class="rank-profile">
-                            <span class="rank-name">Moe_Econ</span>
-                            <span class="rank-meta">Score: 76.5 (🌟 4.5 • 22 Uploads this week)</span>
-                        </div>
-                    </div>
-                </div>
-            </aside>
         </main>
     </div>
 
@@ -216,24 +114,7 @@
                 </div>
                 <button class="ask-help-trigger-btn" id="open-help-modal-btn">Post a Problem (-3 Tokens)</button>
             </div>
-            <div id="help-board-grid" class="help-grid-layout">
-                <div class="help-ticket-card" id="ticket-demo-1">
-                    <div class="ticket-top">
-                        <span class="ticket-badge-tag">Linear Algebra</span>
-                        <span class="ticket-bounty">Bounty Placed 💰</span>
-                    </div>
-                    <h3 class="ticket-title">Stuck resolving eigenvectors for 4x4 matrix dimension mapping</h3>
-                    <p class="ticket-desc">Need a handwritten walkthrough of problem 4 on sheet 3 before midnight exam
-                        window opens.</p>
-                    <div class="ticket-attachment-badge">📎 Reference Attached: <strong>Matrix_Sheet_3.pdf</strong>
-                    </div>
-                    <div class="ticket-answers-list"></div>
-                    <div class="ticket-footer">
-                        <span class="ticket-user">By: Student_401</span>
-                        <button class="unlock-action-btn provide-answer-trigger">Provide Answer (+3 Tokens)</button>
-                    </div>
-                </div>
-            </div>
+            <div id="help-board-grid" class="help-grid-layout"></div>
         </main>
     </div>
 

@@ -53,16 +53,3 @@ CREATE TABLE IF NOT EXISTS votes (
   direction TEXT NOT NULL CHECK (direction IN ('up', 'down')),
   PRIMARY KEY (doc_id, username)
 );
-
--- Seed default documents
-INSERT INTO documents (id, subject, title, author, score)
-SELECT 'doc-1', 'Data Structures', 'Trees & Graphs Summary', 'Alex', 42
-WHERE NOT EXISTS (SELECT 1 FROM documents WHERE id = 'doc-1');
-
-INSERT INTO documents (id, subject, title, author, score)
-SELECT 'doc-2', 'Organic Chemistry', 'Reaction Mechanisms Sheet', 'Sarah', 128
-WHERE NOT EXISTS (SELECT 1 FROM documents WHERE id = 'doc-2');
-
-INSERT INTO comments (doc_id, "user", text)
-SELECT 'doc-1', 'Moe', 'Verified diagrams!'
-WHERE NOT EXISTS (SELECT 1 FROM comments WHERE doc_id = 'doc-1' AND "user" = 'Moe' AND text = 'Verified diagrams!');

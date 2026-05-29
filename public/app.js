@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let activeTicketForAnswer = null;
-    const API_URL = 'http://localhost:3000/api';
+    const API_URL = window.location.origin + '/api';
 
     // --- LIVE SYNCHRONIZER: DATABASE TO UI ---
     async function loadVaultData() {
