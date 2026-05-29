@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Tajwih | P2P Academic Vault</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+</head>
+
+<body>
+
+    <!-- REAL-TIME TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="logo-container">
+            <div class="logo" id="logo-btn">Anti-Tajwih</div>
+        </div>
+
+        <nav class="nav-links">
+            <a href="#" class="nav-link active" data-target="browse-view">Browse</a>
+            <a href="#" class="nav-link" data-target="saved-view">Saved</a>
+            <a href="#" class="nav-link" data-target="uploads-view">My Uploads</a>
+            <a href="#" class="nav-link" data-target="help-view">Help Desk</a>
+        </nav>
+
+        <div class="nav-actions">
+            <!-- THEME SWITCHER TOGGLE -->
+            <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle Theme">🌓</button>
+
+            <div class="token-badge">
+                <span id="global-token-count">0</span> <span class="token-label">Tokens</span>
+            </div>
+            <button class="upload-btn" id="nav-upload-btn">+ Upload</button>
+            <button class="auth-btn" id="nav-auth-btn">Sign In</button>
+            <a href="#" class="account-trigger" id="nav-account-btn" data-target="account-view">
+                <span class="avatar-placeholder"></span>
+                Account
+            </a>
+        </div>
+    </header>
+
+    <!-- BROWSE VIEW -->
+    <div id="browse-view" class="view-section">
+        <section class="hero">
+            <div class="hero-accent-line"></div>
+            <div class="brand-logo-placeholder">
+                <span class="brackets">[</span> Anti-Tajwih <span class="brackets">]</span>
+            </div>
+            <p>P2P Academic Vault. Note uploads earn 5 tokens. Library unlocks cost 1 token. Check reviews and comments
+                below to verify document quality before purchase.</p>
+
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search by subject, module, or keyword...">
+                <button class="search-submit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <main class="container multi-column-layout">
+            <!-- Left Side: Document Feed -->
+            <div class="feed-column">
+                <div class="section-header">
+                    <span class="section-tag">// ARCHIVE FEED</span>
+                    <h2>Trending Documents</h2>
+                </div>
+
+                <div class="doc-grid" id="primary-feed-target">
+                    <!-- Dynamic database content injects here and replaces placeholders -->
+                    <!-- Document Card 1 -->
+                    <div class="doc-card" id="doc-1">
+                        <div class="card-meta-top">
+                            <span class="doc-subject">Data Structures</span>
+                            <span class="lock-indicator status-text">🔒 LOCKED</span>
+                        </div>
+                        <h3 class="doc-title">Exam Summary: Trees & Graphs</h3>
+                        <p class="doc-author">By: Alex • 🌟 4.8/5 (12 reviews)</p>
+
+                        <button class="toggle-comments-btn">// View Reviews & Comments (2)</button>
+
+                        <div class="card-comments-tray hidden">
+                            <div class="comments-list">
+                                <div class="comment-item"><strong>Moe:</strong> Verified. Contains clean recursive trace
+                                    diagrams for AVL balancing!</div>
+                                <div class="comment-item"><strong>Alex:</strong> Added sample practice problems to page
+                                    4 as well.</div>
+                            </div>
+                            <div class="comment-input-box">
+                                <input type="text" placeholder="Ask a question or leave a review..."
+                                    class="inline-comment-input">
+                                <button class="post-comment-btn">Send</button>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="voting-system">
+                                <button class="vote-arrow up">▲</button>
+                                <span class="vote-count">42</span>
+                                <button class="vote-arrow down">▼</button>
+                            </div>
+                            <button class="unlock-action-btn buy-document-trigger">Unlock (-1 Token)</button>
+                        </div>
+                    </div>
+
+                    <!-- Document Card 2 -->
+                    <div class="doc-card" id="doc-2">
+                        <div class="card-meta-top">
+                            <span class="doc-subject">Organic Chemistry</span>
+                            <span class="lock-indicator status-text">🔒 LOCKED</span>
+                        </div>
+                        <h3 class="doc-title">Reaction Mechanisms Cheat Sheet</h3>
+                        <p class="doc-author">By: Sarah • 🌟 5.0/5 (34 reviews)</p>
+
+                        <button class="toggle-comments-btn">// View Reviews & Comments (1)</button>
+
+                        <div class="card-comments-tray hidden">
+                            <div class="comments-list">
+                                <div class="comment-item"><strong>Zayn:</strong> Lifesaver for SN1/SN2. Everything is
+                                    completely accurate.</div>
+                            </div>
+                            <div class="comment-input-box">
+                                <input type="text" placeholder="Ask a question or leave a review..."
+                                    class="inline-comment-input">
+                                <button class="post-comment-btn">Send</button>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="voting-system">
+                                <button class="vote-arrow up">▲</button>
+                                <span class="vote-count">128</span>
+                                <button class="vote-arrow down">▼</button>
+                            </div>
+                            <button class="unlock-action-btn buy-document-trigger">Unlock (-1 Token)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Weekly Leaderboard -->
+            <aside class="sidebar-column">
+                <div class="section-header">
+                    <span class="section-tag">// WEEKLY TOP CONTRIBUTORS</span>
+                    <h2>Leaderboard</h2>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top:2px;">Calculated weekly from reviews
+                        & uploads</p>
+                </div>
+                <div class="leaderboard-card">
+                    <div class="leaderboard-item">
+                        <span class="rank-num">#1</span>
+                        <div class="rank-profile">
+                            <span class="rank-name">Sarah_Chem99</span>
+                            <span class="rank-meta">Score: 98.4 (🌟 5.0 • 14 Uploads this week)</span>
+                        </div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <span class="rank-num">#2</span>
+                        <div class="rank-profile">
+                            <span class="rank-name">Alex_Dev</span>
+                            <span class="rank-meta">Score: 89.1 (🌟 4.8 • 9 Uploads this week)</span>
+                        </div>
+                    </div>
+                    <div class="leaderboard-item">
+                        <span class="rank-num">#3</span>
+                        <div class="rank-profile">
+                            <span class="rank-name">Moe_Econ</span>
+                            <span class="rank-meta">Score: 76.5 (🌟 4.5 • 22 Uploads this week)</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- SAVED VIEW -->
+    <div id="saved-view" class="view-section hidden">
+        <main class="container">
+            <div class="section-header">
+                <span class="section-tag">// YOUR COLLECTION</span>
+                <h2>Saved Documents</h2>
+            </div>
+            <div id="saved-docs-target-container" class="doc-grid">
+                <p class="empty-state-notice" id="no-saved-placeholder">You haven't saved or unlocked any documents yet.
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <!-- MY UPLOADS VIEW -->
+    <div id="uploads-view" class="view-section hidden">
+        <main class="container">
+            <div class="section-header">
+                <span class="section-tag">// CONTRIBUTIONS</span>
+                <h2>Your Uploaded Files</h2>
+            </div>
+            <div id="user-uploads-target-container" class="doc-grid">
+                <p class="empty-state-notice" id="no-uploads-placeholder">Share your notes to earn tokens.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- HELP DESK VIEW -->
+    <div id="help-view" class="view-section hidden">
+        <main class="container">
+            <div class="section-header help-desk-header-flex">
+                <div>
+                    <span class="section-tag">// SOS EMERGENCY ROOM</span>
+                    <h2>Personal Problem Statements</h2>
+                </div>
+                <button class="ask-help-trigger-btn" id="open-help-modal-btn">Post a Problem (-3 Tokens)</button>
+            </div>
+            <div id="help-board-grid" class="help-grid-layout">
+                <div class="help-ticket-card" id="ticket-demo-1">
+                    <div class="ticket-top">
+                        <span class="ticket-badge-tag">Linear Algebra</span>
+                        <span class="ticket-bounty">Bounty Placed 💰</span>
+                    </div>
+                    <h3 class="ticket-title">Stuck resolving eigenvectors for 4x4 matrix dimension mapping</h3>
+                    <p class="ticket-desc">Need a handwritten walkthrough of problem 4 on sheet 3 before midnight exam
+                        window opens.</p>
+                    <div class="ticket-attachment-badge">📎 Reference Attached: <strong>Matrix_Sheet_3.pdf</strong>
+                    </div>
+                    <div class="ticket-answers-list"></div>
+                    <div class="ticket-footer">
+                        <span class="ticket-user">By: Student_401</span>
+                        <button class="unlock-action-btn provide-answer-trigger">Provide Answer (+3 Tokens)</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ACCOUNT VIEW -->
+    <div id="account-view" class="view-section hidden">
+        <main class="container">
+            <div class="section-header">
+                <span class="section-tag">// USER PROFILE</span>
+                <h2>Account Settings</h2>
+            </div>
+            <div class="account-card-box">
+                <h3 class="account-user-name">Anonymous Student</h3>
+                <p class="account-data-row">Available Balance: <span id="account-token-display">0</span> Tokens</p>
+                <p class="account-data-row">Total Uploads: <span id="account-upload-display">0</span> Documents</p>
+                <button class="unlock-action-btn" id="logout-mock-btn" style="width: 100%; margin-top:15px;">Log
+                    Out</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <!-- SIGN IN MODAL (FIXED PASWORD ID) -->
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close-btn" id="close-auth-modal">×</button>
+            <div class="modal-header">
+                <span class="section-tag">// IDENTITY GATEWAY</span>
+                <h2 id="auth-modal-title">Sign In to Anti-Tajwih</h2>
+            </div>
+            <form id="auth-form" class="modal-form">
+                <div class="form-group">
+                    <label id="form-auth-label">Personal Email Address</label>
+                    <input type="email" id="form-auth-input" placeholder="name@example.com" required>
+                </div>
+                <div class="form-group" id="form-auth-email-group" style="display:none;">
+                    <label>Email Address</label>
+                    <input type="email" id="form-auth-email" placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="form-auth-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="modal-submit-btn">Access Vault</button>
+            </form>
+            <div class="modal-footer-switch">
+                <p id="auth-switch-text">New to the community? <a href="#" id="auth-toggle-link">Create an Account (Sign
+                        Up)</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPLOAD MODAL (+5 TOKENS) -->
+    <div id="upload-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close-btn" id="close-upload-modal">×</button>
+            <div class="modal-header">
+                <span class="section-tag">// SHARE CONTENT</span>
+                <h2>Upload Academic Asset</h2>
+            </div>
+            <form id="upload-form" class="modal-form">
+                <div class="form-group">
+                    <label>Document Title</label>
+                    <input type="text" id="form-doc-title" placeholder="e.g., Midterm Cheat Sheet" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject / Module Name</label>
+                    <input type="text" id="form-doc-subject" placeholder="e.g., Organic Chemistry" required>
+                </div>
+                <div class="form-group">
+                    <label>Select PDF File</label>
+                    <!-- FIXED: Added id="form-upload-file" for script file-parsing reference -->
+                    <input type="file" id="form-upload-file" accept=".pdf" required class="dashed-file-input">
+                </div>
+                <button type="submit" class="modal-submit-btn">Submit & Earn 5 Tokens</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- HELP DESK MODAL (-3 TOKENS) -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close-btn" id="close-help-modal">×</button>
+            <div class="modal-header">
+                <span class="section-tag">// SOS FORM</span>
+                <h2>Request Emergency Assistance</h2>
+            </div>
+            <form id="help-form" class="modal-form">
+                <div class="form-group">
+                    <label>Problem Topic or Class</label>
+                    <input type="text" id="form-help-subject" placeholder="e.g., Linear Algebra" required>
+                </div>
+                <div class="form-group">
+                    <label>Problem Brief Summary</label>
+                    <input type="text" id="form-help-title" placeholder="e.g., Eigenvector calculation error" required>
+                </div>
+                <div class="form-group">
+                    <label>Detailed Question Requirements</label>
+                    <input type="text" id="form-help-desc" placeholder="Explain what steps you got stuck on..."
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Upload Problem / Reference PDF</label>
+                    <input type="file" id="form-help-file" accept=".pdf" required class="dashed-file-input">
+                </div>
+                <button type="submit" class="modal-submit-btn">Post Request (-3 Tokens)</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PROVIDE ANSWER MODAL WITH FILE ASSET OPTION (+3 TOKENS) -->
+    <div id="answer-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close-btn" id="close-answer-modal">×</button>
+            <div class="modal-header">
+                <span class="section-tag">// PROVIDE SOLUTION</span>
+                <h2>Fulfill Bounty Request</h2>
+            </div>
+            <form id="answer-form" class="modal-form">
+                <div class="form-group">
+                    <label>Walkthrough Explanation or Notes</label>
+                    <input type="text" id="form-answer-desc"
+                        placeholder="Write down structural advice or summary guide..." required>
+                </div>
+                <div class="form-group">
+                    <label>Upload Verification / Solution PDF</label>
+                    <input type="file" id="form-answer-file" accept=".pdf" required class="dashed-file-input">
+                </div>
+                <button type="submit" class="modal-submit-btn">Transmit Solution & Claim Bounty</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+
+</html>

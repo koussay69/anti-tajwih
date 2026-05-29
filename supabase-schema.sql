@@ -1,0 +1,68 @@
+-- Run this in Supabase SQL Editor (https://supabase.com > SQL Editor)
+
+CREATE TABLE IF NOT EXISTS users (
+  username TEXT PRIMARY KEY,
+  email TEXT,
+  password TEXT NOT NULL,
+  tokens INTEGER DEFAULT 10,
+  "uploadsCount" INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS unlocked_docs (
+  username TEXT NOT NULL REFERENCES users(username),
+  doc_id TEXT NOT NULL,
+  PRIMARY KEY (username, doc_id)
+);
+
+CREATE TABLE IF NOT EXISTS documents (
+  id TEXT PRIMARY KEY,
+  subject TEXT NOT NULL,
+  title TEXT NOT NULL,
+  author TEXT NOT NULL,
+  score INTEGER DEFAULT 0,
+  file_path TEXT
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+  id SERIAL PRIMARY KEY,
+  doc_id TEXT NOT NULL REFERENCES documents(id),
+  "user" TEXT NOT NULL,
+  text TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bounties (
+  id TEXT PRIMARY KEY,
+  subject TEXT NOT NULL,
+  title TEXT NOT NULL,
+  "desc" TEXT NOT NULL,
+  file_name TEXT DEFAULT 'Specs_Attached.pdf',
+  author TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS answers (
+  id SERIAL PRIMARY KEY,
+  bounty_id TEXT NOT NULL REFERENCES bounties(id),
+  "user" TEXT NOT NULL,
+  text TEXT NOT NULL,
+  file_name TEXT DEFAULT 'Solution_Breakdown.pdf'
+);
+
+CREATE TABLE IF NOT EXISTS votes (
+  doc_id TEXT NOT NULL REFERENCES documents(id),
+  username TEXT NOT NULL REFERENCES users(username),
+  direction TEXT NOT NULL CHECK (direction IN ('up', 'down')),
+  PRIMARY KEY (doc_id, username)
+);
+
+-- Seed default documents
+INSERT INTO documents (id, subject, title, author, score)
+SELECT 'doc-1', 'Data Structures', 'Trees & Graphs Summary', 'Alex', 42
+WHERE NOT EXISTS (SELECT 1 FROM documents WHERE id = 'doc-1');
+
+INSERT INTO documents (id, subject, title, author, score)
+SELECT 'doc-2', 'Organic Chemistry', 'Reaction Mechanisms Sheet', 'Sarah', 128
+WHERE NOT EXISTS (SELECT 1 FROM documents WHERE id = 'doc-2');
+
+INSERT INTO comments (doc_id, "user", text)
+SELECT 'doc-1', 'Moe', 'Verified diagrams!'
+WHERE NOT EXISTS (SELECT 1 FROM comments WHERE doc_id = 'doc-1' AND "user" = 'Moe' AND text = 'Verified diagrams!');
