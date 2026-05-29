@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- APP STATE ENGINE ---
     let state = {
-        tokens: 10,
+        tokens: 0,
         uploadsCount: 0,
         user: localStorage.getItem('p2p-vault-user') || null
     };

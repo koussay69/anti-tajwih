@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT PRIMARY KEY,
   email TEXT,
   password TEXT NOT NULL,
-  tokens INTEGER DEFAULT 10,
+  tokens INTEGER DEFAULT 0,
   "uploadsCount" INTEGER DEFAULT 0
 );
 

@@ -95,7 +95,7 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: "Username already registered." });
   }
 
-  await supabase.from('users').insert({ username: normalizedName, email: email || null, password, tokens: 10, uploadsCount: 0 });
+  await supabase.from('users').insert({ username: normalizedName, email: email || null, password, tokens: 0, uploadsCount: 0 });
   res.json({ success: true });
 });
 
