@@ -75,7 +75,7 @@ async function getDocumentsWithLockState(normalizedUsername) {
 }
 
 async function getBounties() {
-  const { data: bounties } = await supabase.from('bounties').select('*').order('id', { ascending: false });
+  const { data: bounties } = await supabase.from('bounties').select('*').eq('settled', false).order('id', { ascending: false });
   if (!bounties) return [];
 
   const result = [];
@@ -361,7 +361,9 @@ app.get('/api/admin/users', async (req, res) => {
   const enriched = [];
   for (const u of users || []) {
     const { count: docCount } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('author', u.username);
-    enriched.push({ ...u, uploadsCount: docCount || 0 });
+    // Also count unsettled bounties posted by each user
+    const { count: bountyCount } = await supabase.from('bounties').select('*', { count: 'exact', head: true }).eq('author', u.username).eq('settled', false);
+    enriched.push({ ...u, uploadsCount: docCount || 0, bountiesCount: bountyCount || 0 });
   }
   res.json(enriched);
 });
@@ -370,7 +372,7 @@ app.get('/api/admin/stats', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
   const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
   const { count: totalDocs } = await supabase.from('documents').select('*', { count: 'exact', head: true });
-  const { count: totalBounties } = await supabase.from('bounties').select('*', { count: 'exact', head: true });
+  const { count: totalBounties } = await supabase.from('bounties').select('*', { count: 'exact', head: true }).eq('settled', false);
   res.json({ totalUsers, totalDocs, totalBounties });
 });
 
@@ -440,7 +442,7 @@ app.delete('/api/admin/users/:username/documents', async (req, res) => {
   await supabase.from('users').update({ uploadsCount: 0 }).eq('username', username);
   const { count: totalDocs } = await supabase.from('documents').select('*', { count: 'exact', head: true });
   const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
-  const { count: totalBounties } = await supabase.from('bounties').select('*', { count: 'exact', head: true });
+  const { count: totalBounties } = await supabase.from('bounties').select('*', { count: 'exact', head: true }).eq('settled', false);
   res.json({ success: true, deleted: docs?.length || 0, totalDocs, totalUsers, totalBounties });
 });
 
