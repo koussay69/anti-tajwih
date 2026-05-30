@@ -315,8 +315,8 @@ async function checkDocumentContent(pdfBuffer, metadata) {
     const pdfData = await pdfParse(pdfBuffer);
     const text = (pdfData.text || '').trim();
     if (text.length < 20) {
-      console.error('AI check: insufficient extractable text (scanned PDF?)');
-      return null; // fall to pending
+      console.error(`AI check: insufficient text (${text.length} chars), likely scanned`);
+      return { error: `Only ${text.length} chars extracted — scanned PDF?` };
     }
     const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials.
 
@@ -350,16 +350,19 @@ Set isAcademic to false if content doesn't match the declared metadata or is non
     const json = await response.json();
     if (!response.ok) {
       console.error('Groq API error:', response.status, JSON.stringify(json.error || json));
-      return null;
+      return { error: `Groq API: ${json.error?.message || response.status}` };
     }
     const content = json?.choices?.[0]?.message?.content || '';
+    if (!content) {
+      return { error: 'Groq returned empty content' };
+    }
     console.log('Groq response:', content.substring(0, 200));
     const jsonMatch = content.match(/\{.*\}/s);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    return null;
+    return { error: 'Groq response had no valid JSON: ' + content.substring(0, 100) };
   } catch (err) {
     console.error('AI check error:', err.message);
-    return null;
+    return { error: err.message };
   }
 }
 
@@ -416,7 +419,9 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   try {
     aiResult = await checkDocumentContent(req.file.buffer, { subject, filiere, niveau, matiere, type, title });
     if (aiResult) {
-      if (aiResult.isAcademic === true) {
+      if (aiResult.error) {
+        aiError = aiResult.error;
+      } else if (aiResult.isAcademic === true) {
         approved = true;
       } else {
         rejectionReason = aiResult.reason || 'Content not recognized as academic study material.';
@@ -450,7 +455,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
     documents: await getDocumentsWithLockState(normalizedName),
     pending: !approved,
     approved,
-    aiError: aiError || (!approved && !rejectionReason ? 'AI check failed (check server logs)' : undefined)
+    aiError: aiError || null
   });
 });
 
