@@ -110,6 +110,9 @@ app.post('/api/auth/login', async (req, res) => {
   if (!user || user.password !== password) {
     return res.status(401).json({ error: "Invalid username/email or password." });
   }
+  if (user.banned) {
+    return res.status(403).json({ error: "Your account has been banned." });
+  }
   res.json({ success: true, username: user.username });
 });
 
@@ -341,7 +344,7 @@ async function requireAdmin(user) {
 
 app.get('/api/admin/users', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
-  const { data: users } = await supabase.from('users').select('username, email, tokens, "uploadsCount", admin').order('username');
+  const { data: users } = await supabase.from('users').select('username, email, tokens, "uploadsCount", admin, banned').order('username');
   res.json(users || []);
 });
 
@@ -384,6 +387,17 @@ app.post('/api/admin/users/tokens', async (req, res) => {
   if (!profile) return res.status(404).json({ error: "User not found." });
   await supabase.from('users').update({ tokens: profile.tokens + amount }).eq('username', targetUser.trim().toLowerCase());
   res.json({ success: true, newBalance: profile.tokens + amount });
+});
+
+app.post('/api/admin/users/ban', async (req, res) => {
+  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  const { targetUser, banned } = req.body;
+  if (!targetUser) return res.status(400).json({ error: "targetUser required." });
+  const profile = await getUserProfile(targetUser.trim().toLowerCase());
+  if (!profile) return res.status(404).json({ error: "User not found." });
+  if (profile.admin) return res.status(400).json({ error: "Cannot ban another admin." });
+  await supabase.from('users').update({ banned: !!banned }).eq('username', targetUser.trim().toLowerCase());
+  res.json({ success: true, banned: !!banned });
 });
 
 app.listen(PORT, () => {

@@ -133,15 +133,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const usersDiv = document.getElementById('admin-users-list');
             usersDiv.innerHTML = users.map(u => `
-                <div class="admin-user-row">
-                    <span><strong>${u.username}</strong> ${u.admin ? '👑' : ''}</span>
+                <div class="admin-user-row" style="${u.banned ? 'opacity:0.5;' : ''}">
+                    <span><strong>${u.username}</strong> ${u.admin ? '👑' : ''} ${u.banned ? '🚫 BANNED' : ''}</span>
                     <span>Tokens: ${u.tokens}</span>
                     <span>Uploads: ${u.uploadsCount}</span>
                     <span>Email: ${u.email || '—'}</span>
                     <div class="admin-user-actions">
                         <input type="number" class="admin-token-input" id="token-input-${u.username}" value="0" style="width:70px;">
                         <button class="unlock-action-btn admin-token-btn" data-user="${u.username}">Adjust Tokens</button>
-                        <button class="unlock-action-btn admin-delete-docs-btn" data-user="${u.username}" style="background:#dc3545;">Delete All Docs</button>
+                        <button class="unlock-action-btn admin-ban-btn" data-user="${u.username}" data-banned="${u.banned}" style="${u.banned ? 'background:green;' : 'background:#dc3545;'}">${u.banned ? 'Unban' : 'Ban'}</button>
                     </div>
                 </div>
             `).join('');
@@ -157,6 +157,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     const data = await res.json();
                     showToast(data.success ? `Tokens adjusted. New balance: ${data.newBalance}` : data.error || 'Error', data.success ? 'success' : 'error');
+                    loadAdminPanel();
+                });
+            });
+
+            usersDiv.querySelectorAll('.admin-ban-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const targetUser = btn.dataset.user;
+                    const currentlyBanned = btn.dataset.banned === 'true';
+                    const res = await fetch(`${API_URL}/admin/users/ban`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user: state.user, targetUser, banned: !currentlyBanned })
+                    });
+                    const data = await res.json();
+                    showToast(data.success ? `User ${data.banned ? 'banned' : 'unbanned'}.` : data.error || 'Error', data.success ? 'success' : 'error');
                     loadAdminPanel();
                 });
             });
