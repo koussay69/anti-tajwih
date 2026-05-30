@@ -367,6 +367,7 @@ app.get('/api/admin/ai-test', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.json({ ok: false, error: 'GEMINI_API_KEY not set on server' });
+  const keyPreview = key.length > 8 ? key.substring(0, 4) + '...' + key.substring(key.length - 4) : '(too short)';
   const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
   for (const modelName of modelsToTry) {
     try {
@@ -376,15 +377,15 @@ app.get('/api/admin/ai-test', async (req, res) => {
       const json = await resp.json();
       if (!resp.ok) {
         if (modelName === modelsToTry[modelsToTry.length - 1]) {
-          return res.json({ ok: false, model: modelName, status: resp.status, error: json.error?.message || JSON.stringify(json) });
+          return res.json({ ok: false, model: modelName, status: resp.status, error: json.error?.message || JSON.stringify(json), key: keyPreview });
         }
         continue;
       }
       const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      return res.json({ ok: text === 'WORKING', model: modelName, response: text });
+      return res.json({ ok: text === 'WORKING', model: modelName, response: text, key: keyPreview });
     } catch (err) {
       if (modelName === modelsToTry[modelsToTry.length - 1]) {
-        return res.json({ ok: false, model: modelName, error: err.message });
+        return res.json({ ok: false, model: modelName, error: err.message, key: keyPreview });
       }
     }
   }
