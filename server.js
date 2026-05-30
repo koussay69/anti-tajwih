@@ -5,7 +5,7 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
-const pdfjsLib = require('pdfjs-dist/legacy/build/pdf');
+const pdfjsLib = require('pdfjs-dist');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -368,7 +368,6 @@ Set isAcademic to false if content doesn't match the declared metadata or is non
     console.error('AI check error:', err.message);
     return { error: err.message };
   }
-}
 }
 
 // --- TEST ENDPOINT for AI key ---
