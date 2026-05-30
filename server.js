@@ -123,7 +123,8 @@ app.get('/api/vault-data', async (req, res) => {
     state: {
       tokens: profile ? profile.tokens : 0,
       uploadsCount: profile ? profile.uploadsCount : 0,
-      user: normalizedName || null
+      user: normalizedName || null,
+      admin: profile ? !!profile.admin : false
     },
     documents: await getDocumentsWithLockState(normalizedName),
     bounties: await getBounties()
@@ -329,6 +330,60 @@ app.post('/api/bounties/accept', async (req, res) => {
     console.error('Accept error:', err.message);
     res.status(500).json({ error: 'Server error: ' + err.message });
   }
+});
+
+// --- ADMIN ROUTES ---
+async function requireAdmin(user) {
+  if (!user) return false;
+  const profile = await getUserProfile(user.trim().toLowerCase());
+  return profile && profile.admin === true;
+}
+
+app.get('/api/admin/users', async (req, res) => {
+  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  const { data: users } = await supabase.from('users').select('username, email, tokens, "uploadsCount", admin').order('username');
+  res.json(users || []);
+});
+
+app.get('/api/admin/stats', async (req, res) => {
+  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
+  const { count: totalDocs } = await supabase.from('documents').select('*', { count: 'exact', head: true });
+  const { count: totalBounties } = await supabase.from('bounties').select('*', { count: 'exact', head: true });
+  res.json({ totalUsers, totalDocs, totalBounties });
+});
+
+app.delete('/api/admin/documents/:docId', async (req, res) => {
+  const { user } = req.query;
+  if (!await requireAdmin(user)) return res.status(403).json({ error: "Admin access required." });
+  const { docId } = req.params;
+  const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
+  if (!doc) return res.status(404).json({ error: "Document not found." });
+  const fileName = doc.file_path?.split('/').pop();
+  if (fileName) await supabase.storage.from('documents').remove([fileName]);
+  await supabase.from('votes').delete().eq('doc_id', docId);
+  await supabase.from('comments').delete().eq('doc_id', docId);
+  await supabase.from('unlocked_docs').delete().eq('doc_id', docId);
+  await supabase.from('documents').delete().eq('id', docId);
+  res.json({ success: true });
+});
+
+app.delete('/api/admin/bounties/:bountyId', async (req, res) => {
+  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  const { bountyId } = req.params;
+  await supabase.from('answers').delete().eq('bounty_id', bountyId);
+  await supabase.from('bounties').delete().eq('id', bountyId);
+  res.json({ success: true, bounties: await getBounties() });
+});
+
+app.post('/api/admin/users/tokens', async (req, res) => {
+  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  const { targetUser, amount } = req.body;
+  if (!targetUser || amount === undefined) return res.status(400).json({ error: "targetUser and amount required." });
+  const profile = await getUserProfile(targetUser.trim().toLowerCase());
+  if (!profile) return res.status(404).json({ error: "User not found." });
+  await supabase.from('users').update({ tokens: profile.tokens + amount }).eq('username', targetUser.trim().toLowerCase());
+  res.json({ success: true, newBalance: profile.tokens + amount });
 });
 
 app.listen(PORT, () => {

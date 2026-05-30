@@ -26,8 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             state.tokens = data.state.tokens;
             state.uploadsCount = data.state.uploadsCount;
+            state.admin = data.state.admin;
 
             updateTokenUI();
+
+            const adminLink = document.getElementById('admin-nav-link');
+            if (adminLink) {
+                adminLink.classList.toggle('hidden', !state.admin);
+            }
 
             if (data.documents) {
                 renderDocuments(data.documents);
@@ -101,8 +107,63 @@ document.addEventListener('DOMContentLoaded', () => {
             sections.forEach(section => section.classList.add('hidden'));
             const activeSection = document.getElementById(targetId);
             if (activeSection) activeSection.classList.remove('hidden');
+
+            if (targetId === 'admin-view') {
+                loadAdminPanel();
+            }
         });
     });
+
+    async function loadAdminPanel() {
+        if (!state.admin || !state.user) return;
+        try {
+            const [usersRes, statsRes] = await Promise.all([
+                fetch(`${API_URL}/admin/users?user=${encodeURIComponent(state.user)}`),
+                fetch(`${API_URL}/admin/stats?user=${encodeURIComponent(state.user)}`)
+            ]);
+            const users = await usersRes.json();
+            const stats = await statsRes.json();
+
+            const statsDiv = document.getElementById('admin-stats');
+            statsDiv.innerHTML = `
+                <div class="stat-box"><strong>Users:</strong> ${stats.totalUsers || 0}</div>
+                <div class="stat-box"><strong>Documents:</strong> ${stats.totalDocs || 0}</div>
+                <div class="stat-box"><strong>Bounties:</strong> ${stats.totalBounties || 0}</div>
+            `;
+
+            const usersDiv = document.getElementById('admin-users-list');
+            usersDiv.innerHTML = users.map(u => `
+                <div class="admin-user-row">
+                    <span><strong>${u.username}</strong> ${u.admin ? '👑' : ''}</span>
+                    <span>Tokens: ${u.tokens}</span>
+                    <span>Uploads: ${u.uploadsCount}</span>
+                    <span>Email: ${u.email || '—'}</span>
+                    <div class="admin-user-actions">
+                        <input type="number" class="admin-token-input" id="token-input-${u.username}" value="0" style="width:70px;">
+                        <button class="unlock-action-btn admin-token-btn" data-user="${u.username}">Adjust Tokens</button>
+                        <button class="unlock-action-btn admin-delete-docs-btn" data-user="${u.username}" style="background:#dc3545;">Delete All Docs</button>
+                    </div>
+                </div>
+            `).join('');
+
+            usersDiv.querySelectorAll('.admin-token-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const targetUser = btn.dataset.user;
+                    const amount = parseInt(document.getElementById(`token-input-${targetUser}`).value) || 0;
+                    const res = await fetch(`${API_URL}/admin/users/tokens`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user: state.user, targetUser, amount })
+                    });
+                    const data = await res.json();
+                    showToast(data.success ? `Tokens adjusted. New balance: ${data.newBalance}` : data.error || 'Error', data.success ? 'success' : 'error');
+                    loadAdminPanel();
+                });
+            });
+        } catch {
+            showToast("Failed to load admin panel.", "error");
+        }
+    }
 
     // --- REFACTORED MODAL SYSTEM (GUARDED INTERCEPTIONS) ---
     const authModal = document.getElementById('auth-modal');

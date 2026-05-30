@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT,
   password TEXT NOT NULL,
   tokens INTEGER DEFAULT 0,
-  "uploadsCount" INTEGER DEFAULT 0
+  "uploadsCount" INTEGER DEFAULT 0,
+  admin BOOLEAN DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS unlocked_docs (

@@ -25,6 +25,7 @@
             <a href="#" class="nav-link" data-target="saved-view">Saved</a>
             <a href="#" class="nav-link" data-target="uploads-view">My Uploads</a>
             <a href="#" class="nav-link" data-target="help-view">Help Desk</a>
+            <a href="#" class="nav-link hidden admin-link" data-target="admin-view" id="admin-nav-link">Admin Panel</a>
         </nav>
 
         <div class="nav-actions">
@@ -161,6 +162,22 @@
                 <button class="unlock-action-btn" id="logout-mock-btn" style="width: 100%; margin-top:15px;">Log
                     Out</button>
             </div>
+        </main>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="admin-view" class="view-section hidden">
+        <main class="container">
+            <div class="section-header">
+                <span class="section-tag">// ADMIN</span>
+                <h2>Admin Panel</h2>
+            </div>
+            <div id="admin-stats" class="admin-stats-row"></div>
+            <div class="section-header" style="margin-top:30px;">
+                <span class="section-tag">// USER MANAGEMENT</span>
+                <h2>All Users</h2>
+            </div>
+            <div id="admin-users-list"></div>
         </main>
     </div>
 
