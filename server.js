@@ -222,6 +222,7 @@ app.delete('/api/documents/delete/:docId', async (req, res) => {
   await supabase.from('comments').delete().eq('doc_id', docId);
   await supabase.from('unlocked_docs').delete().eq('doc_id', docId);
   await supabase.from('documents').delete().eq('id', docId);
+  await supabase.from('users').update({ uploadsCount: supabase.raw('GREATEST(uploadsCount - 1, 0)') }).eq('username', normalizedName);
 
   const profile = await getUserProfile(normalizedName);
   res.json({ success: true, tokens: profile ? profile.tokens : 0, documents: await getDocumentsWithLockState(normalizedName) });
@@ -380,6 +381,13 @@ app.delete('/api/admin/documents/:docId', async (req, res) => {
   await supabase.from('comments').delete().eq('doc_id', docId);
   await supabase.from('unlocked_docs').delete().eq('doc_id', docId);
   await supabase.from('documents').delete().eq('id', docId);
+  const authorName = doc.author?.toLowerCase();
+  if (authorName) {
+    const { data: authorProfile } = await supabase.from('users').select('uploadsCount').eq('username', authorName).maybeSingle();
+    if (authorProfile) {
+      await supabase.from('users').update({ uploadsCount: Math.max(0, authorProfile.uploadsCount - 1) }).eq('username', authorName);
+    }
+  }
   res.json({ success: true });
 });
 
@@ -424,6 +432,7 @@ app.delete('/api/admin/users/:username/documents', async (req, res) => {
     await supabase.from('unlocked_docs').delete().eq('doc_id', doc.id);
   }
   await supabase.from('documents').delete().eq('author', username);
+  await supabase.from('users').update({ uploadsCount: 0 }).eq('username', username);
   const { count: totalDocs } = await supabase.from('documents').select('*', { count: 'exact', head: true });
   const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
   const { count: totalBounties } = await supabase.from('bounties').select('*', { count: 'exact', head: true });
