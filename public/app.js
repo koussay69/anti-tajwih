@@ -777,13 +777,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const browseCards = document.querySelectorAll('#primary-feed-target .doc-card');
         let visible = 0;
         browseCards.forEach(card => {
-            const titleText = card.querySelector('.doc-title')?.innerText.toLowerCase() || '';
-            const subjectText = card.querySelector('.doc-subject')?.innerText.toLowerCase() || '';
+            const cardText = card.innerText.toLowerCase();
             const filiereTag = card.querySelector('.tag-filiere');
             const niveauTag = card.querySelector('.tag-niveau');
             const matiereTag = card.querySelector('.tag-matiere');
 
-            const matchesSearch = !query || titleText.includes(query) || subjectText.includes(query);
+            const matchesSearch = !query || cardText.includes(query);
             const matchesFiliere = !filterFiliere || (filiereTag && filiereTag.innerText === filterFiliere);
             const matchesNiveau = !filterNiveau || (niveauTag && niveauTag.innerText === filterNiveau);
             const matchesMatiere = !filterMatiere || (matiereTag && matiereTag.innerText === filterMatiere);
