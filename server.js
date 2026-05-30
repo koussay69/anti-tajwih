@@ -254,7 +254,7 @@ app.get('/api/vault-data', async (req, res) => {
   res.json({
     state: {
       tokens: profile ? profile.tokens : 0,
-      uploadsCount: profile ? profile.uploadsCount : 0,
+      uploadsCount: profile ? docs.filter(d => d.author?.toLowerCase() === normalizedName).length : 0,
       user: normalizedName || null,
       admin: profile ? !!profile.admin : false,
       banned: profile ? !!profile.banned : false,
