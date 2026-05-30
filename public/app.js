@@ -456,6 +456,8 @@ document.addEventListener('DOMContentLoaded', () => {
         acceptBtns.forEach(btn => {
             btn.addEventListener('click', async () => {
                 if (!state.user) return;
+                btn.disabled = true;
+                btn.textContent = 'Accepting...';
                 const answerId = btn.dataset.answerId;
                 const bountyId = ticket.dataset.id;
                 try {
