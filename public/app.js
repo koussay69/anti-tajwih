@@ -441,8 +441,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const authorSignature = ticket.querySelector('.ticket-user').innerText;
-                if (authorSignature.includes('By: You') || authorSignature.includes(`By: ${state.user}`)) {
+            const authorName = ticket.querySelector('.ticket-user').innerText.replace('By: ', '').trim();
+            if (authorName === 'You' || authorName === state.user) {
                     showToast("Self-bounty actions are locked on this node.", "error");
                     return;
                 }
