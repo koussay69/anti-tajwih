@@ -1,4 +1,9 @@
 -- Run this in Supabase SQL Editor (https://supabase.com > SQL Editor)
+-- The CREATE TABLE statements work for fresh databases.
+-- ALTER TABLE statements add columns if they don't exist (for existing databases).
+
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS type TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
 CREATE TABLE IF NOT EXISTS users (
   username TEXT PRIMARY KEY,

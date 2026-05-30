@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let state = {
         tokens: 0,
         uploadsCount: 0,
-        user: localStorage.getItem('p2p-vault-user') || null
+        user: localStorage.getItem('p2p-vault-user') || null,
+        admin: false,
+        avatar_url: null
     };
 
     let activeTicketForAnswer = null;
