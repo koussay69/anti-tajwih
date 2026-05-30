@@ -475,8 +475,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         showToast(data.error || "Failed to accept answer.", "error");
                     }
-                } catch {
-                    showToast("Network error accepting answer.", "error");
+                } catch (err) {
+                    console.error('Accept error:', err);
+                    showToast("Error: " + err.message, "error");
                 }
             });
         });
