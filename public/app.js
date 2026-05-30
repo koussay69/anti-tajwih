@@ -208,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">Unlock (-1 Token)</button>` : ''}
                     ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">⬇ Download PDF</a>` : ''}
+                    ${state.user && doc.author === state.user ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">🗑 Delete</button>` : ''}
                 </div>
             `;
 
@@ -425,6 +426,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     list.appendChild(newComment);
                     inputField.value = "";
                     showToast("Review attached to local session pipeline.", "info");
+                }
+            });
+        }
+
+        const deleteBtn = card.querySelector('.delete-doc-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async () => {
+                if (!state.user) return;
+                if (!confirm('Delete this document permanently?')) return;
+                try {
+                    const res = await fetch(`${API_URL}/documents/delete/${docId}?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (res.ok) {
+                        state.tokens = data.tokens;
+                        updateTokenUI();
+                        renderDocuments(data.documents);
+                        showToast("Document deleted.", "info");
+                    } else {
+                        showToast(data.error || "Delete failed.", "error");
+                    }
+                } catch {
+                    showToast("Network error deleting document.", "error");
                 }
             });
         }

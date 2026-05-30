@@ -186,6 +186,31 @@ app.get('/api/documents/download/:docId', async (req, res) => {
   res.redirect(doc.file_path);
 });
 
+// --- DELETE DOCUMENT ---
+app.delete('/api/documents/delete/:docId', async (req, res) => {
+  const { docId } = req.params;
+  const { user } = req.query;
+  if (!user) return res.status(401).json({ error: "Authentication required." });
+
+  const normalizedName = user.trim().toLowerCase();
+  const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
+  if (!doc) return res.status(404).json({ error: "Document not found." });
+  if (doc.author.toLowerCase() !== normalizedName) return res.status(403).json({ error: "Only the author can delete this document." });
+
+  const fileName = doc.file_path?.split('/').pop();
+  if (fileName) {
+    await supabase.storage.from('documents').remove([fileName]);
+  }
+
+  await supabase.from('votes').delete().eq('doc_id', docId);
+  await supabase.from('comments').delete().eq('doc_id', docId);
+  await supabase.from('unlocked_docs').delete().eq('doc_id', docId);
+  await supabase.from('documents').delete().eq('id', docId);
+
+  const profile = await getUserProfile(normalizedName);
+  res.json({ success: true, tokens: profile ? profile.tokens : 0, documents: await getDocumentsWithLockState(normalizedName) });
+});
+
 // --- UNLOCK DOCUMENT ---
 app.post('/api/documents/unlock', async (req, res) => {
   const { docId, user } = req.body;
