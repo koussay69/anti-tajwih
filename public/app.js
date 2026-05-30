@@ -194,9 +194,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.addEventListener('click', async () => {
                     if (!confirm('Delete all documents for this user?')) return;
                     const targetUser = btn.dataset.user;
-                    const res = await fetch(`${API_URL}/admin/users/${encodeURIComponent(targetUser)}/documents?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
-                    const data = await res.json();
-                    showToast(data.success ? `Deleted ${data.deleted} documents.` : data.error || 'Error', data.success ? 'success' : 'error');
+                    try {
+                        const res = await fetch(`${API_URL}/admin/users/${encodeURIComponent(targetUser)}/documents?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
+                        const data = await res.json();
+                        showToast(data.success ? `Deleted ${data.deleted} documents.` : data.error || 'Error', data.success ? 'success' : 'error');
+                    } catch {
+                        showToast("Error deleting documents.", "error");
+                    }
                     loadAdminPanel();
                 });
             });
@@ -770,8 +774,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const filterFiliere = document.getElementById('filter-filiere')?.value || '';
         const filterNiveau = document.getElementById('filter-niveau')?.value || '';
         const filterMatiere = document.getElementById('filter-matiere')?.value || '';
-        const browseCards = document.querySelectorAll('#browse-view .feed-column .doc-card, #primary-feed-target .doc-card');
-
+        const browseCards = document.querySelectorAll('#primary-feed-target .doc-card');
+        let visible = 0;
         browseCards.forEach(card => {
             const titleText = card.querySelector('.doc-title')?.innerText.toLowerCase() || '';
             const subjectText = card.querySelector('.doc-subject')?.innerText.toLowerCase() || '';
@@ -786,10 +790,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (matchesSearch && matchesFiliere && matchesNiveau && matchesMatiere) {
                 card.classList.remove('hidden');
+                visible++;
             } else {
                 card.classList.add('hidden');
             }
         });
+        console.log(`[Filter] query="${query}" filiere="${filterFiliere}" niveau="${filterNiveau}" matiere="${filterMatiere}" cards=${browseCards.length} visible=${visible}`);
     }
 
     const searchInput = document.getElementById('search-input');

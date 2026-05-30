@@ -422,7 +422,9 @@ app.delete('/api/admin/users/:username/documents', async (req, res) => {
   }
   await supabase.from('documents').delete().eq('author', username);
   const { count: totalDocs } = await supabase.from('documents').select('*', { count: 'exact', head: true });
-  res.json({ success: true, deleted: docs?.length || 0, totalDocs });
+  const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
+  const { count: totalBounties } = await supabase.from('bounties').select('*', { count: 'exact', head: true });
+  res.json({ success: true, deleted: docs?.length || 0, totalDocs, totalUsers, totalBounties });
 });
 
 app.listen(PORT, () => {
