@@ -261,7 +261,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeHelp = document.getElementById('close-help-modal');
     const closeAnswer = document.getElementById('close-answer-modal');
 
-    if (navAuthBtn) navAuthBtn.addEventListener('click', () => authModal.classList.add('open'));
+    if (navAuthBtn) {
+        navAuthBtn.addEventListener('click', () => {
+            if (!state.user) authModal.classList.add('open');
+        });
+    }
 
     if (navUploadBtn) {
         navUploadBtn.addEventListener('click', () => {
@@ -883,9 +887,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const input = document.getElementById('form-auth-input');
             const emailGroup = document.getElementById('form-auth-email-group');
             const avatarGroup = document.getElementById('form-auth-avatar-group');
+            const switchText = document.getElementById('auth-switch-text');
             if (isSignUpMode) {
                 authModalTitle.innerText = "Create Your Account";
                 authToggleLink.innerText = "Sign In instead";
+                if (switchText) switchText.firstChild.textContent = "Already one of us? ";
                 if (label) label.innerText = "Choose a Username";
                 if (input) { input.type = "text"; input.placeholder = "your-username"; }
                 if (emailGroup) emailGroup.style.display = "";
@@ -893,6 +899,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 authModalTitle.innerText = "Sign In to Anti-Tajwih";
                 authToggleLink.innerText = "Create an Account (Sign Up)";
+                if (switchText) switchText.firstChild.textContent = "New to the community? ";
                 if (label) label.innerText = "Email or Username";
                 if (input) { input.type = "text"; input.placeholder = "name@example.com or username"; }
                 if (emailGroup) emailGroup.style.display = "none";
