@@ -5,7 +5,6 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,8 +18,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
@@ -308,16 +305,13 @@ app.get('/api/vault-data', async (req, res) => {
 
 // --- AI CONTENT CHECK ---
 async function checkDocumentContent(pdfBuffer, metadata) {
-  if (!genAI) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) {
     console.error('AI check skipped: GEMINI_API_KEY not configured');
     return null;
   }
-  const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.0-flash-lite'];
-  let lastError = null;
-  for (const modelName of modelsToTry) {
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
+  const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
+  const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
 A document was uploaded with these details:
 - Subject category: "${metadata.subject}"
 - Filière (track): "${metadata.filiere || 'N/A'}"
@@ -336,42 +330,61 @@ Reply with ONLY a single JSON object:
 {"isAcademic": true/false, "reason": "brief one-line explanation"}
 
 Set isAcademic to false if: the content doesn't match the declared subject/filière/type, or it contains spam, ads, malware, irrelevant personal content, non-educational entertainment, or anything that doesn't help students study.`;
-      const base64Data = pdfBuffer.toString('base64');
-      const result = await model.generateContent([
-        { inlineData: { mimeType: 'application/pdf', data: base64Data } },
-        { text: prompt }
-      ]);
-      const responseText = result.response.text().trim();
-      console.log('AI raw response:', responseText.substring(0, 200));
-      const jsonMatch = responseText.match(/\{.*\}/s);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+
+  const base64Data = pdfBuffer.toString('base64');
+
+  for (const modelName of modelsToTry) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`;
+      const body = {
+        contents: [{
+          parts: [
+            { inlineData: { mimeType: 'application/pdf', data: base64Data } },
+            { text: prompt }
+          ]
+        }]
+      };
+      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const json = await resp.json();
+      if (!resp.ok) {
+        console.error(`AI check error (${modelName}):`, resp.status, JSON.stringify(json.error || json));
+        continue;
       }
-      console.error('AI check: no JSON found in response');
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      console.log('AI raw response:', text.substring(0, 200));
+      const jsonMatch = text.match(/\{.*\}/s);
+      if (jsonMatch) return JSON.parse(jsonMatch[0]);
       return null;
     } catch (err) {
-      lastError = err;
       console.error(`AI check error (${modelName}):`, err.message);
     }
   }
-  console.error('AI check: all models failed, last error:', lastError?.message);
   return null;
 }
 
 // --- TEST ENDPOINT for AI key ---
 app.get('/api/admin/ai-test', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
-  if (!genAI) return res.json({ ok: false, error: 'GEMINI_API_KEY not set on server' });
-  const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.0-flash-lite'];
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return res.json({ ok: false, error: 'GEMINI_API_KEY not set on server' });
+  const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
   for (const modelName of modelsToTry) {
     try {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent('Reply with just the word WORKING');
-      const text = result.response.text().trim();
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`;
+      const body = { contents: [{ parts: [{ text: 'Reply with just the word WORKING' }] }] };
+      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const json = await resp.json();
+      if (!resp.ok) {
+        if (modelName === modelsToTry[modelsToTry.length - 1]) {
+          return res.json({ ok: false, model: modelName, status: resp.status, error: json.error?.message || JSON.stringify(json) });
+        }
+        continue;
+      }
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
       return res.json({ ok: text === 'WORKING', model: modelName, response: text });
     } catch (err) {
       if (modelName === modelsToTry[modelsToTry.length - 1]) {
-        return res.json({ ok: false, error: err.message, model: modelName });
+        return res.json({ ok: false, model: modelName, error: err.message });
       }
     }
   }
