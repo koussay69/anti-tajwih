@@ -312,9 +312,12 @@ async function checkDocumentContent(pdfBuffer, metadata) {
     console.error('AI check skipped: GEMINI_API_KEY not configured');
     return null;
   }
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-    const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
+  const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.0-flash-lite'];
+  let lastError = null;
+  for (const modelName of modelsToTry) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
 A document was uploaded with these details:
 - Subject category: "${metadata.subject}"
 - Filière (track): "${metadata.filiere || 'N/A'}"
@@ -333,36 +336,44 @@ Reply with ONLY a single JSON object:
 {"isAcademic": true/false, "reason": "brief one-line explanation"}
 
 Set isAcademic to false if: the content doesn't match the declared subject/filière/type, or it contains spam, ads, malware, irrelevant personal content, non-educational entertainment, or anything that doesn't help students study.`;
-    const base64Data = pdfBuffer.toString('base64');
-    const result = await model.generateContent([
-      { inlineData: { mimeType: 'application/pdf', data: base64Data } },
-      { text: prompt }
-    ]);
-    const responseText = result.response.text().trim();
-    console.log('AI raw response:', responseText.substring(0, 200));
-    const jsonMatch = responseText.match(/\{.*\}/s);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const base64Data = pdfBuffer.toString('base64');
+      const result = await model.generateContent([
+        { inlineData: { mimeType: 'application/pdf', data: base64Data } },
+        { text: prompt }
+      ]);
+      const responseText = result.response.text().trim();
+      console.log('AI raw response:', responseText.substring(0, 200));
+      const jsonMatch = responseText.match(/\{.*\}/s);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      console.error('AI check: no JSON found in response');
+      return null;
+    } catch (err) {
+      lastError = err;
+      console.error(`AI check error (${modelName}):`, err.message);
     }
-    console.error('AI check: no JSON found in response');
-    return null;
-  } catch (err) {
-    console.error('AI check error:', err.message, err.stack?.substring(0, 300));
-    return null; // fall back to pending
   }
+  console.error('AI check: all models failed, last error:', lastError?.message);
+  return null;
 }
 
 // --- TEST ENDPOINT for AI key ---
 app.get('/api/admin/ai-test', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
   if (!genAI) return res.json({ ok: false, error: 'GEMINI_API_KEY not set on server' });
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-    const result = await model.generateContent('Reply with just the word WORKING');
-    const text = result.response.text().trim();
-    res.json({ ok: text === 'WORKING', response: text });
-  } catch (err) {
-    res.json({ ok: false, error: err.message });
+  const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.0-flash-lite'];
+  for (const modelName of modelsToTry) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent('Reply with just the word WORKING');
+      const text = result.response.text().trim();
+      return res.json({ ok: text === 'WORKING', model: modelName, response: text });
+    } catch (err) {
+      if (modelName === modelsToTry[modelsToTry.length - 1]) {
+        return res.json({ ok: false, error: err.message, model: modelName });
+      }
+    }
   }
 });
 
