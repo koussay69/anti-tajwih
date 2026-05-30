@@ -310,7 +310,7 @@ async function checkDocumentContent(pdfBuffer, metadata) {
     console.error('AI check skipped: GEMINI_API_KEY not configured');
     return null;
   }
-  const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
+  const modelsToTry = ['gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
   const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
 A document was uploaded with these details:
 - Subject category: "${metadata.subject}"
@@ -367,7 +367,7 @@ app.get('/api/admin/ai-test', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
   const key = process.env.GEMINI_API_KEY;
   if (!key) return res.json({ ok: false, error: 'GEMINI_API_KEY not set on server' });
-  const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
+  const modelsToTry = ['gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
   for (const modelName of modelsToTry) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`;
