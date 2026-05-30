@@ -75,7 +75,7 @@ async function getDocumentsWithLockState(normalizedUsername) {
 }
 
 async function getBounties() {
-  const { data: bounties } = await supabase.from('bounties').select('*').eq('settled', false).order('id', { ascending: false });
+  const { data: bounties } = await supabase.from('bounties').select('*').order('id', { ascending: false });
   if (!bounties) return [];
 
   const result = [];
@@ -174,7 +174,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere });
 
   const updatedProfile = await getUserProfile(normalizedName);
-  res.json({ success: true, tokens: updatedProfile.tokens, documents: await getDocumentsWithLockState(normalizedName) });
+  res.json({ success: true, tokens: updatedProfile.tokens, uploadsCount: updatedProfile.uploadsCount, documents: await getDocumentsWithLockState(normalizedName) });
 });
 
 // --- DOWNLOAD DOCUMENT ---

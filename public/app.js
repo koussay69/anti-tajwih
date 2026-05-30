@@ -653,7 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (res.ok) {
                     state.tokens = data.tokens;
-                    state.uploadsCount += 1;
+                    state.uploadsCount = data.uploadsCount;
 
                     updateTokenUI();
                     showToast("Asset distribution complete! (+5 Tokens Reward)", "bounty");
