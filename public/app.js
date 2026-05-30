@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = await res.json();
                     if (res.ok) {
                         state.tokens = data.tokens;
-                        updateUI();
+                        updateTokenUI();
                         renderBounties(data.bounties);
                         showToast("Best answer selected! +3 tokens awarded.", "success");
                     } else {
