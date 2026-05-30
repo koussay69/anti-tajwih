@@ -356,10 +356,10 @@ Set isAcademic to false if content doesn't match the declared metadata or is non
     if (!content) {
       return { error: 'Groq returned empty content' };
     }
-    console.log('Groq response:', content.substring(0, 200));
+    console.log('Groq response:', content.substring(0, 300));
     const jsonMatch = content.match(/\{.*\}/s);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    return { error: 'Groq response had no valid JSON: ' + content.substring(0, 100) };
+    return { error: 'Groq did not return valid JSON. Raw: ' + content.substring(0, 200) };
   } catch (err) {
     console.error('AI check error:', err.message);
     return { error: err.message };
