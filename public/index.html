@@ -90,6 +90,13 @@
                     <option>Français</option>
                     <option>Anglais</option>
                 </select>
+                <select id="filter-type" class="filter-select">
+                    <option value="">Type (all)</option>
+                    <option>DS</option>
+                    <option>Examen</option>
+                    <option>Série</option>
+                    <option>Cours</option>
+                </select>
                 <button id="clear-filters" class="clear-filters-btn">Clear</button>
             </div>
         </section>
@@ -156,11 +163,18 @@
                 <h2>Account Settings</h2>
             </div>
             <div class="account-card-box">
+                <div id="account-avatar-section" style="text-align:center; margin-bottom:15px;">
+                    <img id="account-avatar-img" src="" alt="Avatar" style="width:100px; height:100px; border-radius:50%; object-fit:cover; display:none; border:2px solid var(--text-main);">
+                    <div id="account-avatar-placeholder" style="width:100px; height:100px; border-radius:50%; background:var(--bg-tray); margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:36px; color:var(--text-muted); border:2px dashed var(--text-muted);">?</div>
+                    <div style="margin-top:8px;">
+                        <input type="file" id="account-avatar-input" accept=".jpg,.jpeg,image/jpeg" style="display:none;">
+                        <button class="unlock-action-btn" id="account-avatar-btn" style="font-size:12px; padding:4px 12px;">Change Photo</button>
+                    </div>
+                </div>
                 <h3 class="account-user-name">Anonymous Student</h3>
                 <p class="account-data-row">Available Balance: <span id="account-token-display">0</span> Tokens</p>
                 <p class="account-data-row">Total Uploads: <span id="account-upload-display">0</span> Documents</p>
-                <button class="unlock-action-btn" id="logout-mock-btn" style="width: 100%; margin-top:15px;">Log
-                    Out</button>
+                <button class="unlock-action-btn" id="logout-mock-btn" style="width: 100%; margin-top:15px;">Log Out</button>
             </div>
         </main>
     </div>
@@ -182,6 +196,22 @@
         </main>
     </div>
 
+    <!-- AUTHOR VIEW -->
+    <div id="author-view" class="view-section hidden">
+        <main class="container">
+            <div class="section-header">
+                <span class="section-tag">// AUTHOR PROFILE</span>
+                <h2 id="author-display-name">Author</h2>
+            </div>
+            <div id="author-profile" style="margin-bottom:20px;"></div>
+            <div class="section-header">
+                <span class="section-tag">// UPLOADS</span>
+                <h2>Documents by <span id="author-uploads-label">this author</span></h2>
+            </div>
+            <div class="doc-grid" id="author-docs-target"></div>
+        </main>
+    </div>
+
     <!-- MODALS -->
     <!-- SIGN IN MODAL (FIXED PASWORD ID) -->
     <div id="auth-modal" class="modal-overlay">
@@ -199,6 +229,10 @@
                 <div class="form-group" id="form-auth-email-group" style="display:none;">
                     <label>Email Address</label>
                     <input type="email" id="form-auth-email" placeholder="name@example.com">
+                </div>
+                <div class="form-group" id="form-auth-avatar-group" style="display:none;">
+                    <label>Profile Picture (JPG)</label>
+                    <input type="file" id="form-auth-avatar" accept=".jpg,.jpeg,image/jpeg">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -263,6 +297,16 @@
                         <option>Informatique</option>
                         <option>Français</option>
                         <option>Anglais</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Type de fichier</label>
+                    <select id="form-doc-type" required>
+                        <option value="">-- Select --</option>
+                        <option>DS</option>
+                        <option>Examen</option>
+                        <option>Série</option>
+                        <option>Cours</option>
                     </select>
                 </div>
                 <div class="form-group">

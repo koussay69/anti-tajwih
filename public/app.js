@@ -27,17 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
             state.tokens = data.state.tokens;
             state.uploadsCount = data.state.uploadsCount;
             state.admin = data.state.admin;
-
-            if (data.state.banned) {
-                state.user = null;
-                localStorage.removeItem('p2p-vault-user');
-                if (navAuthBtn) navAuthBtn.innerText = 'Sign In';
-                document.querySelector('.account-user-name').innerText = 'Anonymous Student';
-                showToast("Your account has been banned.", "error");
-                return;
-            }
+            state.avatar_url = data.state.avatar_url;
 
             updateTokenUI();
+            updateAvatarUI();
 
             const adminLink = document.getElementById('admin-nav-link');
             if (adminLink) {
@@ -59,6 +52,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('global-token-count').innerText = state.tokens;
         document.getElementById('account-token-display').innerText = state.tokens;
         document.getElementById('account-upload-display').innerText = state.uploadsCount;
+    }
+
+    function updateAvatarUI() {
+        const img = document.getElementById('account-avatar-img');
+        const placeholder = document.getElementById('account-avatar-placeholder');
+        if (!img || !placeholder) return;
+        if (state.avatar_url) {
+            img.src = state.avatar_url;
+            img.style.display = '';
+            placeholder.style.display = 'none';
+        } else {
+            img.style.display = 'none';
+            placeholder.style.display = 'flex';
+        }
     }
 
     // --- TOAST NOTIFICATION UTILITY FUNCTION ---
@@ -294,8 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? '🔒 LOCKED' : '✓ UNLOCKED'}</span>
                 </div>
                 <h3 class="doc-title">${doc.title}</h3>
-                <p class="doc-author">By: ${doc.author} • 🌟 ${doc.score ? doc.score + '/5 (' + doc.comments.length + ' reviews)' : 'No reviews yet'}</p>
-                <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}</div>
+                <p class="doc-author">By: <a href="#" class="author-link" data-author="${doc.author}">${doc.author}</a> • 🌟 ${doc.score ? doc.score + '/5 (' + doc.comments.length + ' reviews)' : 'No reviews yet'}</p>
+                <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}${doc.type ? `<span class="tag tag-type">${doc.type}</span>` : ''}</div>
                 <button class="toggle-comments-btn">// View Reviews & Comments (${doc.comments ? doc.comments.length : 0})</button>
                 <div class="card-comments-tray hidden">
                     <div class="comments-list">
@@ -628,6 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const filiereVal = document.getElementById('form-doc-filiere').value;
             const niveauVal = document.getElementById('form-doc-niveau').value;
             const matiereVal = document.getElementById('form-doc-matiere').value;
+            const typeVal = document.getElementById('form-doc-type').value;
             const fileInput = document.getElementById('form-upload-file');
             const file = fileInput.files[0];
             if (!file) {
@@ -641,6 +649,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('filiere', filiereVal);
             formData.append('niveau', niveauVal);
             formData.append('matiere', matiereVal);
+            formData.append('type', typeVal);
             formData.append('author', state.user);
             formData.append('file', file);
 
@@ -774,36 +783,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const filterFiliere = document.getElementById('filter-filiere')?.value || '';
         const filterNiveau = document.getElementById('filter-niveau')?.value || '';
         const filterMatiere = document.getElementById('filter-matiere')?.value || '';
+        const filterType = document.getElementById('filter-type')?.value || '';
         const browseCards = document.querySelectorAll('#primary-feed-target .doc-card');
         let visible = 0;
-        let nf = 0, nn = 0, nm = 0;
         browseCards.forEach(card => {
             const cardText = card.innerText.toLowerCase();
-            const filiereTag = card.querySelector('.tag-filiere');
-            const niveauTag = card.querySelector('.tag-niveau');
-            const matiereTag = card.querySelector('.tag-matiere');
+            const tagType = card.querySelector('.tag-type');
 
             const matchesSearch = !query || cardText.includes(query);
 
-            const rawFiliere = (filiereTag?.innerText || '').trim().toLowerCase();
-            const rawNiveau = (niveauTag?.innerText || '').trim().toLowerCase();
-            const rawMatiere = (matiereTag?.innerText || '').trim().toLowerCase();
+            const rawFiliere = (card.querySelector('.tag-filiere')?.innerText || '').trim().toLowerCase();
+            const rawNiveau = (card.querySelector('.tag-niveau')?.innerText || '').trim().toLowerCase();
+            const rawMatiere = (card.querySelector('.tag-matiere')?.innerText || '').trim().toLowerCase();
+            const rawType = (tagType?.innerText || '').trim().toLowerCase();
 
             const matchesFiliere = !filterFiliere || rawFiliere === filterFiliere.trim().toLowerCase();
             const matchesNiveau = !filterNiveau || rawNiveau === filterNiveau.trim().toLowerCase();
             const matchesMatiere = !filterMatiere || rawMatiere === filterMatiere.trim().toLowerCase();
+            const matchesType = !filterType || rawType === filterType.trim().toLowerCase();
 
-            if (matchesSearch && matchesFiliere && matchesNiveau && matchesMatiere) {
+            if (matchesSearch && matchesFiliere && matchesNiveau && matchesMatiere && matchesType) {
                 card.classList.remove('hidden');
                 visible++;
             } else {
                 card.classList.add('hidden');
             }
-            if (filterFiliere && !matchesFiliere) nf++;
-            if (filterNiveau && !matchesNiveau) nn++;
-            if (filterMatiere && !matchesMatiere) nm++;
         });
-        console.log(`[Filter] q="${query}" f="${filterFiliere}" n="${filterNiveau}" m="${filterMatiere}" cards=${browseCards.length} vis=${visible} hiddenBy={f:${nf} n:${nn} m:${nm}}`);
+        console.log(`[Filter] q="${query}" f="${filterFiliere}" n="${filterNiveau}" m="${filterMatiere}" t="${filterType}" cards=${browseCards.length} vis=${visible}`);
     }
 
     const searchInput = document.getElementById('search-input');
@@ -811,7 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('input', applyFilters);
     }
 
-    ['filter-filiere', 'filter-niveau', 'filter-matiere'].forEach(id => {
+    ['filter-filiere', 'filter-niveau', 'filter-matiere', 'filter-type'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', applyFilters);
     });
@@ -822,6 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('filter-filiere').value = '';
             document.getElementById('filter-niveau').value = '';
             document.getElementById('filter-matiere').value = '';
+            document.getElementById('filter-type').value = '';
             applyFilters();
         });
     }
@@ -845,18 +852,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const label = document.getElementById('form-auth-label');
             const input = document.getElementById('form-auth-input');
             const emailGroup = document.getElementById('form-auth-email-group');
+            const avatarGroup = document.getElementById('form-auth-avatar-group');
             if (isSignUpMode) {
                 authModalTitle.innerText = "Create Your Account";
                 authToggleLink.innerText = "Sign In instead";
                 if (label) label.innerText = "Choose a Username";
                 if (input) { input.type = "text"; input.placeholder = "your-username"; }
                 if (emailGroup) emailGroup.style.display = "";
+                if (avatarGroup) avatarGroup.style.display = "";
             } else {
                 authModalTitle.innerText = "Sign In to Anti-Tajwih";
                 authToggleLink.innerText = "Create an Account (Sign Up)";
                 if (label) label.innerText = "Email or Username";
                 if (input) { input.type = "text"; input.placeholder = "name@example.com or username"; }
                 if (emailGroup) emailGroup.style.display = "none";
+                if (avatarGroup) avatarGroup.style.display = "none";
             }
         });
     }
@@ -896,6 +906,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const profileHeader = document.querySelector('.account-user-name');
                 if (profileHeader) profileHeader.innerText = loggedInName;
 
+                if (isSignUpMode) {
+                    const avatarInput = document.getElementById('form-auth-avatar');
+                    if (avatarInput && avatarInput.files[0]) {
+                        const avatarForm = new FormData();
+                        avatarForm.append('user', loggedInName);
+                        avatarForm.append('avatar', avatarInput.files[0]);
+                        await fetch(`${API_URL}/auth/avatar`, { method: 'POST', body: avatarForm });
+                    }
+                }
+
                 authForm.reset();
                 authModal.classList.remove('open');
                 showToast(`Logged in as ${loggedInName}`, "info");
@@ -920,6 +940,76 @@ document.addEventListener('DOMContentLoaded', () => {
             loadVaultData();
         });
     }
+
+    // --- AVATAR CHANGE ---
+    const avatarInput = document.getElementById('account-avatar-input');
+    const avatarBtn = document.getElementById('account-avatar-btn');
+    if (avatarBtn && avatarInput) {
+        avatarBtn.addEventListener('click', () => avatarInput.click());
+        avatarInput.addEventListener('change', async () => {
+            if (!state.user || !avatarInput.files[0]) return;
+            const formData = new FormData();
+            formData.append('user', state.user);
+            formData.append('avatar', avatarInput.files[0]);
+            const res = await fetch(`${API_URL}/auth/avatar`, { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                state.avatar_url = data.avatar_url;
+                updateAvatarUI();
+                showToast("Profile picture updated.", "success");
+            } else {
+                showToast(data.error || "Avatar upload failed.", "error");
+            }
+            avatarInput.value = '';
+        });
+    }
+
+    // --- AUTHOR LINKS ---
+    document.addEventListener('click', async (e) => {
+        const link = e.target.closest('.author-link');
+        if (!link) return;
+        e.preventDefault();
+        const author = link.dataset.author;
+        if (!author) return;
+        try {
+            const res = await fetch(`${API_URL}/users/${encodeURIComponent(author)}/profile`);
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error || "User not found.", "error"); return; }
+
+            document.getElementById('author-display-name').innerText = data.username;
+            document.getElementById('author-uploads-label').innerText = data.username;
+
+            const profileDiv = document.getElementById('author-profile');
+            profileDiv.innerHTML = `
+                <div class="account-card-box" style="text-align:center;">
+                    ${data.avatar_url ? `<img src="${data.avatar_url}" alt="Avatar" style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid var(--text-main);">` : ''}
+                    <h3>${data.username}</h3>
+                    <p class="account-data-row">Tokens: ${data.tokens}</p>
+                    <p class="account-data-row">Uploads: ${data.uploadsCount} documents</p>
+                </div>
+            `;
+
+            const docsContainer = document.getElementById('author-docs-target');
+            docsContainer.innerHTML = '';
+            (data.documents || []).forEach(doc => {
+                const card = document.createElement('div');
+                card.className = 'doc-card';
+                card.innerHTML = `
+                    <div class="card-meta-top"><span class="doc-subject">${doc.subject}</span></div>
+                    <h3 class="doc-title">${doc.title}</h3>
+                    <p class="doc-author">By: ${doc.author}</p>
+                    <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}${doc.type ? `<span class="tag tag-type">${doc.type}</span>` : ''}</div>
+                `;
+                docsContainer.appendChild(card);
+            });
+
+            document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('author-view').classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(nl => nl.classList.remove('active'));
+        } catch {
+            showToast("Failed to load author profile.", "error");
+        }
+    });
 
     // Boot execution sync pipeline
     loadVaultData();

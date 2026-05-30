@@ -68,7 +68,8 @@ async function getDocumentsWithLockState(normalizedUsername) {
       locked: isAuthor ? false : !unlockedIds.includes(doc.id),
       filiere: doc.filiere,
       niveau: doc.niveau,
-      matiere: doc.matiere
+      matiere: doc.matiere,
+      type: doc.type
     });
   }
   return result;
@@ -119,6 +120,41 @@ app.post('/api/auth/login', async (req, res) => {
   res.json({ success: true, username: user.username });
 });
 
+// --- AVATAR UPLOAD ---
+app.post('/api/auth/avatar', upload.single('avatar'), async (req, res) => {
+  const { user } = req.body;
+  if (!user) return res.status(401).json({ error: "Authentication required." });
+  if (!req.file) return res.status(400).json({ error: "JPG file is required." });
+  if (req.file.mimetype !== 'image/jpeg') return res.status(400).json({ error: "Only JPG images are allowed." });
+
+  const normalizedName = user.trim().toLowerCase();
+  const ext = 'jpg';
+  const fileName = `avatar-${normalizedName}.${ext}`;
+  const { error: uploadError } = await supabase.storage.from('documents').upload(fileName, req.file.buffer, { contentType: 'image/jpeg', upsert: true });
+  if (uploadError) return res.status(500).json({ error: "Avatar upload failed: " + uploadError.message });
+
+  const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(fileName);
+  await supabase.from('users').update({ avatar_url: publicUrl }).eq('username', normalizedName);
+  res.json({ success: true, avatar_url: publicUrl });
+});
+
+// --- USER PROFILE ---
+app.get('/api/users/:username/profile', async (req, res) => {
+  const { username } = req.params;
+  const normalizedName = username.trim().toLowerCase();
+  const profile = await getUserProfile(normalizedName);
+  if (!profile) return res.status(404).json({ error: "User not found." });
+  const { data: docs } = await supabase.from('documents').select('*').eq('author', normalizedName).order('id', { ascending: false });
+  res.json({
+    username: profile.username,
+    email: profile.email,
+    avatar_url: profile.avatar_url,
+    uploadsCount: docs ? docs.length : 0,
+    tokens: profile.tokens,
+    documents: docs || []
+  });
+});
+
 // --- VAULT DATA ---
 app.get('/api/vault-data', async (req, res) => {
   const { user } = req.query;
@@ -139,7 +175,8 @@ app.get('/api/vault-data', async (req, res) => {
       uploadsCount: profile ? profile.uploadsCount : 0,
       user: normalizedName || null,
       admin: profile ? !!profile.admin : false,
-      banned: profile ? !!profile.banned : false
+      banned: profile ? !!profile.banned : false,
+      avatar_url: profile ? profile.avatar_url : null
     },
     documents: await getDocumentsWithLockState(normalizedName),
     bounties: await getBounties()
@@ -148,7 +185,7 @@ app.get('/api/vault-data', async (req, res) => {
 
 // --- UPLOAD DOCUMENT ---
 app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
-  const { title, subject, author, filiere, niveau, matiere } = req.body;
+  const { title, subject, author, filiere, niveau, matiere, type } = req.body;
   if (!author) return res.status(401).json({ error: "Authentication required." });
 
   const normalizedName = author.trim().toLowerCase();
@@ -171,7 +208,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   await supabase.from('users').update({ tokens: profile.tokens + 5, uploadsCount: profile.uploadsCount + 1 }).eq('username', normalizedName);
 
   const docId = `doc-${Date.now()}`;
-  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere });
+  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere, type });
 
   const updatedProfile = await getUserProfile(normalizedName);
   res.json({ success: true, tokens: updatedProfile.tokens, uploadsCount: updatedProfile.uploadsCount, documents: await getDocumentsWithLockState(normalizedName) });
