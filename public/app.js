@@ -167,14 +167,16 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadAdminPanel() {
         if (!state.admin || !state.user) return;
         try {
-            const [usersRes, statsRes, onlineRes] = await Promise.all([
+            const [usersRes, statsRes, onlineRes, pendingRes] = await Promise.all([
                 fetch(`${API_URL}/admin/users?user=${encodeURIComponent(state.user)}`),
                 fetch(`${API_URL}/admin/stats?user=${encodeURIComponent(state.user)}`),
-                fetch(`${API_URL}/admin/online-count?user=${encodeURIComponent(state.user)}`)
+                fetch(`${API_URL}/admin/online-count?user=${encodeURIComponent(state.user)}`),
+                fetch(`${API_URL}/admin/pending-docs?user=${encodeURIComponent(state.user)}`)
             ]);
             const users = await usersRes.json();
             const stats = await statsRes.json();
             const online = await onlineRes.json();
+            const pendingDocs = await pendingRes.json();
 
             const statsDiv = document.getElementById('admin-stats');
             statsDiv.innerHTML = `
@@ -183,6 +185,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="stat-box"><strong>Bounties:</strong> ${stats.totalBounties || 0}</div>
                 <div class="stat-box" style="border:2px solid #2ecc71;"><strong>🟢 Online (30m):</strong> ${online.online || 0}</div>
             `;
+
+            const pendingDiv = document.getElementById('admin-pending-docs');
+            if (!pendingDocs || pendingDocs.length === 0) {
+                pendingDiv.innerHTML = `<p style="opacity:0.6;">No documents pending review.</p>`;
+            } else {
+                pendingDiv.innerHTML = pendingDocs.map(d => `
+                    <div class="admin-user-row" style="flex-wrap:wrap;">
+                        <span><strong>${d.title}</strong> by ${d.author}</span>
+                        <span>${d.filiere || ''} ${d.niveau || ''} ${d.matiere || ''} ${d.type || ''}</span>
+                        <div class="admin-user-actions">
+                            <button class="unlock-action-btn admin-approve-btn" data-docid="${d.id}" style="background:green;">✅ Approve</button>
+                            <button class="unlock-action-btn admin-reject-pending-btn" data-docid="${d.id}" style="background:#dc3545;">🗑 Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                pendingDiv.querySelectorAll('.admin-approve-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const docId = btn.dataset.docid;
+                        btn.disabled = true; btn.innerText = 'Approving...';
+                        const res = await fetch(`${API_URL}/admin/documents/${docId}/approve`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ user: state.user })
+                        });
+                        const data = await res.json();
+                        showToast(data.success ? 'Document approved! Author +5 tokens.' : data.error || 'Error', data.success ? 'success' : 'error');
+                        loadAdminPanel();
+                    });
+                });
+                pendingDiv.querySelectorAll('.admin-reject-pending-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const docId = btn.dataset.docid;
+                        btn.disabled = true; btn.innerText = 'Rejecting...';
+                        const res = await fetch(`${API_URL}/admin/documents/${docId}?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
+                        const data = await res.json();
+                        showToast(data.success ? 'Document rejected and deleted.' : data.error || 'Error', data.success ? 'success' : 'error');
+                        loadAdminPanel();
+                    });
+                });
+            }
 
             const usersDiv = document.getElementById('admin-users-list');
             const searchTerm = (document.getElementById('admin-user-search')?.value || '').toLowerCase();
@@ -339,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 <div class="card-meta-top">
                     <span class="doc-subject">${doc.subject}</span>
-                    <span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? '🔒 LOCKED' : '✓ UNLOCKED'}</span>
+                    ${!doc.approved ? '<span class="lock-indicator status-text" style="color:orange;">⏳ PENDING REVIEW</span>' : `<span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? '🔒 LOCKED' : '✓ UNLOCKED'}</span>`}
                 </div>
                 <h3 class="doc-title">${doc.title}</h3>
                 <p class="doc-author">By: <a href="#" class="author-link" data-author="${doc.author}">${doc.author}</a> • 🌟 ${doc.score ? doc.score + '/5 (' + doc.comments.length + ' reviews)' : 'No reviews yet'}</p>
@@ -378,8 +421,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (insideBuyBtn) insideBuyBtn.remove();
                     const insideStatusText = clone.querySelector('.status-text');
                     if (insideStatusText) {
-                        insideStatusText.innerText = "✓ ACTIVE SHARED";
-                        insideStatusText.style.color = "green";
+                        if (doc.approved) {
+                            insideStatusText.innerText = "✓ ACTIVE SHARED";
+                            insideStatusText.style.color = "green";
+                        } else {
+                            insideStatusText.innerText = "⏳ PENDING REVIEW";
+                            insideStatusText.style.color = "orange";
+                        }
                     }
                     myUploadsSection.appendChild(clone);
                     setupDocumentCardInteractions(clone);
@@ -706,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.uploadsCount = data.uploadsCount;
 
                     updateTokenUI();
-                    showToast("Asset distribution complete! (+5 Tokens Reward)", "bounty");
+                    showToast("Document submitted for review. You'll receive +5 tokens once approved.", "bounty");
 
                     renderDocuments(data.documents);
                     uploadForm.reset();

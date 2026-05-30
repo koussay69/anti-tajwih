@@ -3,6 +3,7 @@
 -- ALTER TABLE statements add columns if they don't exist (for existing databases).
 
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS type TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_visits INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active TIMESTAMPTZ;
@@ -34,7 +35,8 @@ CREATE TABLE IF NOT EXISTS documents (
   filiere TEXT,
   niveau TEXT,
   matiere TEXT,
-  type TEXT
+  type TEXT,
+  approved BOOLEAN DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS users (

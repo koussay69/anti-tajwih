@@ -39,9 +39,10 @@ app.use((req, res, next) => {
 (async () => {
   try {
     await supabase.rpc('exec_sql', { sql: 'ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active TIMESTAMPTZ' });
-  } catch (_) {
-    // rpc not available — column likely already exists or will be added manually
-  }
+  } catch (_) {}
+  try {
+    await supabase.rpc('exec_sql', { sql: "ALTER TABLE documents ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT false" });
+  } catch (_) {}
 })();
 
 // --- HELPERS ---
@@ -52,7 +53,20 @@ async function getUserProfile(normalizedUsername) {
 }
 
 async function getDocumentsWithLockState(normalizedUsername) {
-  const { data: docs } = await supabase.from('documents').select('*').order('id', { ascending: false });
+  let isAdmin = false;
+  if (normalizedUsername) {
+    const viewer = await getUserProfile(normalizedUsername);
+    isAdmin = viewer && viewer.admin === true;
+  }
+
+  let query = supabase.from('documents').select('*').order('id', { ascending: false });
+  // Non-admin sees only their own pending docs + all approved docs
+  if (!isAdmin && normalizedUsername) {
+    query = query.or(`approved.eq.true,author.eq.${normalizedUsername}`);
+  } else if (!isAdmin) {
+    query = query.eq('approved', true);
+  }
+  const { data: docs } = await query;
   if (!docs) return [];
 
   let unlockedIds = [];
@@ -88,7 +102,8 @@ async function getDocumentsWithLockState(normalizedUsername) {
       filiere: doc.filiere,
       niveau: doc.niveau,
       matiere: doc.matiere,
-      type: doc.type
+      type: doc.type,
+      approved: doc.approved === true
     });
   }
   return result;
@@ -310,13 +325,13 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
 
   const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(fileName);
 
-  await supabase.from('users').update({ tokens: profile.tokens + 5, uploadsCount: profile.uploadsCount + 1 }).eq('username', normalizedName);
+  await supabase.from('users').update({ uploadsCount: profile.uploadsCount + 1 }).eq('username', normalizedName);
 
   const docId = `doc-${Date.now()}`;
-  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere, type });
+  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere, type, approved: false });
 
   const updatedProfile = await getUserProfile(normalizedName);
-  res.json({ success: true, tokens: updatedProfile.tokens, uploadsCount: updatedProfile.uploadsCount, documents: await getDocumentsWithLockState(normalizedName) });
+  res.json({ success: true, tokens: updatedProfile.tokens, uploadsCount: updatedProfile.uploadsCount, documents: await getDocumentsWithLockState(normalizedName), pending: true });
 });
 
 // --- DOWNLOAD DOCUMENT ---
@@ -331,8 +346,10 @@ app.get('/api/documents/download/:docId', async (req, res) => {
 
   const isAuthor = doc.author.toLowerCase() === normalizedName;
   const { data: hasUnlocked } = await supabase.from('unlocked_docs').select('doc_id').eq('username', normalizedName).eq('doc_id', docId).maybeSingle();
+  const { data: viewerProfile } = await supabase.from('users').select('admin').eq('username', normalizedName).maybeSingle();
+  const isAdmin = viewerProfile && viewerProfile.admin === true;
 
-  if (!isAuthor && !hasUnlocked) {
+  if (!isAuthor && !hasUnlocked && !isAdmin) {
     return res.status(403).json({ error: "You must unlock this document first." });
   }
 
@@ -523,6 +540,29 @@ app.get('/api/admin/online-count', async (req, res) => {
   const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
   const { count } = await supabase.from('users').select('*', { count: 'exact', head: true }).gte('last_active', thirtyMinAgo);
   res.json({ online: count || 0 });
+});
+
+app.get('/api/admin/pending-docs', async (req, res) => {
+  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  const { data: docs } = await supabase.from('documents').select('*').eq('approved', false).order('id', { ascending: false });
+  res.json(docs || []);
+});
+
+app.post('/api/admin/documents/:docId/approve', async (req, res) => {
+  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  const { docId } = req.params;
+  const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
+  if (!doc) return res.status(404).json({ error: "Document not found." });
+  if (doc.approved) return res.status(400).json({ error: "Already approved." });
+  await supabase.from('documents').update({ approved: true }).eq('id', docId);
+  const authorName = doc.author?.toLowerCase();
+  if (authorName) {
+    const { data: authorProfile } = await supabase.from('users').select('tokens').eq('username', authorName).maybeSingle();
+    if (authorProfile) {
+      await supabase.from('users').update({ tokens: authorProfile.tokens + 5 }).eq('username', authorName);
+    }
+  }
+  res.json({ success: true });
 });
 
 app.delete('/api/admin/documents/:docId', async (req, res) => {
