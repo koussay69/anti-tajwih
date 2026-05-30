@@ -175,7 +175,35 @@
                 <h3 class="account-user-name">Anonymous Student</h3>
                 <p class="account-data-row">Available Balance: <span id="account-token-display">0</span> Tokens</p>
                 <p class="account-data-row">Total Uploads: <span id="account-upload-display">0</span> Documents</p>
-                <button class="unlock-action-btn" id="logout-mock-btn" style="width: 100%; margin-top:15px;">Log Out</button>
+
+                <div style="margin-top:20px; border-top:1px solid var(--glass-border); padding-top:20px;">
+                    <h4 style="margin-bottom:10px;">📊 Your Stats</h4>
+                    <p class="account-data-row">Profile Visits: <span id="account-visits">0</span></p>
+                    <p class="account-data-row">Files Downloaded: <span id="account-downloads">0</span></p>
+                    <p class="account-data-row">Total Upvotes Received: <span id="account-upvotes">0</span></p>
+                    <p class="account-data-row">Total Downvotes Received: <span id="account-downvotes">0</span></p>
+                </div>
+
+                <div style="margin-top:20px; border-top:1px solid var(--glass-border); padding-top:20px;">
+                    <h4 style="margin-bottom:10px;">⚙ Settings</h4>
+                    <div class="form-group">
+                        <label>Change Username</label>
+                        <div style="display:flex; gap:8px;">
+                            <input type="text" id="account-new-username" placeholder="New username" style="flex:1; padding:8px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--glass-border); border-radius:4px;">
+                            <button class="unlock-action-btn" id="account-change-username-btn" style="white-space:nowrap;">Save</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:12px;">
+                        <label>Change Password</label>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <input type="password" id="account-current-password" placeholder="Current password" style="padding:8px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--glass-border); border-radius:4px;">
+                            <input type="password" id="account-new-password" placeholder="New password" style="padding:8px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--glass-border); border-radius:4px;">
+                            <button class="unlock-action-btn" id="account-change-password-btn">Change Password</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="unlock-action-btn" id="logout-mock-btn" style="width: 100%; margin-top:20px; background:#dc3545; color:white;">Log Out</button>
             </div>
         </main>
     </div>

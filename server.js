@@ -120,6 +120,44 @@ app.post('/api/auth/login', async (req, res) => {
   res.json({ success: true, username: user.username });
 });
 
+// --- CHANGE USERNAME ---
+app.post('/api/auth/change-username', async (req, res) => {
+  const { user, newUsername } = req.body;
+  if (!user || !newUsername) return res.status(400).json({ error: "Current username and new username required." });
+  const oldName = user.trim().toLowerCase();
+  const newName = newUsername.trim().toLowerCase();
+  if (oldName === newName) return res.status(400).json({ error: "New username is the same as current." });
+
+  const { data: existing } = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
+  if (existing) return res.status(400).json({ error: "Username already taken." });
+
+  const profile = await getUserProfile(oldName);
+  if (!profile) return res.status(404).json({ error: "User not found." });
+
+  // Update username in all tables
+  await supabase.from('users').update({ username: newName }).eq('username', oldName);
+  await supabase.from('documents').update({ author: newName }).eq('author', oldName);
+  await supabase.from('unlocked_docs').update({ username: newName }).eq('username', oldName);
+  await supabase.from('comments').update({ user: newName }).eq('user', oldName);
+  await supabase.from('votes').update({ username: newName }).eq('username', oldName);
+  await supabase.from('bounties').update({ author: newName }).eq('author', oldName);
+  await supabase.from('answers').update({ user: newName }).eq('user', oldName);
+
+  res.json({ success: true, username: newName });
+});
+
+// --- CHANGE PASSWORD ---
+app.post('/api/auth/change-password', async (req, res) => {
+  const { user, currentPassword, newPassword } = req.body;
+  if (!user || !currentPassword || !newPassword) return res.status(400).json({ error: "All fields required." });
+  const normalizedName = user.trim().toLowerCase();
+  const profile = await getUserProfile(normalizedName);
+  if (!profile) return res.status(404).json({ error: "User not found." });
+  if (profile.password !== currentPassword) return res.status(400).json({ error: "Current password is incorrect." });
+  await supabase.from('users').update({ password: newPassword }).eq('username', normalizedName);
+  res.json({ success: true });
+});
+
 // --- AVATAR UPLOAD ---
 app.post('/api/auth/avatar', upload.single('avatar'), async (req, res) => {
   const { user } = req.body;
@@ -145,14 +183,39 @@ app.get('/api/users/:username/profile', async (req, res) => {
   const normalizedName = username.trim().toLowerCase();
   const profile = await getUserProfile(normalizedName);
   if (!profile) return res.status(404).json({ error: "User not found." });
+
+  // Track visit if viewer is not the profile owner
+  if (!user || user.trim().toLowerCase() !== normalizedName) {
+    await supabase.from('users').update({ profile_visits: (profile.profile_visits || 0) + 1 }).eq('username', normalizedName);
+  }
+
   const docs = await getDocumentsWithLockState(user ? user.trim().toLowerCase() : null);
   const userDocs = docs.filter(d => d.author?.toLowerCase() === normalizedName);
+
+  // Compute vote stats across all user's documents
+  const { data: allUserDocVotes } = await supabase.from('votes').select('direction, doc_id');
+  const userDocIds = userDocs.map(d => d.id);
+  const userVotes = (allUserDocVotes || []).filter(v => userDocIds.includes(v.doc_id));
+  const totalUpvotes = userVotes.filter(v => v.direction === 'up').length;
+  const totalDownvotes = userVotes.filter(v => v.direction === 'down').length;
+
+  // Count how many times user's docs were unlocked (bought)
+  let totalDownloads = 0;
+  for (const docId of userDocIds) {
+    const { count } = await supabase.from('unlocked_docs').select('*', { count: 'exact', head: true }).eq('doc_id', docId);
+    totalDownloads += count || 0;
+  }
+
   res.json({
     username: profile.username,
     email: profile.email,
     avatar_url: profile.avatar_url,
     uploadsCount: userDocs.length,
     tokens: profile.tokens,
+    profile_visits: (profile.profile_visits || 0) + (user && user.trim().toLowerCase() !== normalizedName ? 1 : 0),
+    totalUpvotes,
+    totalDownvotes,
+    totalDownloads,
     documents: userDocs
   });
 });
@@ -171,6 +234,23 @@ app.get('/api/vault-data', async (req, res) => {
     });
   }
 
+  const docs = await getDocumentsWithLockState(normalizedName);
+  const bounties = await getBounties();
+
+  // Compute user stats
+  let totalUpvotes = 0, totalDownvotes = 0, totalDownloads = 0;
+  if (profile && docs.length > 0) {
+    const userDocIds = docs.filter(d => d.author?.toLowerCase() === normalizedName).map(d => d.id);
+    const { data: allUserDocVotes } = await supabase.from('votes').select('direction, doc_id');
+    const userVotes = (allUserDocVotes || []).filter(v => userDocIds.includes(v.doc_id));
+    totalUpvotes = userVotes.filter(v => v.direction === 'up').length;
+    totalDownvotes = userVotes.filter(v => v.direction === 'down').length;
+    for (const docId of userDocIds) {
+      const { count } = await supabase.from('unlocked_docs').select('*', { count: 'exact', head: true }).eq('doc_id', docId);
+      totalDownloads += count || 0;
+    }
+  }
+
   res.json({
     state: {
       tokens: profile ? profile.tokens : 0,
@@ -178,10 +258,14 @@ app.get('/api/vault-data', async (req, res) => {
       user: normalizedName || null,
       admin: profile ? !!profile.admin : false,
       banned: profile ? !!profile.banned : false,
-      avatar_url: profile ? profile.avatar_url : null
+      avatar_url: profile ? profile.avatar_url : null,
+      profile_visits: profile ? (profile.profile_visits || 0) : 0,
+      totalUpvotes,
+      totalDownvotes,
+      totalDownloads
     },
-    documents: await getDocumentsWithLockState(normalizedName),
-    bounties: await getBounties()
+    documents: docs,
+    bounties
   });
 });
 

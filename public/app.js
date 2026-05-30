@@ -6,7 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
         uploadsCount: 0,
         user: localStorage.getItem('p2p-vault-user') || null,
         admin: false,
-        avatar_url: null
+        avatar_url: null,
+        profile_visits: 0,
+        totalUpvotes: 0,
+        totalDownvotes: 0,
+        totalDownloads: 0
     };
 
     let activeTicketForAnswer = null;
@@ -30,9 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
             state.uploadsCount = data.state.uploadsCount;
             state.admin = data.state.admin;
             state.avatar_url = data.state.avatar_url;
+            state.profile_visits = data.state.profile_visits || 0;
+            state.totalUpvotes = data.state.totalUpvotes || 0;
+            state.totalDownvotes = data.state.totalDownvotes || 0;
+            state.totalDownloads = data.state.totalDownloads || 0;
 
             updateTokenUI();
             updateAvatarUI();
+            updateStatsUI();
 
             const adminLink = document.getElementById('admin-nav-link');
             if (adminLink) {
@@ -54,6 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('global-token-count').innerText = state.tokens;
         document.getElementById('account-token-display').innerText = state.tokens;
         document.getElementById('account-upload-display').innerText = state.uploadsCount;
+    }
+
+    function updateStatsUI() {
+        document.getElementById('account-visits').innerText = state.profile_visits || 0;
+        document.getElementById('account-downloads').innerText = state.totalDownloads || 0;
+        document.getElementById('account-upvotes').innerText = state.totalUpvotes || 0;
+        document.getElementById('account-downvotes').innerText = state.totalDownvotes || 0;
     }
 
     function updateAvatarUI() {
@@ -977,6 +993,50 @@ document.addEventListener('DOMContentLoaded', () => {
             avatarInput.value = '';
         });
     }
+
+    // --- CHANGE USERNAME ---
+    document.getElementById('account-change-username-btn')?.addEventListener('click', async () => {
+        if (!state.user) return;
+        const newUsername = document.getElementById('account-new-username').value.trim();
+        if (!newUsername) { showToast("Enter a new username.", "error"); return; }
+        const res = await fetch(`${API_URL}/auth/change-username`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: state.user, newUsername })
+        });
+        const data = await res.json();
+        if (data.success) {
+            state.user = data.username;
+            localStorage.setItem('p2p-vault-user', data.username);
+            if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
+            document.querySelector('.account-user-name').innerText = data.username;
+            document.getElementById('account-new-username').value = '';
+            showToast("Username changed successfully.", "success");
+        } else {
+            showToast(data.error || "Failed to change username.", "error");
+        }
+    });
+
+    // --- CHANGE PASSWORD ---
+    document.getElementById('account-change-password-btn')?.addEventListener('click', async () => {
+        if (!state.user) return;
+        const currentPassword = document.getElementById('account-current-password').value;
+        const newPassword = document.getElementById('account-new-password').value;
+        if (!currentPassword || !newPassword) { showToast("Fill in both password fields.", "error"); return; }
+        const res = await fetch(`${API_URL}/auth/change-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: state.user, currentPassword, newPassword })
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('account-current-password').value = '';
+            document.getElementById('account-new-password').value = '';
+            showToast("Password changed successfully.", "success");
+        } else {
+            showToast(data.error || "Failed to change password.", "error");
+        }
+    });
 
     // --- AUTHOR LINKS ---
     document.addEventListener('click', async (e) => {
