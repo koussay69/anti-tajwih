@@ -122,12 +122,21 @@ app.get('/api/vault-data', async (req, res) => {
   const normalizedName = user ? user.trim().toLowerCase() : null;
   const profile = await getUserProfile(normalizedName);
 
+  if (profile && profile.banned) {
+    return res.json({
+      state: { tokens: 0, uploadsCount: 0, user: normalizedName, admin: false, banned: true },
+      documents: [],
+      bounties: []
+    });
+  }
+
   res.json({
     state: {
       tokens: profile ? profile.tokens : 0,
       uploadsCount: profile ? profile.uploadsCount : 0,
       user: normalizedName || null,
-      admin: profile ? !!profile.admin : false
+      admin: profile ? !!profile.admin : false,
+      banned: profile ? !!profile.banned : false
     },
     documents: await getDocumentsWithLockState(normalizedName),
     bounties: await getBounties()
@@ -412,7 +421,8 @@ app.delete('/api/admin/users/:username/documents', async (req, res) => {
     await supabase.from('unlocked_docs').delete().eq('doc_id', doc.id);
   }
   await supabase.from('documents').delete().eq('author', username);
-  res.json({ success: true, deleted: docs?.length || 0 });
+  const { count: totalDocs } = await supabase.from('documents').select('*', { count: 'exact', head: true });
+  res.json({ success: true, deleted: docs?.length || 0, totalDocs });
 });
 
 app.listen(PORT, () => {

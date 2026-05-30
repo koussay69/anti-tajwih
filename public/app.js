@@ -28,6 +28,15 @@ document.addEventListener('DOMContentLoaded', () => {
             state.uploadsCount = data.state.uploadsCount;
             state.admin = data.state.admin;
 
+            if (data.state.banned) {
+                state.user = null;
+                localStorage.removeItem('p2p-vault-user');
+                if (navAuthBtn) navAuthBtn.innerText = 'Sign In';
+                document.querySelector('.account-user-name').innerText = 'Anonymous Student';
+                showToast("Your account has been banned.", "error");
+                return;
+            }
+
             updateTokenUI();
 
             const adminLink = document.getElementById('admin-nav-link');
@@ -187,6 +196,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetUser = btn.dataset.user;
                     const res = await fetch(`${API_URL}/admin/users/${encodeURIComponent(targetUser)}/documents?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
                     const data = await res.json();
+                    if (data.success) {
+                        document.querySelector('.stat-box:nth-child(2) strong').parentElement.innerHTML = `<strong>Documents:</strong> ${data.totalDocs}`;
+                    }
                     showToast(data.success ? `Deleted ${data.deleted} documents.` : data.error || 'Error', data.success ? 'success' : 'error');
                     loadAdminPanel();
                 });
@@ -766,21 +778,22 @@ document.addEventListener('DOMContentLoaded', () => {
         browseCards.forEach(card => {
             const titleText = card.querySelector('.doc-title')?.innerText.toLowerCase() || '';
             const subjectText = card.querySelector('.doc-subject')?.innerText.toLowerCase() || '';
-
             const filiereTag = card.querySelector('.tag-filiere');
             const niveauTag = card.querySelector('.tag-niveau');
             const matiereTag = card.querySelector('.tag-matiere');
 
             const matchesSearch = !query || titleText.includes(query) || subjectText.includes(query);
-            const matchesFiliere = !filterFiliere || (filiereTag && filiereTag.innerText === filterFiliere) || !filiereTag;
-            const matchesNiveau = !filterNiveau || (niveauTag && niveauTag.innerText === filterNiveau) || !niveauTag;
-            const matchesMatiere = !filterMatiere || (matiereTag && matiereTag.innerText === filterMatiere) || !matiereTag;
+            const matchesFiliere = !filterFiliere || (filiereTag && filiereTag.innerText === filterFiliere);
+            const matchesNiveau = !filterNiveau || (niveauTag && niveauTag.innerText === filterNiveau);
+            const matchesMatiere = !filterMatiere || (matiereTag && matiereTag.innerText === filterMatiere);
 
             if (matchesSearch && matchesFiliere && matchesNiveau && matchesMatiere) {
                 card.classList.remove('hidden');
             } else {
                 card.classList.add('hidden');
             }
+        });
+    }
         });
     }
 
