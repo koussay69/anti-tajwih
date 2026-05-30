@@ -76,8 +76,9 @@ async function getBounties() {
 
   const result = [];
   for (const b of bounties) {
-    const { data: answers } = await supabase.from('answers').select('user, text, file_name').eq('bounty_id', b.id);
-    result.push({ ...b, fileName: b.file_name, answers: answers || [] });
+    const { data: rawAnswers } = await supabase.from('answers').select('*').eq('bounty_id', b.id);
+    const answers = (rawAnswers || []).map(a => ({ ...a, fileName: a.file_name }));
+    result.push({ ...b, fileName: b.file_name, settled: !!b.settled, answers });
   }
   return result;
 }
@@ -243,16 +244,51 @@ app.post('/api/bounties/create', async (req, res) => {
   res.json({ success: true, tokens: updatedProfile.tokens, bounties: await getBounties() });
 });
 
-// --- FULFILL BOUNTY ---
-app.post('/api/bounties/fulfill', async (req, res) => {
-  const { bountyId, text, fileName, user } = req.body;
+// --- FULFILL BOUNTY (submit answer, no tokens yet) ---
+app.post('/api/bounties/fulfill', upload.single('file'), async (req, res) => {
+  const { bountyId, text, user } = req.body;
   const normalizedName = user.trim().toLowerCase();
 
-  const { data: bounty } = await supabase.from('bounties').select('id').eq('id', bountyId).maybeSingle();
+  const { data: bounty } = await supabase.from('bounties').select('id, settled').eq('id', bountyId).maybeSingle();
   if (!bounty) return res.status(404).json({ error: "Bounty not found." });
+  if (bounty.settled) return res.status(400).json({ error: "This bounty is already settled." });
 
-  await supabase.from('answers').insert({ bounty_id: bountyId, user, text, file_name: fileName || 'Solution_Breakdown.pdf' });
-  await supabase.from('users').update({ tokens: (await getUserProfile(normalizedName)).tokens + 3 }).eq('username', normalizedName);
+  let fileUrl = 'Solution_Breakdown.pdf';
+  if (req.file) {
+    const fileName = `answer-${Date.now()}.pdf`;
+    const { error: uploadError } = await supabase.storage.from('documents').upload(fileName, req.file.buffer, { contentType: 'application/pdf', upsert: true });
+    if (!uploadError) {
+      const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(fileName);
+      fileUrl = publicUrl;
+    }
+  }
+
+  await supabase.from('answers').insert({ bounty_id: bountyId, user, text, file_name: fileUrl });
+
+  const profile = await getUserProfile(normalizedName);
+  res.json({ success: true, tokens: profile ? profile.tokens : 0, bounties: await getBounties() });
+});
+
+// --- ACCEPT ANSWER (author picks winner, +3 tokens to answerer) ---
+app.post('/api/bounties/accept', async (req, res) => {
+  const { bountyId, answerId, user } = req.body;
+  const normalizedName = user.trim().toLowerCase();
+
+  const { data: bounty } = await supabase.from('bounties').select('*').eq('id', bountyId).maybeSingle();
+  if (!bounty) return res.status(404).json({ error: "Bounty not found." });
+  if (bounty.author.toLowerCase() !== normalizedName) return res.status(403).json({ error: "Only the bounty author can accept an answer." });
+  if (bounty.settled) return res.status(400).json({ error: "Bounty already settled." });
+
+  const { data: answer } = await supabase.from('answers').select('*').eq('id', answerId).eq('bounty_id', bountyId).maybeSingle();
+  if (!answer) return res.status(404).json({ error: "Answer not found." });
+
+  const answererProfile = await getUserProfile(answer.user.toLowerCase());
+  if (answererProfile) {
+    await supabase.from('users').update({ tokens: answererProfile.tokens + 3 }).eq('username', answer.user.toLowerCase());
+  }
+
+  await supabase.from('bounties').update({ settled: true }).eq('id', bountyId);
+  await supabase.from('answers').update({ winner: true }).eq('id', answerId);
 
   const profile = await getUserProfile(normalizedName);
   res.json({ success: true, tokens: profile ? profile.tokens : 0, bounties: await getBounties() });

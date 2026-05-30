@@ -263,26 +263,29 @@ document.addEventListener('DOMContentLoaded', () => {
             ticketCard.className = 'help-ticket-card';
             ticketCard.dataset.id = bounty.id;
 
+            const isAuthor = state.user && bounty.author === state.user;
+
             ticketCard.innerHTML = `
                 <div class="ticket-top">
                     <span class="ticket-badge-tag">${bounty.subject}</span>
-                    <span class="ticket-bounty">Bounty Placed 💰</span>
+                    <span class="ticket-bounty">${bounty.settled ? '✅ Settled' : '💰 Bounty Placed'}</span>
                 </div>
                 <h3 class="ticket-title">${bounty.title}</h3>
                 <p class="ticket-desc">${bounty.desc}</p>
                 <div class="ticket-attachment-badge">📎 Reference Attached: <strong>${bounty.fileName || 'Specs_Attached.pdf'}</strong></div>
                 <div class="ticket-answers-list">
                     ${bounty.answers ? bounty.answers.map(ans => `
-                        <div class="comment-item" style="padding: 12px; background: var(--bg-tray); border-left: 3px solid var(--glow-secondary); margin-top: 10px;">
+                        <div class="comment-item" style="padding: 12px; background: var(--bg-tray); border-left: 3px solid ${ans.winner ? 'green' : 'var(--glow-secondary)'}; margin-top: 10px;${ans.winner ? ' border-left-width: 5px;' : ''}">
                             <strong>${ans.user}:</strong> ${ans.text}
-                            <div style="font-size:12px; margin-top:6px; color:var(--text-main); font-weight:500;">📎 Shared Answer: <span style="text-decoration:underline; cursor:pointer; color:var(--glow-color);">${ans.fileName}</span></div>
-                            <span style="color:green; font-size:11px; display:block; margin-top:6px; font-weight:600;">[Bounty Settled ✓ +3 Tokens Paid]</span>
+                            <div style="font-size:12px; margin-top:6px; color:var(--text-main); font-weight:500;">📎 Shared Answer: ${ans.fileName && ans.fileName.startsWith('http') ? `<a href="${ans.fileName}" target="_blank" style="color:var(--glow-color); text-decoration:underline;">${ans.fileName.split('/').pop()}</a>` : `<span style="color:var(--glow-color);">${ans.fileName || 'No file'}</span>`}</div>
+                            ${ans.winner ? '<span style="color:green; font-size:12px; display:block; margin-top:6px; font-weight:700;">🏆 Best Answer — Bounty Settled ✓ (+3 Tokens)</span>' : ''}
+                            ${!bounty.settled && isAuthor ? `<button class="accept-answer-btn unlock-action-btn" data-answer-id="${ans.id}" style="margin-top:8px; width:100%;">Select as Best Answer</button>` : ''}
                         </div>
                     `).join('') : ''}
                 </div>
                 <div class="ticket-footer">
                     <span class="ticket-user">By: ${bounty.author === state.user ? 'You' : bounty.author}</span>
-                    ${(!bounty.answers || bounty.answers.length === 0) ? `<button class="unlock-action-btn provide-answer-trigger">Manage Request</button>` : ''}
+                    ${!bounty.settled ? `<button class="unlock-action-btn provide-answer-trigger">Provide Answer (+3 Tokens)</button>` : ''}
                 </div>
             `;
             setupHelpTicketInteractions(ticketCard);
@@ -430,23 +433,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- TICKET MANAGEMENT INTERFACES ---
     function setupHelpTicketInteractions(ticket) {
         const answerTrigger = ticket.querySelector('.provide-answer-trigger');
-        if (!answerTrigger) return;
+        if (answerTrigger) {
+            answerTrigger.addEventListener('click', () => {
+                if (!state.user) {
+                    showToast("Please sign in to provide solution proposals.", "error");
+                    authModal.classList.add('open');
+                    return;
+                }
 
-        answerTrigger.addEventListener('click', () => {
-            if (!state.user) {
-                showToast("Please sign in to provide solution proposals.", "error");
-                authModal.classList.add('open');
-                return;
-            }
+                const authorSignature = ticket.querySelector('.ticket-user').innerText;
+                if (authorSignature.includes('By: You') || authorSignature.includes(`By: ${state.user}`)) {
+                    showToast("Self-bounty actions are locked on this node.", "error");
+                    return;
+                }
 
-            const authorSignature = ticket.querySelector('.ticket-user').innerText;
-            if (authorSignature.includes('By: You') || authorSignature.includes(`By: ${state.user}`)) {
-                showToast("Self-bounty actions are locked on this node.", "error");
-                return;
-            }
+                activeTicketForAnswer = ticket;
+                answerModal.classList.add('open');
+            });
+        }
 
-            activeTicketForAnswer = ticket;
-            answerModal.classList.add('open');
+        const acceptBtns = ticket.querySelectorAll('.accept-answer-btn');
+        acceptBtns.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!state.user) return;
+                const answerId = btn.dataset.answerId;
+                const bountyId = ticket.dataset.id;
+                try {
+                    const res = await fetch(`${API_URL}/bounties/accept`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bountyId, answerId, user: state.user })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        state.tokens = data.tokens;
+                        updateUI();
+                        renderBounties(data.bounties);
+                        showToast("Best answer selected! +3 tokens awarded.", "success");
+                    } else {
+                        showToast(data.error || "Failed to accept answer.", "error");
+                    }
+                } catch {
+                    showToast("Network error accepting answer.", "error");
+                }
+            });
         });
     }
 
@@ -559,27 +589,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const answerDesc = document.getElementById('form-answer-desc').value;
             const answerFileInput = document.getElementById('form-answer-file');
-            const uploadedSolutionName = answerFileInput.files[0] ? answerFileInput.files[0].name : "Solution_Breakdown.pdf";
             const bountyId = activeTicketForAnswer.dataset.id;
             const activeNodeName = state.user;
 
             try {
+                const formData = new FormData();
+                formData.append('bountyId', bountyId);
+                formData.append('text', answerDesc);
+                formData.append('user', activeNodeName);
+                if (answerFileInput.files[0]) {
+                    formData.append('file', answerFileInput.files[0]);
+                }
                 const res = await fetch(`${API_URL}/bounties/fulfill`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        bountyId,
-                        text: answerDesc,
-                        fileName: uploadedSolutionName,
-                        user: activeNodeName
-                    })
+                    body: formData
                 });
                 const data = await res.json();
 
                 if (res.ok) {
                     state.tokens = data.tokens;
                     updateTokenUI();
-                    showToast("Bounty verified by network peer node (+3 Tokens)", "bounty");
+                    showToast("Answer submitted — author will review and accept.", "info");
                     renderBounties(data.bounties);
 
                     answerForm.reset();
@@ -588,30 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (err) {
                 // Network pipeline failure offline sandbox emulation state management
-                state.tokens += 3;
-                updateTokenUI();
-                showToast("Bounty processed locally (+3 Tokens)", "bounty");
-
-                const answersWrapper = activeTicketForAnswer.querySelector('.ticket-answers-list');
-                if (answersWrapper) {
-                    const responseBlock = document.createElement('div');
-                    responseBlock.className = 'comment-item';
-                    responseBlock.style.padding = '12px';
-                    responseBlock.style.background = 'var(--bg-tray)';
-                    responseBlock.style.borderLeft = '3px solid var(--glow-secondary)';
-                    responseBlock.style.marginTop = '10px';
-
-                    responseBlock.innerHTML = `
-                        <strong>${activeNodeName}:</strong> ${answerDesc.trim()}
-                        <div style="font-size:12px; margin-top:6px; color:var(--text-main); font-weight:500;">📎 Shared Answer: <span style="text-decoration:underline; cursor:pointer; color:var(--glow-color);">${uploadedSolutionName}</span></div>
-                        <span style="color:green; font-size:11px; display:block; margin-top:6px; font-weight:600;">[Bounty Settled ✓ +3 Tokens Paid]</span>
-                    `;
-                    answersWrapper.appendChild(responseBlock);
-                }
-
-                const currentTriggerButton = activeTicketForAnswer.querySelector('.provide-answer-trigger');
-                if (currentTriggerButton) currentTriggerButton.remove();
-
+                showToast("Network error submitting answer.", "error");
                 answerForm.reset();
                 answerModal.classList.remove('open');
                 activeTicketForAnswer = null;

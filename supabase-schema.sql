@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS bounties (
   title TEXT NOT NULL,
   "desc" TEXT NOT NULL,
   file_name TEXT DEFAULT 'Specs_Attached.pdf',
-  author TEXT NOT NULL
+  author TEXT NOT NULL,
+  settled BOOLEAN DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS answers (
@@ -44,7 +45,8 @@ CREATE TABLE IF NOT EXISTS answers (
   bounty_id TEXT NOT NULL REFERENCES bounties(id),
   "user" TEXT NOT NULL,
   text TEXT NOT NULL,
-  file_name TEXT DEFAULT 'Solution_Breakdown.pdf'
+  file_name TEXT DEFAULT 'Solution_Breakdown.pdf',
+  winner BOOLEAN DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS votes (
