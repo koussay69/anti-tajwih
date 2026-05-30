@@ -757,7 +757,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.approved) {
                         showToast("Document approved! (+5 Tokens)", "success");
                     } else if (data.pending) {
-                        showToast("Document submitted for review. You'll receive +5 tokens once approved.", "bounty");
+                        const reason = data.aiError ? ` (AI: ${data.aiError})` : '';
+                        showToast(`Document submitted for review. You'll receive +5 tokens once approved.${reason}`, "bounty");
                     }
 
                     renderDocuments(data.documents);
