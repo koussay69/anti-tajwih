@@ -1020,6 +1020,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SHARE MATERIAL SUBMITTER ENGINE ---
     const uploadForm = document.getElementById('upload-form');
     if (uploadForm) {
+        const uploadSubmitBtn = uploadForm.querySelector('button[type="submit"]');
+        const uploadBtnOriginalText = uploadSubmitBtn ? uploadSubmitBtn.innerText : '';
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!state.user) return;
@@ -1035,6 +1037,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!file) {
                 showToast(t('toast.selectPdf'), "error");
                 return;
+            }
+
+            if (uploadSubmitBtn) {
+                uploadSubmitBtn.disabled = true;
+                uploadSubmitBtn.innerText = '⏳ Uploading...';
             }
 
             const formData = new FormData();
@@ -1074,6 +1081,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (err) {
                 showToast(t('toast.networkError'), "error");
+            } finally {
+                if (uploadSubmitBtn) {
+                    uploadSubmitBtn.disabled = false;
+                    uploadSubmitBtn.innerText = uploadBtnOriginalText;
+                }
             }
         });
     }
@@ -1081,6 +1093,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SOS BROADCAST BOUNTY STATEMENT FORM ---
     const helpForm = document.getElementById('help-form');
     if (helpForm) {
+        const helpSubmitBtn = helpForm.querySelector('button[type="submit"]');
+        const helpBtnOriginalText = helpSubmitBtn ? helpSubmitBtn.innerText : '';
         helpForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!state.user) return;
@@ -1089,6 +1103,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     showToast(t('toast.insufficientTokensBounty'), "error");
                 helpModal.classList.remove('open');
                 return;
+            }
+
+            if (helpSubmitBtn) {
+                helpSubmitBtn.disabled = true;
+                helpSubmitBtn.innerText = '⏳ Posting...';
             }
 
             const hSubject = document.getElementById('form-help-subject').value;
@@ -1126,6 +1145,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (err) {
                 showToast(t('toast.networkError'), "error");
+            } finally {
+                if (helpSubmitBtn) {
+                    helpSubmitBtn.disabled = false;
+                    helpSubmitBtn.innerText = helpBtnOriginalText;
+                }
             }
         });
     }
@@ -1133,9 +1157,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SUBMIT ANSWER MODULE INTEGRATION ---
     const answerForm = document.getElementById('answer-form');
     if (answerForm) {
+        const answerSubmitBtn = answerForm.querySelector('button[type="submit"]');
+        const answerBtnOriginalText = answerSubmitBtn ? answerSubmitBtn.innerText : '';
         answerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!activeTicketForAnswer || !state.user) return;
+
+            if (answerSubmitBtn) {
+                answerSubmitBtn.disabled = true;
+                answerSubmitBtn.innerText = '⏳ Sending...';
+            }
 
             const answerDesc = document.getElementById('form-answer-desc').value;
             const answerFileInput = document.getElementById('form-answer-file');
@@ -1172,6 +1203,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 answerForm.reset();
                 answerModal.classList.remove('open');
                 activeTicketForAnswer = null;
+            } finally {
+                if (answerSubmitBtn) {
+                    answerSubmitBtn.disabled = false;
+                    answerSubmitBtn.innerText = answerBtnOriginalText;
+                }
             }
         });
     }
@@ -1274,8 +1310,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (authForm) {
+        const authSubmitBtn = authForm.querySelector('button[type="submit"]');
+        const authBtnOriginalText = authSubmitBtn ? authSubmitBtn.innerText : '';
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            if (authSubmitBtn) {
+                authSubmitBtn.disabled = true;
+                authSubmitBtn.innerText = '⏳ Processing...';
+            }
+
             const rawValue = document.getElementById('form-auth-input').value;
             const password = document.getElementById('form-auth-password').value;
             const email = document.getElementById('form-auth-email')?.value || '';
@@ -1325,6 +1369,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadVaultData();
             } catch (err) {
                 showToast(t('toast.networkError'), "error");
+            } finally {
+                if (authSubmitBtn) {
+                    authSubmitBtn.disabled = false;
+                    authSubmitBtn.innerText = authBtnOriginalText;
+                }
             }
         });
     }
