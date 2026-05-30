@@ -776,6 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const filterMatiere = document.getElementById('filter-matiere')?.value || '';
         const browseCards = document.querySelectorAll('#primary-feed-target .doc-card');
         let visible = 0;
+        let nf = 0, nn = 0, nm = 0;
         browseCards.forEach(card => {
             const cardText = card.innerText.toLowerCase();
             const filiereTag = card.querySelector('.tag-filiere');
@@ -784,13 +785,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const matchesSearch = !query || cardText.includes(query);
 
-            const rawFiliere = filiereTag?.innerText || '';
-            const rawNiveau = niveauTag?.innerText || '';
-            const rawMatiere = matiereTag?.innerText || '';
+            const rawFiliere = (filiereTag?.innerText || '').trim().toLowerCase();
+            const rawNiveau = (niveauTag?.innerText || '').trim().toLowerCase();
+            const rawMatiere = (matiereTag?.innerText || '').trim().toLowerCase();
 
-            const matchesFiliere = !filterFiliere || (filiereTag && rawFiliere.normalize() === filterFiliere.normalize());
-            const matchesNiveau = !filterNiveau || (niveauTag && rawNiveau.normalize() === filterNiveau.normalize());
-            const matchesMatiere = !filterMatiere || (matiereTag && rawMatiere.normalize() === filterMatiere.normalize());
+            const matchesFiliere = !filterFiliere || rawFiliere === filterFiliere.trim().toLowerCase();
+            const matchesNiveau = !filterNiveau || rawNiveau === filterNiveau.trim().toLowerCase();
+            const matchesMatiere = !filterMatiere || rawMatiere === filterMatiere.trim().toLowerCase();
 
             if (matchesSearch && matchesFiliere && matchesNiveau && matchesMatiere) {
                 card.classList.remove('hidden');
@@ -798,8 +799,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 card.classList.add('hidden');
             }
+            if (filterFiliere && !matchesFiliere) nf++;
+            if (filterNiveau && !matchesNiveau) nn++;
+            if (filterMatiere && !matchesMatiere) nm++;
         });
-        console.log(`[Filter] query="${query}" filiere="${filterFiliere}" niveau="${filterNiveau}" matiere="${filterMatiere}" cards=${browseCards.length} visible=${visible}`);
+        console.log(`[Filter] q="${query}" f="${filterFiliere}" n="${filterNiveau}" m="${filterMatiere}" cards=${browseCards.length} vis=${visible} hiddenBy={f:${nf} n:${nn} m:${nm}}`);
     }
 
     const searchInput = document.getElementById('search-input');
