@@ -72,7 +72,7 @@ async function getDocumentsWithLockState(normalizedUsername) {
 }
 
 async function getBounties() {
-  const { data: bounties } = await supabase.from('bounties').select('*').order('id', { ascending: false });
+  const { data: bounties } = await supabase.from('bounties').select('*').eq('settled', false).order('id', { ascending: false });
   if (!bounties) return [];
 
   const result = [];
