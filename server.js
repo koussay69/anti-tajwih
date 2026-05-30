@@ -358,7 +358,12 @@ async function requireAdmin(user) {
 app.get('/api/admin/users', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
   const { data: users } = await supabase.from('users').select('*').order('username');
-  res.json(users || []);
+  const enriched = [];
+  for (const u of users || []) {
+    const { count: docCount } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('author', u.username);
+    enriched.push({ ...u, uploadsCount: docCount || 0 });
+  }
+  res.json(enriched);
 });
 
 app.get('/api/admin/stats', async (req, res) => {
