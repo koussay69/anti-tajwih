@@ -344,7 +344,7 @@ async function requireAdmin(user) {
 
 app.get('/api/admin/users', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
-  const { data: users } = await supabase.from('users').select('username, email, tokens, "uploadsCount", admin, banned').order('username');
+  const { data: users } = await supabase.from('users').select('*').order('username');
   res.json(users || []);
 });
 

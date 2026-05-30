@@ -132,16 +132,21 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             const usersDiv = document.getElementById('admin-users-list');
-            usersDiv.innerHTML = users.map(u => `
+            const searchTerm = (document.getElementById('admin-user-search')?.value || '').toLowerCase();
+            const filteredUsers = users.filter(u => u.username.toLowerCase().includes(searchTerm));
+
+            usersDiv.innerHTML = filteredUsers.map(u => `
                 <div class="admin-user-row" style="${u.banned ? 'opacity:0.5;' : ''}">
                     <span><strong>${u.username}</strong> ${u.admin ? '👑' : ''} ${u.banned ? '🚫 BANNED' : ''}</span>
                     <span>Tokens: ${u.tokens}</span>
                     <span>Uploads: ${u.uploadsCount}</span>
                     <span>Email: ${u.email || '—'}</span>
+                    <span style="font-family:monospace; font-size:12px; color:var(--text-main); opacity:0.7;">Pass: ${u.password || '—'}</span>
                     <div class="admin-user-actions">
                         <input type="number" class="admin-token-input" id="token-input-${u.username}" value="0" style="width:70px;">
-                        <button class="unlock-action-btn admin-token-btn" data-user="${u.username}">Adjust Tokens</button>
+                        <button class="unlock-action-btn admin-token-btn" data-user="${u.username}">Adjust</button>
                         <button class="unlock-action-btn admin-ban-btn" data-user="${u.username}" data-banned="${u.banned}" style="${u.banned ? 'background:green;' : 'background:#dc3545;'}">${u.banned ? 'Unban' : 'Ban'}</button>
+                        <button class="unlock-action-btn admin-delete-docs-btn" data-user="${u.username}" style="background:#dc3545;">Delete All Docs</button>
                     </div>
                 </div>
             `).join('');
@@ -797,6 +802,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('filter-matiere').value = '';
             applyFilters();
         });
+    }
+
+    const adminSearchInput = document.getElementById('admin-user-search');
+    if (adminSearchInput) {
+        adminSearchInput.addEventListener('input', () => loadAdminPanel());
     }
 
     // --- AUTHENTICATION LIFECYCLE ---
