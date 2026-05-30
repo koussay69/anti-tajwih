@@ -156,6 +156,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (targetId === 'admin-view') {
                 loadAdminPanel();
+                if (window._onlinePoll) clearInterval(window._onlinePoll);
+                window._onlinePoll = setInterval(loadAdminPanel, 30000);
+            } else {
+                if (window._onlinePoll) { clearInterval(window._onlinePoll); window._onlinePoll = null; }
             }
         });
     });
@@ -163,18 +167,21 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadAdminPanel() {
         if (!state.admin || !state.user) return;
         try {
-            const [usersRes, statsRes] = await Promise.all([
+            const [usersRes, statsRes, onlineRes] = await Promise.all([
                 fetch(`${API_URL}/admin/users?user=${encodeURIComponent(state.user)}`),
-                fetch(`${API_URL}/admin/stats?user=${encodeURIComponent(state.user)}`)
+                fetch(`${API_URL}/admin/stats?user=${encodeURIComponent(state.user)}`),
+                fetch(`${API_URL}/admin/online-count?user=${encodeURIComponent(state.user)}`)
             ]);
             const users = await usersRes.json();
             const stats = await statsRes.json();
+            const online = await onlineRes.json();
 
             const statsDiv = document.getElementById('admin-stats');
             statsDiv.innerHTML = `
                 <div class="stat-box"><strong>Users:</strong> ${stats.totalUsers || 0}</div>
                 <div class="stat-box"><strong>Documents:</strong> ${stats.totalDocs || 0}</div>
                 <div class="stat-box"><strong>Bounties:</strong> ${stats.totalBounties || 0}</div>
+                <div class="stat-box" style="border:2px solid #2ecc71;"><strong>🟢 Online (5m):</strong> ${online.online || 0}</div>
             `;
 
             const usersDiv = document.getElementById('admin-users-list');

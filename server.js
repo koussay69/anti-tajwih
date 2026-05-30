@@ -25,6 +25,25 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public', { maxAge: 0, etag: false }));
 
+// Track last active timestamp for any request with a user identifier
+app.use((req, res, next) => {
+  const user = req.query.user || req.body?.user;
+  if (user && typeof user === 'string' && user.trim()) {
+    const normalized = user.trim().toLowerCase();
+    supabase.from('users').update({ last_active: new Date().toISOString() }).eq('username', normalized).then().catch(() => {});
+  }
+  next();
+});
+
+// Run migration on startup
+(async () => {
+  try {
+    await supabase.rpc('exec_sql', { sql: 'ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active TIMESTAMPTZ' });
+  } catch (_) {
+    // rpc not available — column likely already exists or will be added manually
+  }
+})();
+
 // --- HELPERS ---
 async function getUserProfile(normalizedUsername) {
   if (!normalizedUsername) return null;
@@ -497,6 +516,13 @@ app.get('/api/admin/stats', async (req, res) => {
   const { count: totalDocs } = await supabase.from('documents').select('*', { count: 'exact', head: true });
   const { count: totalBounties } = await supabase.from('bounties').select('*', { count: 'exact', head: true }).eq('settled', false);
   res.json({ totalUsers, totalDocs, totalBounties });
+});
+
+app.get('/api/admin/online-count', async (req, res) => {
+  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const { count } = await supabase.from('users').select('*', { count: 'exact', head: true }).gte('last_active', fiveMinAgo);
+  res.json({ online: count || 0 });
 });
 
 app.delete('/api/admin/documents/:docId', async (req, res) => {

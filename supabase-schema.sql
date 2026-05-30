@@ -5,6 +5,7 @@
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS type TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_visits INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS users (
   username TEXT PRIMARY KEY,
@@ -44,7 +45,8 @@ CREATE TABLE IF NOT EXISTS users (
   "uploadsCount" INTEGER DEFAULT 0,
   admin BOOLEAN DEFAULT false,
   banned BOOLEAN DEFAULT false,
-  avatar_url TEXT
+  avatar_url TEXT,
+  last_active TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS comments (
