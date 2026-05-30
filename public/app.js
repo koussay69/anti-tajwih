@@ -196,9 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetUser = btn.dataset.user;
                     const res = await fetch(`${API_URL}/admin/users/${encodeURIComponent(targetUser)}/documents?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
                     const data = await res.json();
-                    if (data.success) {
-                        document.querySelector('.stat-box:nth-child(2) strong').parentElement.innerHTML = `<strong>Documents:</strong> ${data.totalDocs}`;
-                    }
                     showToast(data.success ? `Deleted ${data.deleted} documents.` : data.error || 'Error', data.success ? 'success' : 'error');
                     loadAdminPanel();
                 });
