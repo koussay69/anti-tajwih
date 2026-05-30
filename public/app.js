@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="stat-box"><strong>Users:</strong> ${stats.totalUsers || 0}</div>
                 <div class="stat-box"><strong>Documents:</strong> ${stats.totalDocs || 0}</div>
                 <div class="stat-box"><strong>Bounties:</strong> ${stats.totalBounties || 0}</div>
-                <div class="stat-box" style="border:2px solid #2ecc71;"><strong>🟢 Online (5m):</strong> ${online.online || 0}</div>
+                <div class="stat-box" style="border:2px solid #2ecc71;"><strong>🟢 Online (30m):</strong> ${online.online || 0}</div>
             `;
 
             const usersDiv = document.getElementById('admin-users-list');

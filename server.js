@@ -520,8 +520,8 @@ app.get('/api/admin/stats', async (req, res) => {
 
 app.get('/api/admin/online-count', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
-  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  const { count } = await supabase.from('users').select('*', { count: 'exact', head: true }).gte('last_active', fiveMinAgo);
+  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { count } = await supabase.from('users').select('*', { count: 'exact', head: true }).gte('last_active', thirtyMinAgo);
   res.json({ online: count || 0 });
 });
 
