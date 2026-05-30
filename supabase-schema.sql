@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS documents (
   title TEXT NOT NULL,
   author TEXT NOT NULL,
   score INTEGER DEFAULT 0,
-  file_path TEXT
+  file_path TEXT,
+  file_hash TEXT
 );
 
 CREATE TABLE IF NOT EXISTS comments (

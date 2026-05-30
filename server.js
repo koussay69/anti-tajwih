@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -139,6 +140,12 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   if (!profile) return res.status(404).json({ error: "User not found." });
   if (!req.file) return res.status(400).json({ error: "PDF file is required." });
 
+  const fileHash = crypto.createHash('sha256').update(req.file.buffer).digest('hex');
+  const { data: existing } = await supabase.from('documents').select('id').eq('file_hash', fileHash).eq('author', normalizedName).maybeSingle();
+  if (existing) {
+    return res.status(400).json({ error: "You already uploaded this file. Duplicate uploads are not allowed." });
+  }
+
   const fileName = `doc-${Date.now()}.pdf`;
   const { error: uploadError } = await supabase.storage.from('documents').upload(fileName, req.file.buffer, { contentType: 'application/pdf', upsert: true });
   if (uploadError) return res.status(500).json({ error: "File upload failed: " + uploadError.message });
@@ -148,7 +155,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   await supabase.from('users').update({ tokens: profile.tokens + 5, uploadsCount: profile.uploadsCount + 1 }).eq('username', normalizedName);
 
   const docId = `doc-${Date.now()}`;
-  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl });
+  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash });
 
   const updatedProfile = await getUserProfile(normalizedName);
   res.json({ success: true, tokens: updatedProfile.tokens, documents: await getDocumentsWithLockState(normalizedName) });
