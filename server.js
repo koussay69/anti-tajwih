@@ -5,7 +5,6 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
-const pdfParse = require('pdf-parse');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
@@ -308,8 +307,8 @@ app.get('/api/vault-data', async (req, res) => {
 });
 
 // --- AI CONTENT CHECK ---
-async function checkDocumentContent(text, metadata) {
-  if (!genAI) return null; // no AI key configured → fall back to pending
+async function checkDocumentContent(pdfBuffer, metadata) {
+  if (!genAI) return null;
   try {
     const model = genAI.getGenerativeModel({ model: 'models/gemini-2.0-flash-lite' });
     const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
@@ -321,20 +320,20 @@ A document was uploaded with these details:
 - Type: "${metadata.type || 'N/A'}"
 - Title: "${metadata.title}"
 
-Here is the extracted text from the PDF (first 3000 chars):
----
-${text.substring(0, 3000)}
----
+The actual PDF is attached below. Analyze its content — both text and images.
 
-IMPORTANT: The actual extracted PDF text above must match the declared metadata. For example, if someone claims "Mathematics / Exam" but the text is about cooking, gardening, sports, entertainment, advertising, or anything non-academic, it must be rejected. The title and subject must honestly describe the content.
+IMPORTANT: The actual PDF content must match the declared metadata. For example, if someone claims "Mathematics / Exam" but the PDF contains a cooking recipe, a magazine article, sports, entertainment, advertising, or anything non-academic, it must be rejected. The title and subject must honestly describe the content.
 
-Determine if this document is genuinely academic/educational study material (exercises, exams, courses, lecture notes, problem sets, corrections, formulas, etc.) AND the declared metadata accurately describes the actual content.
+Determine if this PDF is genuinely academic/educational study material (exercises, exams, courses, lecture notes, problem sets, corrections, formulas, diagrams, etc.) AND the declared metadata accurately describes the actual content.
 
 Reply with ONLY a single JSON object:
 {"isAcademic": true/false, "reason": "brief one-line explanation"}
 
 Set isAcademic to false if: the content doesn't match the declared subject/filière/type, or it contains spam, ads, malware, irrelevant personal content, non-educational entertainment, or anything that doesn't help students study.`;
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent([
+      { inlineData: { mimeType: 'application/pdf', data: pdfBuffer.toString('base64') } },
+      { text: prompt }
+    ]);
     const responseText = result.response.text().trim();
     const jsonMatch = responseText.match(/\{.*\}/s);
     if (jsonMatch) {
@@ -371,29 +370,22 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
 
   const docId = `doc-${Date.now()}`;
 
-  // Extract text and run AI check
+  // AI check — sends the PDF directly to Gemini (handles both text and scanned docs)
   let aiResult = null;
   let approved = false;
   let rejectionReason = null;
   try {
-    const pdfData = await pdfParse(req.file.buffer);
-    const text = pdfData.text || '';
-    if (text.trim().length > 20) {
-      aiResult = await checkDocumentContent(text, { subject, filiere, niveau, matiere, type, title });
-      if (aiResult) {
-        if (aiResult.isAcademic === true) {
-          approved = true;
-        } else {
-          rejectionReason = aiResult.reason || 'Content not recognized as academic study material.';
-        }
+    aiResult = await checkDocumentContent(req.file.buffer, { subject, filiere, niveau, matiere, type, title });
+    if (aiResult) {
+      if (aiResult.isAcademic === true) {
+        approved = true;
+      } else {
+        rejectionReason = aiResult.reason || 'Content not recognized as academic study material.';
       }
-      // aiResult null → fall through to pending
-    } else {
-      // Very little extractable text (scanned doc?) → pending for manual review
     }
-  } catch (parseErr) {
-    console.error('PDF parse error:', parseErr.message);
-    // fall through to pending
+    // aiResult null → fall through to pending
+  } catch (err) {
+    console.error('AI check error:', err.message);
   }
 
   if (rejectionReason) {
