@@ -754,7 +754,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.uploadsCount = data.uploadsCount;
 
                     updateTokenUI();
-                    showToast("Document submitted for review. You'll receive +5 tokens once approved.", "bounty");
+                    if (data.approved) {
+                        showToast("Document approved! (+5 Tokens)", "success");
+                    } else if (data.pending) {
+                        showToast("Document submitted for review. You'll receive +5 tokens once approved.", "bounty");
+                    }
 
                     renderDocuments(data.documents);
                     uploadForm.reset();

@@ -5,6 +5,8 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
+const pdfParse = require('pdf-parse');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,6 +20,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
@@ -303,6 +307,44 @@ app.get('/api/vault-data', async (req, res) => {
   });
 });
 
+// --- AI CONTENT CHECK ---
+async function checkDocumentContent(text, metadata) {
+  if (!genAI) return null; // no AI key configured → fall back to pending
+  try {
+    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.0-flash-lite' });
+    const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
+A document was uploaded with these details:
+- Subject category: "${metadata.subject}"
+- Filière: "${metadata.filiere || 'N/A'}"
+- Level: "${metadata.niveau || 'N/A'}"
+- Course/Matière: "${metadata.matiere || 'N/A'}"
+- Type: "${metadata.type || 'N/A'}"
+- Title: "${metadata.title}"
+
+Here is the extracted text from the PDF (first 3000 chars):
+---
+${text.substring(0, 3000)}
+---
+
+Determine if this document is genuinely academic/educational study material (exercises, exams, courses, lecture notes, problem sets, corrections, formulas, etc.) related to the declared subject. Consider that the text may contain math notation, code, or formulas that don't read as natural language.
+
+Reply with ONLY a single JSON object:
+{"isAcademic": true/false, "reason": "brief one-line explanation"}
+
+Set isAcademic to false if it appears to be: spam, ads, malware, irrelevant personal content, non-educational entertainment, or anything that doesn't help students study.`;
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text().trim();
+    const jsonMatch = responseText.match(/\{.*\}/s);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return null;
+  } catch (err) {
+    console.error('AI check error:', err.message);
+    return null; // fall back to pending
+  }
+}
+
 // --- UPLOAD DOCUMENT ---
 app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   const { title, subject, author, filiere, niveau, matiere, type } = req.body;
@@ -325,13 +367,56 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
 
   const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(fileName);
 
-  await supabase.from('users').update({ uploadsCount: profile.uploadsCount + 1 }).eq('username', normalizedName);
-
   const docId = `doc-${Date.now()}`;
-  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere, type, approved: false });
+
+  // Extract text and run AI check
+  let aiResult = null;
+  let approved = false;
+  let rejectionReason = null;
+  try {
+    const pdfData = await pdfParse(req.file.buffer);
+    const text = pdfData.text || '';
+    if (text.trim().length > 20) {
+      aiResult = await checkDocumentContent(text, { subject, filiere, niveau, matiere, type, title });
+      if (aiResult) {
+        if (aiResult.isAcademic === true) {
+          approved = true;
+        } else {
+          rejectionReason = aiResult.reason || 'Content not recognized as academic study material.';
+        }
+      }
+      // aiResult null → fall through to pending
+    } else {
+      // Very little extractable text (scanned doc?) → pending for manual review
+    }
+  } catch (parseErr) {
+    console.error('PDF parse error:', parseErr.message);
+    // fall through to pending
+  }
+
+  if (rejectionReason) {
+    // AI rejected → delete the uploaded file and return error
+    await supabase.storage.from('documents').remove([fileName]).catch(() => {});
+    return res.status(400).json({ error: `Upload rejected: ${rejectionReason}` });
+  }
+
+  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere, type, approved });
+
+  if (approved) {
+    await supabase.from('users').update({ tokens: profile.tokens + 5, uploadsCount: profile.uploadsCount + 1 }).eq('username', normalizedName);
+  } else {
+    await supabase.from('users').update({ uploadsCount: profile.uploadsCount + 1 }).eq('username', normalizedName);
+  }
 
   const updatedProfile = await getUserProfile(normalizedName);
-  res.json({ success: true, tokens: updatedProfile.tokens, uploadsCount: updatedProfile.uploadsCount, documents: await getDocumentsWithLockState(normalizedName), pending: true });
+  res.json({
+    success: true,
+    tokens: updatedProfile.tokens,
+    uploadsCount: updatedProfile.uploadsCount,
+    documents: await getDocumentsWithLockState(normalizedName),
+    pending: !approved,
+    approved
+  });
 });
 
 // --- DOWNLOAD DOCUMENT ---
