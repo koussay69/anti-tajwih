@@ -5,6 +5,7 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
+const pdfParse = require('pdf-parse');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -303,92 +304,83 @@ app.get('/api/vault-data', async (req, res) => {
   });
 });
 
-// --- AI CONTENT CHECK ---
+// --- AI CONTENT CHECK (Groq) ---
 async function checkDocumentContent(pdfBuffer, metadata) {
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.GROQ_API_KEY;
   if (!key) {
-    console.error('AI check skipped: GEMINI_API_KEY not configured');
+    console.error('AI check skipped: GROQ_API_KEY not configured');
     return null;
   }
-  const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
-  const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
+  try {
+    const pdfData = await pdfParse(pdfBuffer);
+    const text = (pdfData.text || '').trim();
+    if (text.length < 20) {
+      console.error('AI check: insufficient extractable text (scanned PDF?)');
+      return null; // fall to pending
+    }
+    const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials.
+
 A document was uploaded with these details:
-- Subject category: "${metadata.subject}"
-- Filière (track): "${metadata.filiere || 'N/A'}"
+- Subject: "${metadata.subject}"
+- Filière: "${metadata.filiere || 'N/A'}"
 - Level: "${metadata.niveau || 'N/A'}"
-- Course/Matière: "${metadata.matiere || 'N/A'}"
+- Course: "${metadata.matiere || 'N/A'}"
 - Type: "${metadata.type || 'N/A'}"
 - Title: "${metadata.title}"
 
-The actual PDF is attached below. Analyze its content — both text and images.
+Here is the extracted text from the PDF:
+---
+${text.substring(0, 4000)}
+---
 
-IMPORTANT: The actual PDF content must match the declared metadata. For example, if someone claims "Mathematics / Exam" but the PDF contains a cooking recipe, a magazine article, sports, entertainment, advertising, or anything non-academic, it must be rejected. The title and subject must honestly describe the content.
+IMPORTANT: The actual PDF text must match the declared metadata. Eg if someone claims "Mathematics / Exam" but the text is about cooking, sports, advertising, entertainment, or anything non-academic, reject it.
 
-Determine if this PDF is genuinely academic/educational study material (exercises, exams, courses, lecture notes, problem sets, corrections, formulas, diagrams, etc.) AND the declared metadata accurately describes the actual content.
+Determine if this PDF is genuinely academic/educational study material (exercises, exams, courses, notes, problem sets, corrections, formulas) AND the declared metadata accurately describes the actual content.
 
-Reply with ONLY a single JSON object:
+Reply with ONLY a JSON object:
 {"isAcademic": true/false, "reason": "brief one-line explanation"}
 
-Set isAcademic to false if: the content doesn't match the declared subject/filière/type, or it contains spam, ads, malware, irrelevant personal content, non-educational entertainment, or anything that doesn't help students study.`;
+Set isAcademic to false if content doesn't match the declared metadata or is non-academic.`;
 
-  const base64Data = pdfBuffer.toString('base64');
-
-  for (const modelName of modelsToTry) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`;
-      const body = {
-        contents: [{
-          parts: [
-            { inlineData: { mimeType: 'application/pdf', data: base64Data } },
-            { text: prompt }
-          ]
-        }]
-      };
-      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const json = await resp.json();
-      if (!resp.ok) {
-        console.error(`AI check error (${modelName}):`, resp.status, JSON.stringify(json.error || json));
-        continue;
-      }
-      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      console.log('AI raw response:', text.substring(0, 200));
-      const jsonMatch = text.match(/\{.*\}/s);
-      if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: prompt }], temperature: 0.1 })
+    });
+    const json = await response.json();
+    if (!response.ok) {
+      console.error('Groq API error:', response.status, JSON.stringify(json.error || json));
       return null;
-    } catch (err) {
-      console.error(`AI check error (${modelName}):`, err.message);
     }
+    const content = json?.choices?.[0]?.message?.content || '';
+    console.log('Groq response:', content.substring(0, 200));
+    const jsonMatch = content.match(/\{.*\}/s);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    return null;
+  } catch (err) {
+    console.error('AI check error:', err.message);
+    return null;
   }
-  return null;
 }
 
 // --- TEST ENDPOINT for AI key ---
 app.get('/api/admin/ai-test', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) return res.json({ ok: false, error: 'GEMINI_API_KEY not set on server' });
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return res.json({ ok: false, error: 'GROQ_API_KEY not set on server' });
   const keyPreview = key.length > 8 ? key.substring(0, 4) + '...' + key.substring(key.length - 4) : '(too short)';
-  const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
-  for (const modelName of modelsToTry) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${key}`;
-      const body = { contents: [{ parts: [{ text: 'Reply with just the word WORKING' }] }] };
-      const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const json = await resp.json();
-      if (!resp.ok) {
-        const fullError = json.error || json;
-        if (modelName === modelsToTry[modelsToTry.length - 1]) {
-          return res.json({ ok: false, model: modelName, status: resp.status, error: fullError.message || JSON.stringify(fullError), key: keyPreview, full: fullError });
-        }
-        continue;
-      }
-      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      return res.json({ ok: text === 'WORKING', model: modelName, response: text, key: keyPreview });
-    } catch (err) {
-      if (modelName === modelsToTry[modelsToTry.length - 1]) {
-        return res.json({ ok: false, model: modelName, error: err.message, key: keyPreview });
-      }
-    }
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: 'Reply with just the word WORKING' }], temperature: 0.1 })
+    });
+    const json = await response.json();
+    if (!response.ok) return res.json({ ok: false, status: response.status, error: json.error?.message || JSON.stringify(json), key: keyPreview, full: json.error || json });
+    const text = json?.choices?.[0]?.message?.content || '';
+    res.json({ ok: text === 'WORKING', response: text, key: keyPreview });
+  } catch (err) {
+    res.json({ ok: false, error: err.message, key: keyPreview });
   }
 });
 
@@ -458,7 +450,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
     documents: await getDocumentsWithLockState(normalizedName),
     pending: !approved,
     approved,
-    aiError: aiError || (!approved && !rejectionReason ? 'AI check failed: all models returned errors (check server logs)' : undefined)
+    aiError: aiError || (!approved && !rejectionReason ? 'AI check failed (check server logs)' : undefined)
   });
 });
 
