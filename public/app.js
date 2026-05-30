@@ -783,9 +783,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const matiereTag = card.querySelector('.tag-matiere');
 
             const matchesSearch = !query || cardText.includes(query);
-            const matchesFiliere = !filterFiliere || (filiereTag && filiereTag.innerText === filterFiliere);
-            const matchesNiveau = !filterNiveau || (niveauTag && niveauTag.innerText === filterNiveau);
-            const matchesMatiere = !filterMatiere || (matiereTag && matiereTag.innerText === filterMatiere);
+
+            const rawFiliere = filiereTag?.innerText || '';
+            const rawNiveau = niveauTag?.innerText || '';
+            const rawMatiere = matiereTag?.innerText || '';
+
+            const matchesFiliere = !filterFiliere || (filiereTag && rawFiliere.normalize() === filterFiliere.normalize());
+            const matchesNiveau = !filterNiveau || (niveauTag && rawNiveau.normalize() === filterNiveau.normalize());
+            const matchesMatiere = !filterMatiere || (matiereTag && rawMatiere.normalize() === filterMatiere.normalize());
 
             if (matchesSearch && matchesFiliere && matchesNiveau && matchesMatiere) {
                 card.classList.remove('hidden');
