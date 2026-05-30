@@ -438,10 +438,9 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
     console.error('AI check error:', err.message);
   }
 
-  if (rejectionReason) {
-    // AI rejected → delete the uploaded file and return error
+  if (rejectionReason || aiError) {
     await supabase.storage.from('documents').remove([fileName]).catch(() => {});
-    return res.status(400).json({ error: `Upload rejected: ${rejectionReason}` });
+    return res.status(400).json({ error: `Upload rejected: ${rejectionReason || aiError}` });
   }
 
   await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere, type, approved });
