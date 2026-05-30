@@ -1083,6 +1083,10 @@ body {
     margin-left: 0;
     margin-right: auto;
 }
+[data-theme="dark"] #hero-logo {
+    filter: brightness(0) invert(1);
+}
+
 [dir="rtl"] .admin-stats-row {
     flex-direction: row-reverse;
 }
