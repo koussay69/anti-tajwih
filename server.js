@@ -271,27 +271,32 @@ app.post('/api/bounties/fulfill', upload.single('file'), async (req, res) => {
 
 // --- ACCEPT ANSWER (author picks winner, +3 tokens to answerer) ---
 app.post('/api/bounties/accept', async (req, res) => {
-  const { bountyId, answerId, user } = req.body;
-  const normalizedName = user.trim().toLowerCase();
+  try {
+    const { bountyId, answerId, user } = req.body;
+    const normalizedName = user.trim().toLowerCase();
 
-  const { data: bounty } = await supabase.from('bounties').select('*').eq('id', bountyId).maybeSingle();
-  if (!bounty) return res.status(404).json({ error: "Bounty not found." });
-  if (bounty.author.toLowerCase() !== normalizedName) return res.status(403).json({ error: "Only the bounty author can accept an answer." });
-  if (bounty.settled) return res.status(400).json({ error: "Bounty already settled." });
+    const { data: bounty } = await supabase.from('bounties').select('*').eq('id', bountyId).maybeSingle();
+    if (!bounty) return res.status(404).json({ error: "Bounty not found." });
+    if (bounty.author.toLowerCase() !== normalizedName) return res.status(403).json({ error: "Only the bounty author can accept an answer." });
+    if (bounty.settled) return res.status(400).json({ error: "Bounty already settled." });
 
-  const { data: answer } = await supabase.from('answers').select('*').eq('id', answerId).eq('bounty_id', bountyId).maybeSingle();
-  if (!answer) return res.status(404).json({ error: "Answer not found." });
+    const { data: answer } = await supabase.from('answers').select('*').eq('id', answerId).eq('bounty_id', bountyId).maybeSingle();
+    if (!answer) return res.status(404).json({ error: "Answer not found." });
 
-  const answererProfile = await getUserProfile(answer.user.toLowerCase());
-  if (answererProfile) {
-    await supabase.from('users').update({ tokens: answererProfile.tokens + 3 }).eq('username', answer.user.toLowerCase());
+    const answererProfile = await getUserProfile(answer.user.toLowerCase());
+    if (answererProfile) {
+      await supabase.from('users').update({ tokens: answererProfile.tokens + 3 }).eq('username', answer.user.toLowerCase());
+    }
+
+    await supabase.from('bounties').update({ settled: true }).eq('id', bountyId);
+    await supabase.from('answers').update({ winner: true }).eq('id', answerId);
+
+    const profile = await getUserProfile(normalizedName);
+    res.json({ success: true, tokens: profile ? profile.tokens : 0, bounties: await getBounties() });
+  } catch (err) {
+    console.error('Accept error:', err.message);
+    res.status(500).json({ error: 'Server error: ' + err.message });
   }
-
-  await supabase.from('bounties').update({ settled: true }).eq('id', bountyId);
-  await supabase.from('answers').update({ winner: true }).eq('id', answerId);
-
-  const profile = await getUserProfile(normalizedName);
-  res.json({ success: true, tokens: profile ? profile.tokens : 0, bounties: await getBounties() });
 });
 
 app.listen(PORT, () => {
