@@ -308,9 +308,12 @@ app.get('/api/vault-data', async (req, res) => {
 
 // --- AI CONTENT CHECK ---
 async function checkDocumentContent(pdfBuffer, metadata) {
-  if (!genAI) return null;
+  if (!genAI) {
+    console.error('AI check skipped: GEMINI_API_KEY not configured');
+    return null;
+  }
   try {
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-2.0-flash-lite' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
     const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
 A document was uploaded with these details:
 - Subject category: "${metadata.subject}"
@@ -330,21 +333,38 @@ Reply with ONLY a single JSON object:
 {"isAcademic": true/false, "reason": "brief one-line explanation"}
 
 Set isAcademic to false if: the content doesn't match the declared subject/filière/type, or it contains spam, ads, malware, irrelevant personal content, non-educational entertainment, or anything that doesn't help students study.`;
+    const base64Data = pdfBuffer.toString('base64');
     const result = await model.generateContent([
-      { inlineData: { mimeType: 'application/pdf', data: pdfBuffer.toString('base64') } },
+      { inlineData: { mimeType: 'application/pdf', data: base64Data } },
       { text: prompt }
     ]);
     const responseText = result.response.text().trim();
+    console.log('AI raw response:', responseText.substring(0, 200));
     const jsonMatch = responseText.match(/\{.*\}/s);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     }
+    console.error('AI check: no JSON found in response');
     return null;
   } catch (err) {
-    console.error('AI check error:', err.message);
+    console.error('AI check error:', err.message, err.stack?.substring(0, 300));
     return null; // fall back to pending
   }
 }
+
+// --- TEST ENDPOINT for AI key ---
+app.get('/api/admin/ai-test', async (req, res) => {
+  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!genAI) return res.json({ ok: false, error: 'GEMINI_API_KEY not set on server' });
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+    const result = await model.generateContent('Reply with just the word WORKING');
+    const text = result.response.text().trim();
+    res.json({ ok: text === 'WORKING', response: text });
+  } catch (err) {
+    res.json({ ok: false, error: err.message });
+  }
+});
 
 // --- UPLOAD DOCUMENT ---
 app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
