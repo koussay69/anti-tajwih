@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <h3 class="doc-title">${doc.title}</h3>
                 <p class="doc-author">By: ${doc.author} • 🌟 ${doc.score ? doc.score + '/5 (' + doc.comments.length + ' reviews)' : 'No reviews yet'}</p>
-                <div class="doc-tags">${doc.filiere ? `<span class="tag">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag">${doc.matiere}</span>` : ''}</div>
+                <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}</div>
                 <button class="toggle-comments-btn">// View Reviews & Comments (${doc.comments ? doc.comments.length : 0})</button>
                 <div class="card-comments-tray hidden">
                     <div class="comments-list">
@@ -340,6 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hasSaved) placeholderSaved.classList.add('hidden');
             else placeholderSaved.classList.remove('hidden');
         }
+        applyFilters();
     }
 
     function renderBounties(bounties) {
@@ -760,13 +761,15 @@ document.addEventListener('DOMContentLoaded', () => {
         browseCards.forEach(card => {
             const titleText = card.querySelector('.doc-title')?.innerText.toLowerCase() || '';
             const subjectText = card.querySelector('.doc-subject')?.innerText.toLowerCase() || '';
-            const tags = card.querySelectorAll('.tag');
-            const tagTexts = Array.from(tags).map(t => t.innerText);
+
+            const filiereTag = card.querySelector('.tag-filiere');
+            const niveauTag = card.querySelector('.tag-niveau');
+            const matiereTag = card.querySelector('.tag-matiere');
 
             const matchesSearch = !query || titleText.includes(query) || subjectText.includes(query);
-            const matchesFiliere = !filterFiliere || tagTexts.includes(filterFiliere);
-            const matchesNiveau = !filterNiveau || tagTexts.includes(filterNiveau);
-            const matchesMatiere = !filterMatiere || tagTexts.includes(filterMatiere);
+            const matchesFiliere = !filterFiliere || (filiereTag && filiereTag.innerText === filterFiliere) || !filiereTag;
+            const matchesNiveau = !filterNiveau || (niveauTag && niveauTag.innerText === filterNiveau) || !niveauTag;
+            const matchesMatiere = !filterMatiere || (matiereTag && matiereTag.innerText === filterMatiere) || !matiereTag;
 
             if (matchesSearch && matchesFiliere && matchesNiveau && matchesMatiere) {
                 card.classList.remove('hidden');
