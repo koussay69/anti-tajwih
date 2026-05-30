@@ -400,6 +400,21 @@ app.post('/api/admin/users/ban', async (req, res) => {
   res.json({ success: true, banned: !!banned });
 });
 
+app.delete('/api/admin/users/:username/documents', async (req, res) => {
+  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  const { username } = req.params;
+  const { data: docs } = await supabase.from('documents').select('id, file_path').eq('author', username);
+  for (const doc of docs || []) {
+    const fileName = doc.file_path?.split('/').pop();
+    if (fileName) await supabase.storage.from('documents').remove([fileName]);
+    await supabase.from('votes').delete().eq('doc_id', doc.id);
+    await supabase.from('comments').delete().eq('doc_id', doc.id);
+    await supabase.from('unlocked_docs').delete().eq('doc_id', doc.id);
+  }
+  await supabase.from('documents').delete().eq('author', username);
+  res.json({ success: true, deleted: docs?.length || 0 });
+});
+
 app.listen(PORT, () => {
   console.log(`\n=============================================`);
   console.log(`📡 P2P Core Engine running at: http://localhost:${PORT}`);

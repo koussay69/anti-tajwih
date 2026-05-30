@@ -175,6 +175,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     loadAdminPanel();
                 });
             });
+
+            usersDiv.querySelectorAll('.admin-delete-docs-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (!confirm('Delete all documents for this user?')) return;
+                    const targetUser = btn.dataset.user;
+                    const res = await fetch(`${API_URL}/admin/users/${encodeURIComponent(targetUser)}/documents?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    showToast(data.success ? `Deleted ${data.deleted} documents.` : data.error || 'Error', data.success ? 'success' : 'error');
+                    loadAdminPanel();
+                });
+            });
         } catch {
             showToast("Failed to load admin panel.", "error");
         }
@@ -285,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">Unlock (-1 Token)</button>` : ''}
                     ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">⬇ Download PDF</a>` : ''}
-                    ${state.user && doc.author === state.user ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">🗑 Delete</button>` : ''}
+                    ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">🗑 Delete</button>` : ''}
                 </div>
             `;
 
@@ -513,12 +524,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!state.user) return;
                 if (!confirm('Delete this document permanently?')) return;
                 try {
-                    const res = await fetch(`${API_URL}/documents/delete/${docId}?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
+                    const url = state.admin
+                        ? `${API_URL}/admin/documents/${docId}?user=${encodeURIComponent(state.user)}`
+                        : `${API_URL}/documents/delete/${docId}?user=${encodeURIComponent(state.user)}`;
+                    const res = await fetch(url, { method: 'DELETE' });
                     const data = await res.json();
                     if (res.ok) {
-                        state.tokens = data.tokens;
+                        if (data.tokens !== undefined) state.tokens = data.tokens;
                         updateTokenUI();
-                        renderDocuments(data.documents);
+                        renderDocuments(data.documents || []);
                         showToast("Document deleted.", "info");
                     } else {
                         showToast(data.error || "Delete failed.", "error");
