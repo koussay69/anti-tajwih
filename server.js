@@ -141,17 +141,19 @@ app.post('/api/auth/avatar', upload.single('avatar'), async (req, res) => {
 // --- USER PROFILE ---
 app.get('/api/users/:username/profile', async (req, res) => {
   const { username } = req.params;
+  const { user } = req.query;
   const normalizedName = username.trim().toLowerCase();
   const profile = await getUserProfile(normalizedName);
   if (!profile) return res.status(404).json({ error: "User not found." });
-  const { data: docs } = await supabase.from('documents').select('*').eq('author', normalizedName).order('id', { ascending: false });
+  const docs = await getDocumentsWithLockState(user ? user.trim().toLowerCase() : null);
+  const userDocs = docs.filter(d => d.author?.toLowerCase() === normalizedName);
   res.json({
     username: profile.username,
     email: profile.email,
     avatar_url: profile.avatar_url,
-    uploadsCount: docs ? docs.length : 0,
+    uploadsCount: userDocs.length,
     tokens: profile.tokens,
-    documents: docs || []
+    documents: userDocs
   });
 });
 

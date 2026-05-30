@@ -68,6 +68,18 @@ document.addEventListener('DOMContentLoaded', () => {
             img.style.display = 'none';
             placeholder.style.display = 'flex';
         }
+        const navImg = document.getElementById('nav-avatar-img');
+        const navPlaceholder = document.getElementById('nav-avatar-placeholder');
+        if (navImg && navPlaceholder) {
+            if (state.avatar_url) {
+                navImg.src = state.avatar_url;
+                navImg.style.display = '';
+                navPlaceholder.style.display = 'none';
+            } else {
+                navImg.style.display = 'none';
+                navPlaceholder.style.display = '';
+            }
+        }
     }
 
     // --- TOAST NOTIFICATION UTILITY FUNCTION ---
@@ -974,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const author = link.dataset.author;
         if (!author) return;
         try {
-            const res = await fetch(`${API_URL}/users/${encodeURIComponent(author)}/profile`);
+            const res = await fetch(`${API_URL}/users/${encodeURIComponent(author)}/profile?user=${encodeURIComponent(state.user || '')}`);
             const data = await res.json();
             if (!res.ok) { showToast(data.error || "User not found.", "error"); return; }
 
@@ -993,16 +1005,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const docsContainer = document.getElementById('author-docs-target');
             docsContainer.innerHTML = '';
+            const currentSignature = state.user ? state.user : null;
             (data.documents || []).forEach(doc => {
+                const isDocLockedForSession = state.user ? doc.locked : true;
                 const card = document.createElement('div');
                 card.className = 'doc-card';
+                card.dataset.id = doc.id;
+                card.dataset.userVote = doc.userVote || '';
+
+                const upActive = doc.userVote === 'up' ? ' active' : '';
+                const downActive = doc.userVote === 'down' ? ' active' : '';
+
                 card.innerHTML = `
-                    <div class="card-meta-top"><span class="doc-subject">${doc.subject}</span></div>
+                    <div class="card-meta-top">
+                        <span class="doc-subject">${doc.subject}</span>
+                        <span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? '🔒 LOCKED' : '✓ UNLOCKED'}</span>
+                    </div>
                     <h3 class="doc-title">${doc.title}</h3>
                     <p class="doc-author">By: ${doc.author}</p>
                     <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}${doc.type ? `<span class="tag tag-type">${doc.type}</span>` : ''}</div>
+                    <button class="toggle-comments-btn">// View Reviews & Comments (${doc.comments ? doc.comments.length : 0})</button>
+                    <div class="card-comments-tray hidden">
+                        <div class="comments-list">
+                            ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`).join('') : ''}
+                        </div>
+                        <div class="comment-input-box">
+                            <input type="text" placeholder="Ask a question or leave a review..." class="inline-comment-input">
+                            <button class="post-comment-btn">Send</button>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="voting-system">
+                            <button class="vote-arrow up${upActive}">▲</button>
+                            <span class="vote-count">${doc.score || 0}</span>
+                            <button class="vote-arrow down${downActive}">▼</button>
+                        </div>
+                        ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">Unlock (-1 Token)</button>` : ''}
+                        ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">⬇ Download PDF</a>` : ''}
+                        ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">🗑 Delete</button>` : ''}
+                    </div>
                 `;
                 docsContainer.appendChild(card);
+                setupDocumentCardInteractions(card);
             });
 
             document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
