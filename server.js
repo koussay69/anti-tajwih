@@ -23,7 +23,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public', { maxAge: 0, etag: false }));
 
 // --- HELPERS ---
 async function getUserProfile(normalizedUsername) {
@@ -65,7 +65,10 @@ async function getDocumentsWithLockState(normalizedUsername) {
       userVote,
       hasFile: !!doc.file_path,
       comments: comments || [],
-      locked: isAuthor ? false : !unlockedIds.includes(doc.id)
+      locked: isAuthor ? false : !unlockedIds.includes(doc.id),
+      filiere: doc.filiere,
+      niveau: doc.niveau,
+      matiere: doc.matiere
     });
   }
   return result;
