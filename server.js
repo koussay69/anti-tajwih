@@ -315,7 +315,7 @@ async function checkDocumentContent(text, metadata) {
     const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials with other students.
 A document was uploaded with these details:
 - Subject category: "${metadata.subject}"
-- Filière: "${metadata.filiere || 'N/A'}"
+- Filière (track): "${metadata.filiere || 'N/A'}"
 - Level: "${metadata.niveau || 'N/A'}"
 - Course/Matière: "${metadata.matiere || 'N/A'}"
 - Type: "${metadata.type || 'N/A'}"
@@ -326,12 +326,14 @@ Here is the extracted text from the PDF (first 3000 chars):
 ${text.substring(0, 3000)}
 ---
 
-Determine if this document is genuinely academic/educational study material (exercises, exams, courses, lecture notes, problem sets, corrections, formulas, etc.) related to the declared subject. Consider that the text may contain math notation, code, or formulas that don't read as natural language.
+IMPORTANT: The actual extracted PDF text above must match the declared metadata. For example, if someone claims "Mathematics / Exam" but the text is about cooking, gardening, sports, entertainment, advertising, or anything non-academic, it must be rejected. The title and subject must honestly describe the content.
+
+Determine if this document is genuinely academic/educational study material (exercises, exams, courses, lecture notes, problem sets, corrections, formulas, etc.) AND the declared metadata accurately describes the actual content.
 
 Reply with ONLY a single JSON object:
 {"isAcademic": true/false, "reason": "brief one-line explanation"}
 
-Set isAcademic to false if it appears to be: spam, ads, malware, irrelevant personal content, non-educational entertainment, or anything that doesn't help students study.`;
+Set isAcademic to false if: the content doesn't match the declared subject/filière/type, or it contains spam, ads, malware, irrelevant personal content, non-educational entertainment, or anything that doesn't help students study.`;
     const result = await model.generateContent(prompt);
     const responseText = result.response.text().trim();
     const jsonMatch = responseText.match(/\{.*\}/s);
