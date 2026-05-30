@@ -1,3 +1,308 @@
+// --- I18N TRANSLATION SYSTEM ---
+window.translations = {
+  EN: {
+    "lang.en":"EN","lang.fr":"FR","lang.ar":"AR",
+    "nav.browse":"Browse","nav.saved":"Saved","nav.myUploads":"My Uploads","nav.helpDesk":"Help Desk","nav.adminPanel":"Admin Panel",
+    "nav.signIn":"Sign In","nav.account":"Account","nav.upload":"+ Upload","nav.tokens":"Tokens",
+    "hero.desc":"P2P Academic Vault. Note uploads earn 5 tokens. Library unlocks cost 1 token. Check reviews and comments below to verify document quality before purchase.",
+    "hero.searchPlaceholder":"Search by subject, module, or keyword...",
+    "filter.filiere":"Filière (all)","filter.niveau":"Niveau (all)","filter.matiere":"Matière (all)","filter.type":"Type (all)","filter.clear":"Clear",
+    "section.archiveFeed":"// ARCHIVE FEED","section.trending":"Trending Documents",
+    "section.yourCollection":"// YOUR COLLECTION",    "section.savedDocuments":"Saved Documents",
+    "section.savedEmpty":"You haven't saved or unlocked any documents yet.",
+    "section.uploadsEmpty":"Share your notes to earn tokens.",
+    "section.contributions":"// CONTRIBUTIONS","section.yourUploads":"Your Uploaded Files",
+    "section.sos":"// SOS EMERGENCY ROOM","section.problems":"Personal Problem Statements",
+    "section.userProfile":"// USER PROFILE","section.accountSettings":"Account Settings",
+    "section.admin":"// ADMIN","section.adminPanel":"Admin Panel",
+    "section.pendingReviews":"// PENDING REVIEWS","section.awaitingApproval":"Awaiting Approval",
+    "section.userManagement":"// USER MANAGEMENT","section.allUsers":"All Users",
+    "section.authorProfile":"// AUTHOR PROFILE","section.authorUploads":"// UPLOADS",
+    "bounty.postProblem":"Post a Problem (-3 Tokens)","bounty.provideAnswer":"Provide Answer (+3 Tokens)","bounty.selectBest":"Select as Best Answer",
+    "auth.signIn":"Sign In to Anti-Tajwih","auth.createAccount":"Create Your Account",
+    "auth.signInLink":"Sign In instead","auth.signUpLink":"Create an Account (Sign Up)",
+    "auth.newToCommunity":"New to the community?","auth.alreadyOneOfUs":"Already one of us?",
+    "auth.emailOrUsername":"Email or Username","auth.chooseUsername":"Choose a Username",
+    "auth.email":"Email Address","auth.avatar":"Profile Picture (JPG)","auth.password":"Password",
+    "auth.accessVault":"Access Vault","auth.emailPlaceholder":"name@example.com or username","auth.usernamePlaceholder":"your-username",
+    "upload.title":"// SHARE CONTENT","upload.heading":"Upload Academic Asset",
+    "upload.docTitle":"Document Title","upload.subject":"Subject / Module Name",
+    "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Select PDF File",
+    "upload.submit":"Submit & Earn 5 Tokens","upload.select":"-- Select --",
+    "help.title":"// SOS FORM","help.heading":"Request Emergency Assistance",
+    "help.submit":"Post Request (-3 Tokens)","help.topic":"Problem Topic or Class","help.summary":"Problem Brief Summary","help.details":"Detailed Question Requirements","help.file":"Upload Problem / Reference PDF",
+    "answer.title":"// PROVIDE SOLUTION","answer.heading":"Fulfill Bounty Request",
+    "answer.walkthrough":"Walkthrough Explanation or Notes","answer.walkthroughPlaceholder":"Write down structural advice or summary guide...",
+    "answer.file":"Upload Verification / Solution PDF",
+    "answer.submit":"Transmit Solution & Claim Bounty",
+    "account.changePhoto":"Change Photo","account.anonymous":"Anonymous Student",
+    "account.balance":"Available Balance:","account.totalUploads":"Total Uploads:",
+    "account.profileVisits":"Profile Visits:","account.filesDownloaded":"Files Downloaded:",
+    "account.upvotesReceived":"Total Upvotes Received:","account.downvotesReceived":"Total Downvotes Received:",
+    "account.newUsernamePlaceholder":"New username","account.currentPasswordPlaceholder":"Current password","account.newPasswordPlaceholder":"New password",
+    "account.yourStats":"📊 Your Stats","account.settings":"⚙ Settings",
+    "account.changeUsername":"Change Username","account.save":"Save","account.changePassword":"Change Password",
+    "account.logOut":"Log Out",
+    "admin.users":"Users:","admin.documents":"Documents:","admin.bounties":"Bounties:","admin.online":"🟢 Online (30m):",
+    "admin.noPending":"No documents pending review.","admin.searchUsers":"Search users by username...",
+    "admin.adjust":"Adjust","admin.unban":"Unban","admin.ban":"Ban","admin.deleteAllDocs":"Delete All Docs",
+    "admin.approve":"✅ Approve","admin.reject":"🗑 Reject",
+    "card.pending":"⏳ PENDING REVIEW","card.locked":"🔒 LOCKED","card.unlocked":"✓ UNLOCKED","card.activeShared":"✓ ACTIVE SHARED",
+    "card.viewReviews":"// View Reviews & Comments ({count})","card.commentPlaceholder":"Ask a question or leave a review...",
+    "card.send":"Send","card.unlockBtn":"Unlock (-1 Token)","card.download":"⬇ Download PDF","card.delete":"🗑 Delete",
+    "card.by":"By:","card.byYou":"You","card.reviews":"reviews","card.noReviews":"No reviews yet",
+    "bounty.settled":"✅ Settled","bounty.placed":"💰 Bounty Placed","bounty.by":"By:","bounty.you":"You",
+    "bounty.bestAnswer":"🏆 Best Answer — Bounty Settled ✓ (+3 Tokens)","bounty.sharedAnswer":"📎 Shared Answer:","bounty.refAttached":"📎 Reference Attached:",
+    "author.documentsBy":"Documents by",
+    "toast.themeChanged":"Theme changed to {mode} mode!","toast.langChanged":"Language changed to {lang}!",
+    "toast.signInToVote":"Please sign in to vote on documents.",
+    "toast.signInToUpload":"Please sign in to upload.",
+    "toast.signInToUnlock":"Please sign in to unlock.",
+    "toast.signInToComment":"Please sign in to submit peer reviews.",
+    "toast.signInToBounty":"Please sign in to post a bounty.",
+    "toast.signInToAnswer":"Please sign in to provide answers.",
+    "toast.insufficientTokens":"Insufficient token balance.",
+    "toast.insufficientTokensBounty":"Insufficient tokens for bounty.",
+    "toast.uploadApproved":"Document approved! (+5 Tokens)",
+    "toast.submittedForReview":"Document submitted for review. +5 once approved.",
+    "toast.bountyPlaced":"Bounty posted (-3 Tokens)",
+    "toast.answerSubmitted":"Answer submitted — author will review.",
+    "toast.bestSelected":"Best answer selected! +3 awarded.",
+    "toast.usernameChanged":"Username changed successfully.",
+    "toast.passwordChanged":"Password changed successfully.",
+    "toast.loggedIn":"Logged in as {user}",
+    "toast.loggedOut":"Logged out.",
+    "toast.deleted":"Document deleted.",
+    "toast.avatarUpdated":"Profile picture updated.",
+    "toast.selectPdf":"Please select a PDF file.",
+    "toast.noSelfBounty":"Cannot answer your own bounty.",
+    "toast.fillPasswords":"Fill in both password fields.",
+    "toast.enterUsername":"Enter a new username.",
+    "toast.syncFailed":"Sync failed. Running offline.",
+    "toast.loadError":"Failed to load admin panel.",
+    "toast.unlocked":"Document unlocked (-1 Token)",
+    "toast.commentPosted":"Peer review submitted.",
+    "toast.voteFailed":"Vote failed.",
+    "toast.networkError":"Network error.",
+    "toast.authFailed":"Authentication failed.",
+    "toast.docApproved":"Document approved! Author +5 tokens.",
+    "toast.docRejected":"Document rejected and deleted.",
+    "toast.adminTokensAdjusted":"Tokens adjusted.",
+    "toast.adminUserBanned":"User banned.",
+    "toast.adminUserUnbanned":"User unbanned.",
+    "toast.adminDocsDeleted":"Documents deleted.",
+    "toast.deleteConfirm":"Delete this document permanently?",
+    "toast.deleteAllConfirm":"Delete all documents for this user?",
+    // misc
+    "misc.tokens":"Tokens","misc.documents":"Documents","misc.uploads":"Uploads",
+  },
+  FR: {
+    "lang.en":"EN","lang.fr":"FR","lang.ar":"AR",
+    "nav.browse":"Parcourir","nav.saved":"Sauvegardés","nav.myUploads":"Mes Publications","nav.helpDesk":"Entraide","nav.adminPanel":"Admin",
+    "nav.signIn":"Connexion","nav.account":"Compte","nav.upload":"+ Publier","nav.tokens":"Jetons",
+    "hero.desc":"Coffre académique P2P. Publiez des notes pour gagner 5 jetons. Débloquez des documents pour 1 jeton. Consultez les avis avant d'acheter.",
+    "hero.searchPlaceholder":"Rechercher par matière, module ou mot-clé...",
+    "filter.filiere":"Filière (toutes)","filter.niveau":"Niveau (tous)","filter.matiere":"Matière (toutes)","filter.type":"Type (tous)","filter.clear":"Effacer",
+    "section.archiveFeed":"// ARCHIVES","section.trending":"Documents Populaires",
+    "section.yourCollection":"// MA COLLECTION","section.savedDocuments":"Documents Sauvegardés",
+    "section.contributions":"// CONTRIBUTIONS","section.yourUploads":"Mes Fichiers Publiés",
+    "section.sos":"// SOS URGENCES","section.problems":"Demandes d'Aide",
+    "section.userProfile":"// PROFIL","section.accountSettings":"Paramètres du Compte",
+    "section.admin":"// ADMIN","section.adminPanel":"Panneau d'Admin",
+    "section.pendingReviews":"// EN ATTENTE","section.awaitingApproval":"En Attente d'Approbation",
+    "section.userManagement":"// GESTION","section.allUsers":"Tous les Utilisateurs",
+    "section.authorProfile":"// PROFIL AUTEUR","section.authorUploads":"// PUBLICATIONS",
+    "bounty.postProblem":"Publier un Problème (-3 Jetons)","bounty.provideAnswer":"Proposer une Solution (+3 Jetons)","bounty.selectBest":"Choisir comme Meilleure Réponse",
+    "auth.signIn":"Connexion à Anti-Tajwih","auth.createAccount":"Créer Votre Compte",
+    "auth.signInLink":"Se connecter","auth.signUpLink":"Créer un Compte (S'inscrire)",
+    "auth.newToCommunity":"Nouveau sur la plateforme ?","auth.alreadyOneOfUs":"Déjà inscrit ?",
+    "auth.emailOrUsername":"Email ou Nom d'utilisateur","auth.chooseUsername":"Choisir un Nom d'utilisateur",
+    "auth.email":"Adresse Email","auth.avatar":"Photo de Profil (JPG)","auth.password":"Mot de passe",
+    "auth.accessVault":"Accéder au Coffre","auth.emailPlaceholder":"exemple@email.com ou pseudo","auth.usernamePlaceholder":"votre-pseudo",
+    "upload.title":"// PARTAGER","upload.heading":"Publier un Document",
+    "upload.docTitle":"Titre du Document","upload.subject":"Matière / Module",
+    "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Choisir un PDF",
+    "upload.submit":"Publier et Gagner 5 Jetons","upload.select":"-- Sélectionner --",
+    "help.title":"// SOS FORMULAIRE","help.heading":"Demander de l'Aide",
+    "help.submit":"Publier la Demande (-3 Jetons)","help.topic":"Sujet du Problème","help.summary":"Résumé du Problème","help.details":"Détails de la Question","help.file":"Joindre le PDF du Problème",
+    "answer.title":"// PROPOSER UNE SOLUTION","answer.heading":"Répondre à la Demande",
+    "answer.walkthrough":"Explication ou Notes","answer.walkthroughPlaceholder":"Écrivez vos conseils ou un résumé guide...",
+    "answer.file":"Joindre le PDF de Solution",
+    "answer.submit":"Transmettre la Solution",
+    "account.changePhoto":"Changer la Photo","account.anonymous":"Étudiant Anonyme",
+    "account.yourStats":"📊 Vos Statistiques","account.settings":"⚙ Paramètres",
+    "account.changeUsername":"Changer le Pseudo","account.save":"Sauvegarder","account.changePassword":"Changer le Mot de Passe",
+    "account.logOut":"Déconnexion",
+    "admin.users":"Utilisateurs :","admin.documents":"Documents :","admin.bounties":"Demandes :","admin.online":"🟢 En ligne (30m) :",
+    "admin.noPending":"Aucun document en attente.","admin.searchUsers":"Rechercher par nom d'utilisateur...",
+    "admin.adjust":"Ajuster","admin.unban":"Débannir","admin.ban":"Bannir","admin.deleteAllDocs":"Tout Supprimer",
+    "admin.approve":"✅ Approuver","admin.reject":"🗑 Rejeter",
+    "card.pending":"⏳ EN ATTENTE","card.locked":"🔒 VERROUILLÉ","card.unlocked":"✓ DÉVERROUILLÉ","card.activeShared":"✓ PUBLIÉ",
+    "card.viewReviews":"// Voir les Avis ({count})","card.commentPlaceholder":"Posez une question ou laissez un avis...",
+    "card.send":"Envoyer","card.unlockBtn":"Débloquer (-1 Jeton)","card.download":"⬇ Télécharger PDF","card.delete":"🗑 Supprimer",
+    "card.by":"Par :","card.byYou":"Vous","card.reviews":"avis","card.noReviews":"Aucun avis",
+    "bounty.settled":"✅ Résolue","bounty.placed":"💰 Demande Active","bounty.by":"Par :","bounty.you":"Vous",
+    "bounty.bestAnswer":"🏆 Meilleure Réponse — Demande Résolue ✓ (+3 Jetons)","bounty.sharedAnswer":"📎 Réponse fournie :","bounty.refAttached":"📎 Référence jointe :",
+    "author.documentsBy":"Documents par",
+    "toast.themeChanged":"Thème changé en mode {mode} !","toast.langChanged":"Langue changée en {lang} !",
+    "toast.signInToVote":"Connectez-vous pour voter.",
+    "toast.signInToUpload":"Connectez-vous pour publier.",
+    "toast.signInToUnlock":"Connectez-vous pour débloquer.",
+    "toast.signInToComment":"Connectez-vous pour commenter.",
+    "toast.signInToBounty":"Connectez-vous pour poster une demande.",
+    "toast.signInToAnswer":"Connectez-vous pour répondre.",
+    "toast.insufficientTokens":"Solde insuffisant.",
+    "toast.insufficientTokensBounty":"Jetons insuffisants.",
+    "toast.uploadApproved":"Document approuvé ! (+5 Jetons)",
+    "toast.submittedForReview":"Document soumis pour examen. +5 jetons après approbation.",
+    "toast.bountyPlaced":"Demande publiée (-3 Jetons)",
+    "toast.answerSubmitted":"Réponse soumise — l'auteur examinera.",
+    "toast.bestSelected":"Meilleure réponse sélectionnée ! +3 jetons.",
+    "toast.usernameChanged":"Pseudo modifié.",
+    "toast.passwordChanged":"Mot de passe modifié.",
+    "toast.loggedIn":"Connecté en tant que {user}",
+    "toast.loggedOut":"Déconnecté.",
+    "toast.deleted":"Document supprimé.",
+    "toast.avatarUpdated":"Photo de profil mise à jour.",
+    "toast.selectPdf":"Sélectionnez un fichier PDF.",
+    "toast.noSelfBounty":"Vous ne pouvez pas répondre à votre propre demande.",
+    "toast.fillPasswords":"Remplissez les deux champs.",
+    "toast.enterUsername":"Entrez un nouveau pseudo.",
+    "toast.syncFailed":"Synchronisation échouée.",
+    "toast.loadError":"Échec du chargement du panneau admin.",
+    "toast.unlocked":"Document déverrouillé (-1 Jeton)",
+    "toast.commentPosted":"Avis soumis.",
+    "toast.voteFailed":"Échec du vote.",
+    "toast.networkError":"Erreur réseau.",
+    "toast.authFailed":"Échec d'authentification.",
+    "toast.docApproved":"Document approuvé ! +5 jetons.",
+    "toast.docRejected":"Document rejeté et supprimé.",
+    "toast.adminTokensAdjusted":"Jetons ajustés.",
+    "toast.adminUserBanned":"Utilisateur banni.",
+    "toast.adminUserUnbanned":"Utilisateur débanni.",
+    "toast.adminDocsDeleted":"Documents supprimés.",
+    "toast.deleteConfirm":"Supprimer ce document définitivement ?",
+    "toast.deleteAllConfirm":"Supprimer tous les documents de cet utilisateur ?",
+    "misc.tokens":"Jetons","misc.documents":"Documents","misc.uploads":"Publications",
+  },
+  AR: {
+    "lang.en":"EN","lang.fr":"FR","lang.ar":"AR",
+    "nav.browse":"تصفح","nav.saved":"المحفوظات","nav.myUploads":"منشوراتي","nav.helpDesk":"المساعدة","nav.adminPanel":"الإدارة",
+    "nav.signIn":"تسجيل الدخول","nav.account":"الحساب","nav.upload":"+ نشر","nav.tokens":"نقاط",
+    "hero.desc":"خزنة أكاديمية P2P. انشر ملاحظاتك لتربح 5 نقاط. فتح المكتبات يكلف نقطة واحدة. تفقد التقييمات قبل الشراء.",
+    "hero.searchPlaceholder":"ابحث حسب المادة أو الوحدة أو الكلمة المفتاحية...",
+    "filter.filiere":"الشعبة (الكل)","filter.niveau":"المستوى (الكل)","filter.matiere":"المادة (الكل)","filter.type":"النوع (الكل)","filter.clear":"مسح",
+    "section.archiveFeed":"// أرشيف","section.trending":"الوثائق الرائجة",
+    "section.yourCollection":"// مجموعتي","section.savedDocuments":"الوثائق المحفوظة",
+    "section.contributions":"// مساهماتي","section.yourUploads":"ملفاتي المنشورة",
+    "section.sos":"// طوارئ","section.problems":"طلبات المساعدة",
+    "section.userProfile":"// الملف الشخصي","section.accountSettings":"إعدادات الحساب",
+    "section.admin":"// الإدارة","section.adminPanel":"لوحة الإدارة",
+    "section.pendingReviews":"// قيد المراجعة","section.awaitingApproval":"بانتظار الموافقة",
+    "section.userManagement":"// إدارة المستخدمين","section.allUsers":"جميع المستخدمين",
+    "section.authorProfile":"// ملف الناشر","section.authorUploads":"// المنشورات",
+    "bounty.postProblem":"انشر مشكلة (-3 نقاط)","bounty.provideAnswer":"تقديم حل (+3 نقاط)","bounty.selectBest":"اختيار كأفضل إجابة",
+    "auth.signIn":"تسجيل الدخول","auth.createAccount":"إنشاء حساب",
+    "auth.signInLink":"تسجيل الدخول","auth.signUpLink":"إنشاء حساب (اشتراك)",
+    "auth.newToCommunity":"جديد في المجتمع؟","auth.alreadyOneOfUs":"مسجل بالفعل؟",
+    "auth.emailOrUsername":"البريد الإلكتروني أو اسم المستخدم","auth.chooseUsername":"اختر اسم مستخدم",
+    "auth.email":"البريد الإلكتروني","auth.avatar":"صورة شخصية (JPG)","auth.password":"كلمة المرور",
+    "auth.accessVault":"دخول إلى الخزنة","auth.emailPlaceholder":"example@email.com أو اسم المستخدم","auth.usernamePlaceholder":"اسم-المستخدم",
+    "upload.title":"// مشاركة","upload.heading":"نشر وثيقة أكاديمية",
+    "upload.docTitle":"عنوان الوثيقة","upload.subject":"المادة / الوحدة",
+    "upload.filiere":"الشعبة","upload.niveau":"المستوى","upload.matiere":"المادة","upload.typeFile":"نوع الملف","upload.file":"اختيار ملف PDF",
+    "upload.submit":"نشر وربح 5 نقاط","upload.select":"-- اختر --",
+    "help.title":"// طلب مساعدة","help.heading":"طلب مساعدة عاجلة",
+    "help.submit":"نشر الطلب (-3 نقاط)","help.topic":"موضوع المشكلة","help.summary":"ملخص المشكلة","help.details":"تفاصيل السؤال","help.file":"رفع ملف المشكلة",
+    "answer.title":"// تقديم حل","answer.heading":"الرد على الطلب",
+    "answer.walkthrough":"شرح أو ملاحظات","answer.walkthroughPlaceholder":"اكتب نصائحك أو ملخصاً إرشادياً...",
+    "answer.file":"رفع ملف الحل PDF",
+    "answer.submit":"إرسال الحل",
+    "account.changePhoto":"تغيير الصورة","account.anonymous":"طالب مجهول",
+    "account.yourStats":"📊 إحصائياتك","account.settings":"⚙ الإعدادات",
+    "account.changeUsername":"تغيير اسم المستخدم","account.save":"حفظ","account.changePassword":"تغيير كلمة المرور",
+    "account.logOut":"تسجيل الخروج",
+    "admin.users":"المستخدمون :","admin.documents":"الوثائق :","admin.bounties":"الطلبات :","admin.online":"🟢 متصل (30د) :",
+    "admin.noPending":"لا توجد وثائق قيد المراجعة.","admin.searchUsers":"ابحث باسم المستخدم...",
+    "admin.adjust":"تعديل","admin.unban":"إلغاء الحظر","admin.ban":"حظر","admin.deleteAllDocs":"حذف الكل",
+    "admin.approve":"✅ موافقة","admin.reject":"🗑 رفض",
+    "card.pending":"⏳ قيد المراجعة","card.locked":"🔒 مقفول","card.unlocked":"✓ مفتوح","card.activeShared":"✓ منشور",
+    "card.viewReviews":"// عرض التقييمات ({count})","card.commentPlaceholder":"اطرح سؤالاً أو اترك تقييماً...",
+    "card.send":"إرسال","card.unlockBtn":"فتح (نقطة واحدة)","card.download":"⬇ تحميل PDF","card.delete":"🗑 حذف",
+    "card.by":"بواسطة :","card.byYou":"أنت","card.reviews":"تقييم","card.noReviews":"لا توجد تقييمات",
+    "bounty.settled":"✅ تم الحل","bounty.placed":"💰 طلب نشط","bounty.by":"بواسطة :","bounty.you":"أنت",
+    "bounty.bestAnswer":"🏆 أفضل إجابة — تمت التسوية ✓ (+3 نقاط)","bounty.sharedAnswer":"📎 الإجابة :","bounty.refAttached":"📎 المرجع :",
+    "author.documentsBy":"وثائق بواسطة",
+    "toast.themeChanged":"تم تغيير السمة إلى وضع {mode} !","toast.langChanged":"تم تغيير اللغة إلى {lang} !",
+    "toast.signInToVote":"يرجى تسجيل الدخول للتصويت.",
+    "toast.signInToUpload":"يرجى تسجيل الدخول للنشر.",
+    "toast.signInToUnlock":"يرجى تسجيل الدخول للفتح.",
+    "toast.signInToComment":"يرجى تسجيل الدخول للتعليق.",
+    "toast.signInToBounty":"يرجى تسجيل الدخول لنشر طلب.",
+    "toast.signInToAnswer":"يرجى تسجيل الدخول للإجابة.",
+    "toast.insufficientTokens":"رصيد غير كافٍ.",
+    "toast.insufficientTokensBounty":"نقاط غير كافية.",
+    "toast.uploadApproved":"تمت الموافقة على الوثيقة ! (+5 نقاط)",
+    "toast.submittedForReview":"تم إرسال الوثيقة للمراجعة. +5 نقاط بعد الموافقة.",
+    "toast.bountyPlaced":"تم نشر الطلب (-3 نقاط)",
+    "toast.answerSubmitted":"تم إرسال الإجابة — سيراجعها الناشر.",
+    "toast.bestSelected":"تم اختيار أفضل إجابة ! +3 نقاط.",
+    "toast.usernameChanged":"تم تغيير اسم المستخدم.",
+    "toast.passwordChanged":"تم تغيير كلمة المرور.",
+    "toast.loggedIn":"تم تسجيل الدخول كـ {user}",
+    "toast.loggedOut":"تم تسجيل الخروج.",
+    "toast.deleted":"تم حذف الوثيقة.",
+    "toast.avatarUpdated":"تم تحديث الصورة الشخصية.",
+    "toast.selectPdf":"يرجى اختيار ملف PDF.",
+    "toast.noSelfBounty":"لا يمكنك الإجابة على طلبك الخاص.",
+    "toast.fillPasswords":"املأ كلا الحقلين.",
+    "toast.enterUsername":"أدخل اسم مستخدم جديد.",
+    "toast.syncFailed":"فشل التزامن.",
+    "toast.loadError":"فشل تحميل لوحة الإدارة.",
+    "toast.unlocked":"تم فتح الوثيقة (-1 نقطة)",
+    "toast.commentPosted":"تم إرسال التقييم.",
+    "toast.voteFailed":"فشل التصويت.",
+    "toast.networkError":"خطأ في الشبكة.",
+    "toast.authFailed":"فشل المصادقة.",
+    "toast.docApproved":"تمت الموافقة ! +5 نقاط.",
+    "toast.docRejected":"تم رفض وحذف الوثيقة.",
+    "toast.adminTokensAdjusted":"تم تعديل النقاط.",
+    "toast.adminUserBanned":"تم حظر المستخدم.",
+    "toast.adminUserUnbanned":"تم إلغاء حظر المستخدم.",
+    "toast.adminDocsDeleted":"تم حذف الوثائق.",
+    "toast.deleteConfirm":"حذف هذه الوثيقة نهائياً؟",
+    "toast.deleteAllConfirm":"حذف جميع وثائق هذا المستخدم؟",
+    "misc.tokens":"نقاط","misc.documents":"وثائق","misc.uploads":"منشورات",
+  }
+};
+
+window.currentLang = localStorage.getItem('p2p-lang') || 'EN';
+
+function t(key, params) {
+  const lang = window.currentLang || 'EN';
+  const fallback = window.translations['EN'];
+  let str = (window.translations[lang] && window.translations[lang][key]) || (fallback && fallback[key]) || key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), v);
+    }
+  }
+  return str;
+}
+
+function translatePage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.documentElement.dir = window.currentLang === 'AR' ? 'rtl' : 'ltr';
+  document.documentElement.lang = window.currentLang.toLowerCase();
+  const btn = document.getElementById('lang-toggle-btn');
+  if (btn) btn.textContent = t('lang.' + window.currentLang.toLowerCase());
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- APP STATE ENGINE ---
@@ -55,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderBounties(data.bounties);
             }
         } catch (err) {
-            showToast("Failed to sync with backend ledger database. Running offline.", "error");
+            showToast(t('toast.syncFailed'), "error");
         }
     }
 
@@ -106,11 +411,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
 
-        let prefix = "⚡ Info: ";
-        if (type === 'error') prefix = "❌ Error: ";
-        if (type === 'bounty') prefix = "💰 Vault Alert: ";
-
-        toast.innerText = `${prefix}${message}`;
+        // Prefix is now included in translated message, no separate prefix needed
+        toast.innerText = message;
         container.appendChild(toast);
 
         setTimeout(() => {
@@ -132,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             htmlRoot.setAttribute('data-theme', newTheme);
             localStorage.setItem('p2p-vault-theme', newTheme);
-            showToast(`Theme changed to ${newTheme} mode!`, 'info');
+                    showToast(t('toast.themeChanged', {mode: newTheme}), 'info');
         });
     }
 
@@ -180,23 +482,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const statsDiv = document.getElementById('admin-stats');
             statsDiv.innerHTML = `
-                <div class="stat-box"><strong>Users:</strong> ${stats.totalUsers || 0}</div>
-                <div class="stat-box"><strong>Documents:</strong> ${stats.totalDocs || 0}</div>
-                <div class="stat-box"><strong>Bounties:</strong> ${stats.totalBounties || 0}</div>
-                <div class="stat-box" style="border:2px solid #2ecc71;"><strong>🟢 Online (30m):</strong> ${online.online || 0}</div>
+                <div class="stat-box"><strong>${t('admin.users')}</strong> ${stats.totalUsers || 0}</div>
+                <div class="stat-box"><strong>${t('admin.documents')}</strong> ${stats.totalDocs || 0}</div>
+                <div class="stat-box"><strong>${t('admin.bounties')}</strong> ${stats.totalBounties || 0}</div>
+                <div class="stat-box" style="border:2px solid #2ecc71;"><strong>${t('admin.online')}</strong> ${online.online || 0}</div>
             `;
 
             const pendingDiv = document.getElementById('admin-pending-docs');
             if (!pendingDocs || pendingDocs.length === 0) {
-                pendingDiv.innerHTML = `<p style="opacity:0.6;">No documents pending review.</p>`;
+                pendingDiv.innerHTML = `<p style="opacity:0.6;">${t('admin.noPending')}</p>`;
             } else {
                 pendingDiv.innerHTML = pendingDocs.map(d => `
                     <div class="admin-user-row" style="flex-wrap:wrap;">
-                        <span><strong>${d.title}</strong> by ${d.author}</span>
+                        <span><strong>${d.title}</strong> ${t('card.by')} ${d.author}</span>
                         <span>${d.filiere || ''} ${d.niveau || ''} ${d.matiere || ''} ${d.type || ''}</span>
                         <div class="admin-user-actions">
-                            <button class="unlock-action-btn admin-approve-btn" data-docid="${d.id}" style="background:green;">✅ Approve</button>
-                            <button class="unlock-action-btn admin-reject-pending-btn" data-docid="${d.id}" style="background:#dc3545;">🗑 Reject</button>
+                            <button class="unlock-action-btn admin-approve-btn" data-docid="${d.id}" style="background:green;">${t('admin.approve')}</button>
+                            <button class="unlock-action-btn admin-reject-pending-btn" data-docid="${d.id}" style="background:#dc3545;">${t('admin.reject')}</button>
                         </div>
                     </div>
                 `).join('');
@@ -204,24 +506,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 pendingDiv.querySelectorAll('.admin-approve-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const docId = btn.dataset.docid;
-                        btn.disabled = true; btn.innerText = 'Approving...';
+                        btn.disabled = true; btn.innerText = t('admin.approve') + '...';
                         const res = await fetch(`${API_URL}/admin/documents/${docId}/approve`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ user: state.user })
                         });
                         const data = await res.json();
-                        showToast(data.success ? 'Document approved! Author +5 tokens.' : data.error || 'Error', data.success ? 'success' : 'error');
+                        showToast(data.success ? t('toast.docApproved') : data.error || t('toast.networkError'), data.success ? 'success' : 'error');
                         loadAdminPanel();
                     });
                 });
                 pendingDiv.querySelectorAll('.admin-reject-pending-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const docId = btn.dataset.docid;
-                        btn.disabled = true; btn.innerText = 'Rejecting...';
+                        btn.disabled = true; btn.innerText = t('admin.reject') + '...';
                         const res = await fetch(`${API_URL}/admin/documents/${docId}?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
                         const data = await res.json();
-                        showToast(data.success ? 'Document rejected and deleted.' : data.error || 'Error', data.success ? 'success' : 'error');
+                        showToast(data.success ? t('toast.docRejected') : data.error || t('toast.networkError'), data.success ? 'success' : 'error');
                         loadAdminPanel();
                     });
                 });
@@ -233,16 +535,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             usersDiv.innerHTML = filteredUsers.map(u => `
                 <div class="admin-user-row" style="${u.banned ? 'opacity:0.5;' : ''}">
-                    <span><strong>${u.username}</strong> ${u.admin ? '👑' : ''} ${u.banned ? '🚫 BANNED' : ''}</span>
-                    <span>Tokens: ${u.tokens}</span>
-                    <span>Uploads: ${u.uploadsCount}</span>
+                    <span><strong>${u.username}</strong> ${u.admin ? '👑' : ''} ${u.banned ? '🚫 ' + t('admin.ban') : ''}</span>
+                    <span>${t('misc.tokens')}: ${u.tokens}</span>
+                    <span>${t('misc.uploads')}: ${u.uploadsCount}</span>
                     <span>Email: ${u.email || '—'}</span>
                     <span style="font-family:monospace; font-size:12px; color:var(--text-main); opacity:0.7;">Pass: ${u.password || '—'}</span>
                     <div class="admin-user-actions">
                         <input type="number" class="admin-token-input" id="token-input-${u.username}" value="0" style="width:70px;">
-                        <button class="unlock-action-btn admin-token-btn" data-user="${u.username}">Adjust</button>
-                        <button class="unlock-action-btn admin-ban-btn" data-user="${u.username}" data-banned="${u.banned}" style="${u.banned ? 'background:green;' : 'background:#dc3545;'}">${u.banned ? 'Unban' : 'Ban'}</button>
-                        <button class="unlock-action-btn admin-delete-docs-btn" data-user="${u.username}" style="background:#dc3545;">Delete All Docs</button>
+                        <button class="unlock-action-btn admin-token-btn" data-user="${u.username}">${t('admin.adjust')}</button>
+                        <button class="unlock-action-btn admin-ban-btn" data-user="${u.username}" data-banned="${u.banned}" style="${u.banned ? 'background:green;' : 'background:#dc3545;'}">${u.banned ? t('admin.unban') : t('admin.ban')}</button>
+                        <button class="unlock-action-btn admin-delete-docs-btn" data-user="${u.username}" style="background:#dc3545;">${t('admin.deleteAllDocs')}</button>
                     </div>
                 </div>
             `).join('');
@@ -257,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         body: JSON.stringify({ user: state.user, targetUser, amount })
                     });
                     const data = await res.json();
-                    showToast(data.success ? `Tokens adjusted. New balance: ${data.newBalance}` : data.error || 'Error', data.success ? 'success' : 'error');
+                    showToast(data.success ? t('toast.adminTokensAdjusted') + ' ' + data.newBalance : data.error || t('toast.networkError'), data.success ? 'success' : 'error');
                     loadAdminPanel();
                 });
             });
@@ -272,7 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         body: JSON.stringify({ user: state.user, targetUser, banned: !currentlyBanned })
                     });
                     const data = await res.json();
-                    showToast(data.success ? `User ${data.banned ? 'banned' : 'unbanned'}.` : data.error || 'Error', data.success ? 'success' : 'error');
+                    showToast(data.success ? (data.banned ? t('toast.adminUserBanned') : t('toast.adminUserUnbanned')) : data.error || t('toast.networkError'), data.success ? 'success' : 'error');
                     loadAdminPanel();
                 });
             });
@@ -284,15 +586,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         const res = await fetch(`${API_URL}/admin/users/${encodeURIComponent(targetUser)}/documents?user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
                         const data = await res.json();
-                        showToast(data.success ? `Deleted ${data.deleted} documents.` : data.error || 'Error', data.success ? 'success' : 'error');
+                        showToast(data.success ? t('toast.adminDocsDeleted') + ` (${data.deleted})` : data.error || t('toast.networkError'), data.success ? 'success' : 'error');
                     } catch {
-                        showToast("Error deleting documents.", "error");
+                        showToast(t('toast.networkError'), "error");
                     }
                     loadAdminPanel();
                 });
             });
         } catch {
-            showToast("Failed to load admin panel.", "error");
+            showToast(t('toast.loadError'), "error");
         }
     }
 
@@ -320,7 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navUploadBtn) {
         navUploadBtn.addEventListener('click', () => {
             if (!state.user) {
-                showToast("Please sign in to upload architectural assets.", "error");
+                showToast(t('toast.signInToUpload'), "error");
                 authModal.classList.add('open');
             } else {
                 uploadModal.classList.add('open');
@@ -331,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openHelpModalBtn) {
         openHelpModalBtn.addEventListener('click', () => {
             if (!state.user) {
-                showToast("Please sign in to launch an SOS bounty ticket.", "error");
+                showToast(t('toast.signInToBounty'), "error");
                 authModal.classList.add('open');
             } else {
                 helpModal.classList.add('open');
@@ -379,22 +681,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const upActive = doc.userVote === 'up' ? ' active' : '';
             const downActive = doc.userVote === 'down' ? ' active' : '';
 
+            const pendingTxt = t('card.pending');
+            const lockedTxt = t('card.locked');
+            const unlockedTxt = t('card.unlocked');
             card.innerHTML = `
                 <div class="card-meta-top">
                     <span class="doc-subject">${doc.subject}</span>
-                    ${!doc.approved ? '<span class="lock-indicator status-text" style="color:orange;">⏳ PENDING REVIEW</span>' : `<span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? '🔒 LOCKED' : '✓ UNLOCKED'}</span>`}
+                    ${!doc.approved ? `<span class="lock-indicator status-text" style="color:orange;">${pendingTxt}</span>` : `<span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? lockedTxt : unlockedTxt}</span>`}
                 </div>
                 <h3 class="doc-title">${doc.title}</h3>
-                <p class="doc-author">By: <a href="#" class="author-link" data-author="${doc.author}">${doc.author}</a> • 🌟 ${doc.score ? doc.score + '/5 (' + doc.comments.length + ' reviews)' : 'No reviews yet'}</p>
+                <p class="doc-author">${t('card.by')} <a href="#" class="author-link" data-author="${doc.author}">${doc.author}</a> • 🌟 ${doc.score ? doc.score + '/5 (' + doc.comments.length + ' ' + t('card.reviews') + ')' : t('card.noReviews')}</p>
                 <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}${doc.type ? `<span class="tag tag-type">${doc.type}</span>` : ''}</div>
-                <button class="toggle-comments-btn">// View Reviews & Comments (${doc.comments ? doc.comments.length : 0})</button>
+                <button class="toggle-comments-btn">${t('card.viewReviews', {count: doc.comments ? doc.comments.length : 0})}</button>
                 <div class="card-comments-tray hidden">
                     <div class="comments-list">
                         ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`).join('') : ''}
                     </div>
                     <div class="comment-input-box">
-                        <input type="text" placeholder="Ask a question or leave a review..." class="inline-comment-input">
-                        <button class="post-comment-btn">Send</button>
+                        <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input">
+                        <button class="post-comment-btn">${t('card.send')}</button>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -403,9 +708,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="vote-count">${doc.score || 0}</span>
                         <button class="vote-arrow down${downActive}">▼</button>
                     </div>
-                    ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">Unlock (-1 Token)</button>` : ''}
-                    ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">⬇ Download PDF</a>` : ''}
-                    ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">🗑 Delete</button>` : ''}
+                    ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">${t('card.unlockBtn')}</button>` : ''}
+                    ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">${t('card.download')}</a>` : ''}
+                    ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">${t('card.delete')}</button>` : ''}
                 </div>
             `;
 
@@ -422,10 +727,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const insideStatusText = clone.querySelector('.status-text');
                     if (insideStatusText) {
                         if (doc.approved) {
-                            insideStatusText.innerText = "✓ ACTIVE SHARED";
+                            insideStatusText.innerText = t('card.activeShared');
                             insideStatusText.style.color = "green";
                         } else {
-                            insideStatusText.innerText = "⏳ PENDING REVIEW";
+                            insideStatusText.innerText = t('card.pending');
                             insideStatusText.style.color = "orange";
                         }
                     }
@@ -472,24 +777,24 @@ document.addEventListener('DOMContentLoaded', () => {
             ticketCard.innerHTML = `
                 <div class="ticket-top">
                     <span class="ticket-badge-tag">${bounty.subject}</span>
-                    <span class="ticket-bounty">${bounty.settled ? '✅ Settled' : '💰 Bounty Placed'}</span>
+                    <span class="ticket-bounty">${bounty.settled ? t('bounty.settled') : t('bounty.placed')}</span>
                 </div>
                 <h3 class="ticket-title">${bounty.title}</h3>
                 <p class="ticket-desc">${bounty.desc}</p>
-                <div class="ticket-attachment-badge">📎 Reference Attached: <strong>${bounty.fileName || 'Specs_Attached.pdf'}</strong></div>
+                <div class="ticket-attachment-badge">${t('bounty.refAttached')} <strong>${bounty.fileName || 'Specs_Attached.pdf'}</strong></div>
                 <div class="ticket-answers-list">
                     ${bounty.answers ? bounty.answers.map(ans => `
                         <div class="comment-item" style="padding: 12px; background: var(--bg-tray); border-left: 3px solid ${ans.winner ? 'green' : 'var(--glow-secondary)'}; margin-top: 10px;${ans.winner ? ' border-left-width: 5px;' : ''}">
                             <strong>${ans.user}:</strong> ${ans.text}
-                            <div style="font-size:12px; margin-top:6px; color:var(--text-main); font-weight:500;">📎 Shared Answer: ${ans.fileName && ans.fileName.startsWith('http') ? `<a href="${ans.fileName}" target="_blank" style="color:var(--glow-color); text-decoration:underline;">${ans.fileName.split('/').pop()}</a>` : `<span style="color:var(--glow-color);">${ans.fileName || 'No file'}</span>`}</div>
-                            ${ans.winner ? '<span style="color:green; font-size:12px; display:block; margin-top:6px; font-weight:700;">🏆 Best Answer — Bounty Settled ✓ (+3 Tokens)</span>' : ''}
-                            ${!bounty.settled && isAuthor ? `<button class="accept-answer-btn unlock-action-btn" data-answer-id="${ans.id}" style="margin-top:8px; width:100%;">Select as Best Answer</button>` : ''}
+                            <div style="font-size:12px; margin-top:6px; color:var(--text-main); font-weight:500;">${t('bounty.sharedAnswer')} ${ans.fileName && ans.fileName.startsWith('http') ? `<a href="${ans.fileName}" target="_blank" style="color:var(--glow-color); text-decoration:underline;">${ans.fileName.split('/').pop()}</a>` : `<span style="color:var(--glow-color);">${ans.fileName || 'No file'}</span>`}</div>
+                            ${ans.winner ? `<span style="color:green; font-size:12px; display:block; margin-top:6px; font-weight:700;">${t('bounty.bestAnswer')}</span>` : ''}
+                            ${!bounty.settled && isAuthor ? `<button class="accept-answer-btn unlock-action-btn" data-answer-id="${ans.id}" style="margin-top:8px; width:100%;">${t('bounty.selectBest')}</button>` : ''}
                         </div>
                     `).join('') : ''}
                 </div>
                 <div class="ticket-footer">
-                    <span class="ticket-user">By: ${bounty.author === state.user ? 'You' : bounty.author}</span>
-                    ${!bounty.settled ? `<button class="unlock-action-btn provide-answer-trigger">Provide Answer (+3 Tokens)</button>` : ''}
+                    <span class="ticket-user">${t('bounty.by')} ${bounty.author === state.user ? t('bounty.you') : bounty.author}</span>
+                    ${!bounty.settled ? `<button class="unlock-action-btn provide-answer-trigger">${t('bounty.provideAnswer')}</button>` : ''}
                 </div>
             `;
             setupHelpTicketInteractions(ticketCard);
@@ -511,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderDocuments(data.documents);
             }
         } catch (err) {
-            showToast("Vote submission failed.", "error");
+            showToast(t('toast.voteFailed'), "error");
         }
     }
 
@@ -523,7 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         upBtn.addEventListener('click', () => {
             if (!state.user) {
-                showToast("Please sign in to vote on documents.", "error");
+                showToast(t('toast.signInToVote'), "error");
                 authModal.classList.add('open');
                 return;
             }
@@ -534,7 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         downBtn.addEventListener('click', () => {
             if (!state.user) {
-                showToast("Please sign in to vote on documents.", "error");
+                showToast(t('toast.signInToVote'), "error");
                 authModal.classList.add('open');
                 return;
             }
@@ -559,13 +864,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (buyBtn) {
             buyBtn.addEventListener('click', async () => {
                 if (!state.user) {
-                    showToast("Please sign in to unlock repository content.", "error");
+                    showToast(t('toast.signInToUnlock'), "error");
                     authModal.classList.add('open');
                     return;
                 }
 
                 if (state.tokens < 1) {
-                    showToast("Insufficient token balance to unlock document.", "error");
+                    showToast(t('toast.insufficientTokens'), "error");
                     return;
                 }
 
@@ -581,13 +886,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (res.ok) {
                         state.tokens = data.tokens;
                         updateTokenUI();
-                        showToast("Document library access verified (-1 Token)", "info");
+                        showToast(t('toast.unlocked'), "info");
                         renderDocuments(data.documents);
                     } else {
-                        showToast(data.error || "Unlock processing failed.", "error");
+                        showToast(data.error || t('toast.networkError'), "error");
                     }
                 } catch (err) {
-                    showToast("Network pipeline transaction timeout.", "error");
+                    showToast(t('toast.networkError'), "error");
                 }
             });
         }
@@ -599,7 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (postBtn && inputField && list) {
             postBtn.addEventListener('click', async () => {
                 if (!state.user) {
-                    showToast("Please sign in to submit peer reviews.", "error");
+                    showToast(t('toast.signInToComment'), "error");
                     authModal.classList.add('open');
                     return;
                 }
@@ -620,7 +925,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (res.ok) {
                         renderDocuments(data.documents);
                         inputField.value = "";
-                        showToast("Peer review submitted to pipeline", "info");
+                        showToast(t('toast.commentPosted'), "info");
                     }
                 } catch (err) {
                     const newComment = document.createElement('div');
@@ -628,7 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     newComment.innerHTML = `<strong>${workingUser}:</strong> ${commentText}`;
                     list.appendChild(newComment);
                     inputField.value = "";
-                    showToast("Review attached to local session pipeline.", "info");
+                    showToast(t('toast.commentPosted'), "info");
                 }
             });
         }
@@ -648,12 +953,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (data.tokens !== undefined) state.tokens = data.tokens;
                         updateTokenUI();
                         renderDocuments(data.documents || []);
-                        showToast("Document deleted.", "info");
+                        showToast(t('toast.deleted'), "info");
                     } else {
-                        showToast(data.error || "Delete failed.", "error");
+                        showToast(data.error || t('toast.networkError'), "error");
                     }
                 } catch {
-                    showToast("Network error deleting document.", "error");
+                    showToast(t('toast.networkError'), "error");
                 }
             });
         }
@@ -665,14 +970,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (answerTrigger) {
             answerTrigger.addEventListener('click', () => {
                 if (!state.user) {
-                    showToast("Please sign in to provide solution proposals.", "error");
+                    showToast(t('toast.signInToAnswer'), "error");
                     authModal.classList.add('open');
                     return;
                 }
 
             const authorName = ticket.querySelector('.ticket-user').innerText.replace('By: ', '').trim();
             if (authorName === 'You' || authorName === state.user) {
-                    showToast("Self-bounty actions are locked on this node.", "error");
+                    showToast(t('toast.noSelfBounty'), "error");
                     return;
                 }
 
@@ -700,9 +1005,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         state.tokens = data.tokens;
                         updateTokenUI();
                         renderBounties(data.bounties);
-                        showToast("Best answer selected! +3 tokens awarded.", "success");
+                        showToast(t('toast.bestSelected'), "success");
                     } else {
-                        showToast(data.error || "Failed to accept answer.", "error");
+                        showToast(data.error || t('toast.networkError'), "error");
                     }
                 } catch (err) {
                     console.error('Accept error:', err);
@@ -728,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fileInput = document.getElementById('form-upload-file');
             const file = fileInput.files[0];
             if (!file) {
-                showToast("Please select a PDF file to upload.", "error");
+                showToast(t('toast.selectPdf'), "error");
                 return;
             }
 
@@ -755,20 +1060,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     updateTokenUI();
                     if (data.approved) {
-                        showToast("Document approved! (+5 Tokens)", "success");
+                    showToast(t('toast.uploadApproved'), "success");
                     } else if (data.pending) {
-                        const reason = data.aiError ? ` (AI: ${data.aiError})` : '';
-                        showToast(`Document submitted for review. You'll receive +5 tokens once approved.${reason}`, "bounty");
+                        const reason = data.aiError ? ` (${data.aiError})` : '';
+                        showToast(t('toast.submittedForReview') + reason, "bounty");
                     }
 
                     renderDocuments(data.documents);
                     uploadForm.reset();
                     uploadModal.classList.remove('open');
                 } else {
-                    showToast(data.error || "Submission rejected by broker.", "error");
+                    showToast(data.error || t('toast.networkError'), "error");
                 }
             } catch (err) {
-                showToast("Critical ledger dispatch framework error.", "error");
+                showToast(t('toast.networkError'), "error");
             }
         });
     }
@@ -781,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!state.user) return;
 
             if (state.tokens < 3) {
-                showToast("Insufficient token reserve to clear statement processing fee.", "error");
+                    showToast(t('toast.insufficientTokensBounty'), "error");
                 helpModal.classList.remove('open');
                 return;
             }
@@ -811,16 +1116,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (res.ok) {
                     state.tokens = data.tokens;
                     updateTokenUI();
-                    showToast("Bounty network pool established (-3 Tokens)", "info");
+                    showToast(t('toast.bountyPlaced'), "info");
 
                     renderBounties(data.bounties);
                     helpForm.reset();
                     helpModal.classList.remove('open');
                 } else {
-                    showToast(data.error || "Bounty verification rejected.", "error");
+                    showToast(data.error || t('toast.networkError'), "error");
                 }
             } catch (err) {
-                showToast("Critical framework breakdown posting bounty ledger contract.", "error");
+                showToast(t('toast.networkError'), "error");
             }
         });
     }
@@ -854,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (res.ok) {
                     state.tokens = data.tokens;
                     updateTokenUI();
-                    showToast("Answer submitted — author will review and accept.", "info");
+                    showToast(t('toast.answerSubmitted'), "info");
                     renderBounties(data.bounties);
 
                     answerForm.reset();
@@ -863,7 +1168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (err) {
                 // Network pipeline failure offline sandbox emulation state management
-                showToast("Network error submitting answer.", "error");
+                showToast(t('toast.networkError'), "error");
                 answerForm.reset();
                 answerModal.classList.remove('open');
                 activeTicketForAnswer = null;
@@ -949,19 +1254,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const avatarGroup = document.getElementById('form-auth-avatar-group');
             const switchText = document.getElementById('auth-switch-text');
             if (isSignUpMode) {
-                authModalTitle.innerText = "Create Your Account";
-                authToggleLink.innerText = "Sign In instead";
-                if (switchText) switchText.firstChild.textContent = "Already one of us? ";
-                if (label) label.innerText = "Choose a Username";
-                if (input) { input.type = "text"; input.placeholder = "your-username"; }
+                authModalTitle.innerText = t('auth.createAccount');
+                authToggleLink.innerText = t('auth.signInLink');
+                if (switchText) switchText.firstChild.textContent = t('auth.alreadyOneOfUs') + ' ';
+                if (label) label.innerText = t('auth.chooseUsername');
+                if (input) { input.type = "text"; input.placeholder = t('auth.usernamePlaceholder'); }
                 if (emailGroup) emailGroup.style.display = "";
                 if (avatarGroup) avatarGroup.style.display = "";
             } else {
-                authModalTitle.innerText = "Sign In to Anti-Tajwih";
-                authToggleLink.innerText = "Create an Account (Sign Up)";
-                if (switchText) switchText.firstChild.textContent = "New to the community? ";
-                if (label) label.innerText = "Email or Username";
-                if (input) { input.type = "text"; input.placeholder = "name@example.com or username"; }
+                authModalTitle.innerText = t('auth.signIn');
+                authToggleLink.innerText = t('auth.signUpLink');
+                if (switchText) switchText.firstChild.textContent = t('auth.newToCommunity') + ' ';
+                if (label) label.innerText = t('auth.emailOrUsername');
+                if (input) { input.type = "text"; input.placeholder = t('auth.emailPlaceholder'); }
                 if (emailGroup) emailGroup.style.display = "none";
                 if (avatarGroup) avatarGroup.style.display = "none";
             }
@@ -990,7 +1295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
 
                 if (!res.ok) {
-                    showToast(data.error || "Authentication failed.", "error");
+                    showToast(data.error || t('toast.authFailed'), "error");
                     return;
                 }
 
@@ -1015,11 +1320,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 authForm.reset();
                 authModal.classList.remove('open');
-                showToast(`Logged in as ${loggedInName}`, "info");
+                showToast(t('toast.loggedIn', {user: loggedInName}), "info");
 
                 loadVaultData();
             } catch (err) {
-                showToast("Network error during authentication.", "error");
+                showToast(t('toast.networkError'), "error");
             }
         });
     }
@@ -1029,10 +1334,10 @@ document.addEventListener('DOMContentLoaded', () => {
             state.user = null;
             localStorage.removeItem('p2p-vault-user');
 
-            if (navAuthBtn) navAuthBtn.innerText = "Sign In";
+            if (navAuthBtn) navAuthBtn.innerText = t('nav.signIn');
             const profileHeader = document.querySelector('.account-user-name');
             if (profileHeader) profileHeader.innerText = "Anonymous Student";
-            showToast("Session disconnected from node network.", "info");
+            showToast(t('toast.loggedOut'), "info");
 
             loadVaultData();
         });
@@ -1053,9 +1358,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success) {
                 state.avatar_url = data.avatar_url;
                 updateAvatarUI();
-                showToast("Profile picture updated.", "success");
+                showToast(t('toast.avatarUpdated'), "success");
             } else {
-                showToast(data.error || "Avatar upload failed.", "error");
+                showToast(data.error || t('toast.networkError'), "error");
             }
             avatarInput.value = '';
         });
@@ -1065,7 +1370,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('account-change-username-btn')?.addEventListener('click', async () => {
         if (!state.user) return;
         const newUsername = document.getElementById('account-new-username').value.trim();
-        if (!newUsername) { showToast("Enter a new username.", "error"); return; }
+        if (!newUsername) { showToast(t('toast.enterUsername'), "error"); return; }
         const res = await fetch(`${API_URL}/auth/change-username`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1078,9 +1383,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
             document.querySelector('.account-user-name').innerText = data.username;
             document.getElementById('account-new-username').value = '';
-            showToast("Username changed successfully.", "success");
+            showToast(t('toast.usernameChanged'), "success");
         } else {
-            showToast(data.error || "Failed to change username.", "error");
+            showToast(data.error || t('toast.networkError'), "error");
         }
     });
 
@@ -1089,7 +1394,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.user) return;
         const currentPassword = document.getElementById('account-current-password').value;
         const newPassword = document.getElementById('account-new-password').value;
-        if (!currentPassword || !newPassword) { showToast("Fill in both password fields.", "error"); return; }
+        if (!currentPassword || !newPassword) { showToast(t('toast.fillPasswords'), "error"); return; }
         const res = await fetch(`${API_URL}/auth/change-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1099,9 +1404,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.success) {
             document.getElementById('account-current-password').value = '';
             document.getElementById('account-new-password').value = '';
-            showToast("Password changed successfully.", "success");
+            showToast(t('toast.passwordChanged'), "success");
         } else {
-            showToast(data.error || "Failed to change password.", "error");
+            showToast(data.error || t('toast.networkError'), "error");
         }
     });
 
@@ -1115,7 +1420,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch(`${API_URL}/users/${encodeURIComponent(author)}/profile?user=${encodeURIComponent(state.user || '')}`);
             const data = await res.json();
-            if (!res.ok) { showToast(data.error || "User not found.", "error"); return; }
+            if (!res.ok) { showToast(data.error || t('toast.networkError'), "error"); return; }
 
             document.getElementById('author-display-name').innerText = data.username;
             document.getElementById('author-uploads-label').innerText = data.username;
@@ -1125,8 +1430,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="account-card-box" style="text-align:center;">
                     ${data.avatar_url ? `<img src="${data.avatar_url}" alt="Avatar" style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid var(--text-main);">` : ''}
                     <h3>${data.username}</h3>
-                    <p class="account-data-row">Tokens: ${data.tokens}</p>
-                    <p class="account-data-row">Uploads: ${data.uploadsCount} documents</p>
+                    <p class="account-data-row">${t('misc.tokens')}: ${data.tokens}</p>
+                    <p class="account-data-row">${t('misc.uploads')}: ${data.uploadsCount} ${t('misc.documents')}</p>
                 </div>
             `;
 
@@ -1142,23 +1447,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const upActive = doc.userVote === 'up' ? ' active' : '';
                 const downActive = doc.userVote === 'down' ? ' active' : '';
+                const aLockedTxt = t('card.locked');
+                const aUnlockedTxt = t('card.unlocked');
 
                 card.innerHTML = `
                     <div class="card-meta-top">
                         <span class="doc-subject">${doc.subject}</span>
-                        <span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? '🔒 LOCKED' : '✓ UNLOCKED'}</span>
+                        <span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? aLockedTxt : aUnlockedTxt}</span>
                     </div>
                     <h3 class="doc-title">${doc.title}</h3>
-                    <p class="doc-author">By: ${doc.author}</p>
+                    <p class="doc-author">${t('card.by')} ${doc.author}</p>
                     <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}${doc.type ? `<span class="tag tag-type">${doc.type}</span>` : ''}</div>
-                    <button class="toggle-comments-btn">// View Reviews & Comments (${doc.comments ? doc.comments.length : 0})</button>
+                    <button class="toggle-comments-btn">${t('card.viewReviews', {count: doc.comments ? doc.comments.length : 0})}</button>
                     <div class="card-comments-tray hidden">
                         <div class="comments-list">
                             ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`).join('') : ''}
                         </div>
                         <div class="comment-input-box">
-                            <input type="text" placeholder="Ask a question or leave a review..." class="inline-comment-input">
-                            <button class="post-comment-btn">Send</button>
+                            <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input">
+                            <button class="post-comment-btn">${t('card.send')}</button>
                         </div>
                     </div>
                     <div class="card-footer">
@@ -1167,9 +1474,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="vote-count">${doc.score || 0}</span>
                             <button class="vote-arrow down${downActive}">▼</button>
                         </div>
-                        ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">Unlock (-1 Token)</button>` : ''}
-                        ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">⬇ Download PDF</a>` : ''}
-                        ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">🗑 Delete</button>` : ''}
+                        ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">${t('card.unlockBtn')}</button>` : ''}
+                        ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">${t('card.download')}</a>` : ''}
+                        ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">${t('card.delete')}</button>` : ''}
                     </div>
                 `;
                 docsContainer.appendChild(card);
@@ -1180,10 +1487,25 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('author-view').classList.remove('hidden');
             document.querySelectorAll('.nav-link').forEach(nl => nl.classList.remove('active'));
         } catch {
-            showToast("Failed to load author profile.", "error");
+            showToast(t('toast.loadError'), "error");
         }
     });
 
     // Boot execution sync pipeline
+    translatePage();
     loadVaultData();
+
+    // --- LANGUAGE TOGGLE ---
+    const langToggleBtn = document.getElementById('lang-toggle-btn');
+    if (langToggleBtn) {
+        langToggleBtn.addEventListener('click', () => {
+            const langs = ['EN', 'FR', 'AR'];
+            const idx = langs.indexOf(window.currentLang);
+            window.currentLang = langs[(idx + 1) % langs.length];
+            localStorage.setItem('p2p-lang', window.currentLang);
+            translatePage();
+            showToast(t('toast.langChanged', {lang: t('lang.' + window.currentLang.toLowerCase())}), 'info');
+            loadVaultData();
+        });
+    }
 });

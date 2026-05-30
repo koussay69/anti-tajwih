@@ -144,6 +144,29 @@ body {
     border-color: var(--text-main);
 }
 
+/* Language Toggle Button UI */
+.lang-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border-grey);
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    color: var(--text-main);
+    font-family: monospace;
+    letter-spacing: 0.5px;
+}
+
+.lang-toggle-btn:hover {
+    transform: scale(1.05);
+    border-color: var(--text-main);
+}
+
 .token-badge {
     background: var(--bg-tray);
     color: var(--text-main);
@@ -857,6 +880,11 @@ body {
         padding: 4px 8px;
     }
 
+    .lang-toggle-btn {
+        font-size: 11px;
+        padding: 4px 6px;
+    }
+
     .upload-btn {
         font-size: 11px;
         padding: 6px 10px;
@@ -1011,6 +1039,61 @@ body {
         font-size: 11px;
         padding: 5px 8px;
     }
+}
+
+/* --- RTL Support for Arabic --- */
+[dir="rtl"] .navbar {
+    direction: rtl;
+}
+[dir="rtl"] .nav-links {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .nav-actions {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .multi-column-layout {
+    direction: rtl;
+}
+[dir="rtl"] .card-footer {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .voting-system {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .comment-input-box {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .ticket-footer {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .help-desk-header-flex {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .modal-box {
+    text-align: right;
+}
+[dir="rtl"] .modal-close-btn {
+    right: auto;
+    left: 25px;
+}
+[dir="rtl"] .admin-user-row {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .admin-user-actions {
+    margin-left: 0;
+    margin-right: auto;
+}
+[dir="rtl"] .admin-stats-row {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .filter-bar {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .doc-tags {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .card-meta-top {
+    flex-direction: row-reverse;
 }
 
 @media (max-width: 480px) {

@@ -21,26 +21,28 @@
         </div>
 
         <nav class="nav-links">
-            <a href="#" class="nav-link active" data-target="browse-view">Browse</a>
-            <a href="#" class="nav-link" data-target="saved-view">Saved</a>
-            <a href="#" class="nav-link" data-target="uploads-view">My Uploads</a>
-            <a href="#" class="nav-link" data-target="help-view">Help Desk</a>
-            <a href="#" class="nav-link hidden admin-link" data-target="admin-view" id="admin-nav-link">Admin Panel</a>
+            <a href="#" class="nav-link active" data-target="browse-view" data-i18n="nav.browse">Browse</a>
+            <a href="#" class="nav-link" data-target="saved-view" data-i18n="nav.saved">Saved</a>
+            <a href="#" class="nav-link" data-target="uploads-view" data-i18n="nav.myUploads">My Uploads</a>
+            <a href="#" class="nav-link" data-target="help-view" data-i18n="nav.helpDesk">Help Desk</a>
+            <a href="#" class="nav-link hidden admin-link" data-target="admin-view" id="admin-nav-link" data-i18n="nav.adminPanel">Admin Panel</a>
         </nav>
 
         <div class="nav-actions">
             <!-- THEME SWITCHER TOGGLE -->
             <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle Theme">🌓</button>
+            <!-- LANGUAGE TOGGLE -->
+            <button id="lang-toggle-btn" class="lang-toggle-btn" aria-label="Toggle Language">EN</button>
 
             <div class="token-badge">
-                <span id="global-token-count">0</span> <span class="token-label">Tokens</span>
+                <span id="global-token-count">0</span> <span class="token-label" data-i18n="nav.tokens">Tokens</span>
             </div>
-            <button class="upload-btn" id="nav-upload-btn">+ Upload</button>
-            <button class="auth-btn" id="nav-auth-btn">Sign In</button>
+            <button class="upload-btn" id="nav-upload-btn" data-i18n="nav.upload">+ Upload</button>
+            <button class="auth-btn" id="nav-auth-btn" data-i18n="nav.signIn">Sign In</button>
             <a href="#" class="account-trigger" id="nav-account-btn" data-target="account-view">
                 <span class="avatar-placeholder" id="nav-avatar-placeholder"></span>
                 <img id="nav-avatar-img" src="" alt="" style="width:28px; height:28px; border-radius:50%; object-fit:cover; display:none; vertical-align:middle;">
-                <span id="nav-account-text">Account</span>
+                <span id="nav-account-text" data-i18n="nav.account">Account</span>
             </a>
         </div>
     </header>
@@ -52,11 +54,11 @@
             <div class="brand-logo-placeholder">
                 <span class="brackets">[</span> Anti-Tajwih <span class="brackets">]</span>
             </div>
-            <p>P2P Academic Vault. Note uploads earn 5 tokens. Library unlocks cost 1 token. Check reviews and comments
+            <p data-i18n="hero.desc">P2P Academic Vault. Note uploads earn 5 tokens. Library unlocks cost 1 token. Check reviews and comments
                 below to verify document quality before purchase.</p>
 
             <div class="search-container">
-                <input type="text" id="search-input" placeholder="Search by subject, module, or keyword...">
+                <input type="text" id="search-input" data-i18n-placeholder="hero.searchPlaceholder" placeholder="Search by subject, module, or keyword...">
                 <button class="search-submit">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -66,19 +68,19 @@
             </div>
             <div class="filter-bar">
                 <select id="filter-filiere" class="filter-select">
-                    <option value="">Filière (all)</option>
+                    <option value="" data-i18n="filter.filiere">Filière (all)</option>
                     <option>MP</option>
                     <option>PT</option>
                     <option>PC</option>
                     <option>BG</option>
                 </select>
                 <select id="filter-niveau" class="filter-select">
-                    <option value="">Niveau (all)</option>
+                    <option value="" data-i18n="filter.niveau">Niveau (all)</option>
                     <option>1ère</option>
                     <option>2ème</option>
                 </select>
                 <select id="filter-matiere" class="filter-select">
-                    <option value="">Matière (all)</option>
+                    <option value="" data-i18n="filter.matiere">Matière (all)</option>
                     <option>Analyse</option>
                     <option>Algèbre</option>
                     <option>MSI</option>
@@ -92,13 +94,13 @@
                     <option>Anglais</option>
                 </select>
                 <select id="filter-type" class="filter-select">
-                    <option value="">Type (all)</option>
+                    <option value="" data-i18n="filter.type">Type (all)</option>
                     <option>DS</option>
                     <option>Examen</option>
                     <option>Série</option>
                     <option>Cours</option>
                 </select>
-                <button id="clear-filters" class="clear-filters-btn">Clear</button>
+                <button id="clear-filters" class="clear-filters-btn" data-i18n="filter.clear">Clear</button>
             </div>
         </section>
 
@@ -106,8 +108,8 @@
             <!-- Left Side: Document Feed -->
             <div class="feed-column">
                 <div class="section-header">
-                    <span class="section-tag">// ARCHIVE FEED</span>
-                    <h2>Trending Documents</h2>
+                    <span class="section-tag" data-i18n="section.archiveFeed">// ARCHIVE FEED</span>
+                    <h2 data-i18n="section.trending">Trending Documents</h2>
                 </div>
 
                 <div class="doc-grid" id="primary-feed-target"></div>
@@ -119,11 +121,11 @@
     <div id="saved-view" class="view-section hidden">
         <main class="container">
             <div class="section-header">
-                <span class="section-tag">// YOUR COLLECTION</span>
-                <h2>Saved Documents</h2>
+                <span class="section-tag" data-i18n="section.yourCollection">// YOUR COLLECTION</span>
+                <h2 data-i18n="section.savedDocuments">Saved Documents</h2>
             </div>
             <div id="saved-docs-target-container" class="doc-grid">
-                <p class="empty-state-notice" id="no-saved-placeholder">You haven't saved or unlocked any documents yet.
+                <p class="empty-state-notice" id="no-saved-placeholder" data-i18n="section.savedEmpty">You haven't saved or unlocked any documents yet.
                 </p>
             </div>
         </main>
@@ -133,11 +135,11 @@
     <div id="uploads-view" class="view-section hidden">
         <main class="container">
             <div class="section-header">
-                <span class="section-tag">// CONTRIBUTIONS</span>
-                <h2>Your Uploaded Files</h2>
+                <span class="section-tag" data-i18n="section.contributions">// CONTRIBUTIONS</span>
+                <h2 data-i18n="section.yourUploads">Your Uploaded Files</h2>
             </div>
             <div id="user-uploads-target-container" class="doc-grid">
-                <p class="empty-state-notice" id="no-uploads-placeholder">Share your notes to earn tokens.</p>
+                <p class="empty-state-notice" id="no-uploads-placeholder" data-i18n="section.uploadsEmpty">Share your notes to earn tokens.</p>
             </div>
         </main>
     </div>
@@ -147,10 +149,10 @@
         <main class="container">
             <div class="section-header help-desk-header-flex">
                 <div>
-                    <span class="section-tag">// SOS EMERGENCY ROOM</span>
-                    <h2>Personal Problem Statements</h2>
+                    <span class="section-tag" data-i18n="section.sos">// SOS EMERGENCY ROOM</span>
+                    <h2 data-i18n="section.problems">Personal Problem Statements</h2>
                 </div>
-                <button class="ask-help-trigger-btn" id="open-help-modal-btn">Post a Problem (-3 Tokens)</button>
+                <button class="ask-help-trigger-btn" id="open-help-modal-btn" data-i18n="bounty.postProblem">Post a Problem (-3 Tokens)</button>
             </div>
             <div id="help-board-grid" class="help-grid-layout"></div>
         </main>
@@ -160,8 +162,8 @@
     <div id="account-view" class="view-section hidden">
         <main class="container">
             <div class="section-header">
-                <span class="section-tag">// USER PROFILE</span>
-                <h2>Account Settings</h2>
+                <span class="section-tag" data-i18n="section.userProfile">// USER PROFILE</span>
+                <h2 data-i18n="section.accountSettings">Account Settings</h2>
             </div>
             <div class="account-card-box">
                 <div id="account-avatar-section" style="text-align:center; margin-bottom:15px;">
@@ -169,41 +171,41 @@
                     <div id="account-avatar-placeholder" style="width:100px; height:100px; border-radius:50%; background:var(--bg-tray); margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:36px; color:var(--text-muted); border:2px dashed var(--text-muted);">?</div>
                     <div style="margin-top:8px;">
                         <input type="file" id="account-avatar-input" accept=".jpg,.jpeg,image/jpeg" style="display:none;">
-                        <button class="unlock-action-btn" id="account-avatar-btn" style="font-size:12px; padding:4px 12px;">Change Photo</button>
+                        <button class="unlock-action-btn" id="account-avatar-btn" style="font-size:12px; padding:4px 12px;" data-i18n="account.changePhoto">Change Photo</button>
                     </div>
                 </div>
-                <h3 class="account-user-name">Anonymous Student</h3>
-                <p class="account-data-row">Available Balance: <span id="account-token-display">0</span> Tokens</p>
-                <p class="account-data-row">Total Uploads: <span id="account-upload-display">0</span> Documents</p>
+                <h3 class="account-user-name" data-i18n="account.anonymous">Anonymous Student</h3>
+                <p class="account-data-row"><span data-i18n="account.balance">Available Balance:</span> <span id="account-token-display">0</span> <span data-i18n="misc.tokens">Tokens</span></p>
+                <p class="account-data-row"><span data-i18n="account.totalUploads">Total Uploads:</span> <span id="account-upload-display">0</span> <span data-i18n="misc.documents">Documents</span></p>
 
                 <div style="margin-top:20px; border-top:1px solid var(--glass-border); padding-top:20px;">
-                    <h4 style="margin-bottom:10px;">📊 Your Stats</h4>
-                    <p class="account-data-row">Profile Visits: <span id="account-visits">0</span></p>
-                    <p class="account-data-row">Files Downloaded: <span id="account-downloads">0</span></p>
-                    <p class="account-data-row">Total Upvotes Received: <span id="account-upvotes">0</span></p>
-                    <p class="account-data-row">Total Downvotes Received: <span id="account-downvotes">0</span></p>
+                    <h4 style="margin-bottom:10px;" data-i18n="account.yourStats">📊 Your Stats</h4>
+                    <p class="account-data-row"><span data-i18n="account.profileVisits">Profile Visits:</span> <span id="account-visits">0</span></p>
+                    <p class="account-data-row"><span data-i18n="account.filesDownloaded">Files Downloaded:</span> <span id="account-downloads">0</span></p>
+                    <p class="account-data-row"><span data-i18n="account.upvotesReceived">Total Upvotes Received:</span> <span id="account-upvotes">0</span></p>
+                    <p class="account-data-row"><span data-i18n="account.downvotesReceived">Total Downvotes Received:</span> <span id="account-downvotes">0</span></p>
                 </div>
 
                 <div style="margin-top:20px; border-top:1px solid var(--glass-border); padding-top:20px;">
-                    <h4 style="margin-bottom:10px;">⚙ Settings</h4>
+                    <h4 style="margin-bottom:10px;" data-i18n="account.settings">⚙ Settings</h4>
                     <div class="form-group">
-                        <label>Change Username</label>
+                        <label data-i18n="account.changeUsername">Change Username</label>
                         <div style="display:flex; gap:8px;">
-                            <input type="text" id="account-new-username" placeholder="New username" style="flex:1; padding:8px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--glass-border); border-radius:4px;">
-                            <button class="unlock-action-btn" id="account-change-username-btn" style="white-space:nowrap;">Save</button>
+                            <input type="text" id="account-new-username" data-i18n-placeholder="account.newUsernamePlaceholder" placeholder="New username" style="flex:1; padding:8px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--glass-border); border-radius:4px;">
+                            <button class="unlock-action-btn" id="account-change-username-btn" style="white-space:nowrap;" data-i18n="account.save">Save</button>
                         </div>
                     </div>
                     <div class="form-group" style="margin-top:12px;">
-                        <label>Change Password</label>
+                        <label data-i18n="account.changePassword">Change Password</label>
                         <div style="display:flex; flex-direction:column; gap:6px;">
-                            <input type="password" id="account-current-password" placeholder="Current password" autocomplete="new-password" style="padding:8px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--glass-border); border-radius:4px;">
-                            <input type="password" id="account-new-password" placeholder="New password" autocomplete="new-password" style="padding:8px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--glass-border); border-radius:4px;">
-                            <button class="unlock-action-btn" id="account-change-password-btn">Change Password</button>
+                            <input type="password" id="account-current-password" data-i18n-placeholder="account.currentPasswordPlaceholder" placeholder="Current password" autocomplete="new-password" style="padding:8px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--glass-border); border-radius:4px;">
+                            <input type="password" id="account-new-password" data-i18n-placeholder="account.newPasswordPlaceholder" placeholder="New password" autocomplete="new-password" style="padding:8px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--glass-border); border-radius:4px;">
+                            <button class="unlock-action-btn" id="account-change-password-btn" data-i18n="account.changePassword">Change Password</button>
                         </div>
                     </div>
                 </div>
 
-                <button class="unlock-action-btn" id="logout-mock-btn" style="width: 100%; margin-top:20px; background:#dc3545; color:white;">Log Out</button>
+                <button class="unlock-action-btn" id="logout-mock-btn" style="width: 100%; margin-top:20px; background:#dc3545; color:white;" data-i18n="account.logOut">Log Out</button>
             </div>
         </main>
     </div>
@@ -212,20 +214,20 @@
     <div id="admin-view" class="view-section hidden">
         <main class="container">
             <div class="section-header">
-                <span class="section-tag">// ADMIN</span>
-                <h2>Admin Panel</h2>
+                <span class="section-tag" data-i18n="section.admin">// ADMIN</span>
+                <h2 data-i18n="section.adminPanel">Admin Panel</h2>
             </div>
             <div id="admin-stats" class="admin-stats-row"></div>
             <div class="section-header" style="margin-top:30px;">
-                <span class="section-tag">// PENDING REVIEWS</span>
-                <h2>Awaiting Approval</h2>
+                <span class="section-tag" data-i18n="section.pendingReviews">// PENDING REVIEWS</span>
+                <h2 data-i18n="section.awaitingApproval">Awaiting Approval</h2>
             </div>
             <div id="admin-pending-docs"></div>
             <div class="section-header" style="margin-top:30px;">
-                <span class="section-tag">// USER MANAGEMENT</span>
-                <h2>All Users</h2>
+                <span class="section-tag" data-i18n="section.userManagement">// USER MANAGEMENT</span>
+                <h2 data-i18n="section.allUsers">All Users</h2>
             </div>
-            <input type="text" id="admin-user-search" placeholder="Search users by username..." style="width:100%; padding:12px; margin-bottom:12px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--text-main);">
+            <input type="text" id="admin-user-search" data-i18n-placeholder="admin.searchUsers" placeholder="Search users by username..." style="width:100%; padding:12px; margin-bottom:12px; background:var(--bg-tray); color:var(--text-main); border:1px solid var(--text-main);">
             <div id="admin-users-list"></div>
         </main>
     </div>
@@ -234,13 +236,13 @@
     <div id="author-view" class="view-section hidden">
         <main class="container">
             <div class="section-header">
-                <span class="section-tag">// AUTHOR PROFILE</span>
+                <span class="section-tag" data-i18n="section.authorProfile">// AUTHOR PROFILE</span>
                 <h2 id="author-display-name">Author</h2>
             </div>
             <div id="author-profile" style="margin-bottom:20px;"></div>
             <div class="section-header">
-                <span class="section-tag">// UPLOADS</span>
-                <h2>Documents by <span id="author-uploads-label">this author</span></h2>
+                <span class="section-tag" data-i18n="section.authorUploads">// UPLOADS</span>
+                <h2><span data-i18n="author.documentsBy">Documents by</span> <span id="author-uploads-label">this author</span></h2>
             </div>
             <div class="doc-grid" id="author-docs-target"></div>
         </main>
@@ -253,30 +255,29 @@
             <button class="modal-close-btn" id="close-auth-modal">×</button>
             <div class="modal-header">
                 <span class="section-tag">// IDENTITY GATEWAY</span>
-                <h2 id="auth-modal-title">Sign In to Anti-Tajwih</h2>
+                <h2 id="auth-modal-title" data-i18n="auth.signIn">Sign In to Anti-Tajwih</h2>
             </div>
             <form id="auth-form" class="modal-form">
                 <div class="form-group">
-                    <label id="form-auth-label">Personal Email Address</label>
-                    <input type="email" id="form-auth-input" placeholder="name@example.com" required>
+                    <label id="form-auth-label" data-i18n="auth.emailOrUsername">Email or Username</label>
+                    <input type="email" id="form-auth-input" data-i18n-placeholder="auth.emailPlaceholder" placeholder="name@example.com or username" required>
                 </div>
                 <div class="form-group" id="form-auth-email-group" style="display:none;">
-                    <label>Email Address</label>
+                    <label data-i18n="auth.email">Email Address</label>
                     <input type="email" id="form-auth-email" placeholder="name@example.com">
                 </div>
                 <div class="form-group" id="form-auth-avatar-group" style="display:none;">
-                    <label>Profile Picture (JPG)</label>
+                    <label data-i18n="auth.avatar">Profile Picture (JPG)</label>
                     <input type="file" id="form-auth-avatar" accept=".jpg,.jpeg,image/jpeg">
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="form-auth-password" placeholder="••••••••" autocomplete="new-password" required>
+                    <label data-i18n="auth.password">Password</label>
+                    <input type="password" id="form-auth-password" data-i18n-placeholder="auth.password" placeholder="••••••••" autocomplete="new-password" required>
                 </div>
-                <button type="submit" class="modal-submit-btn">Access Vault</button>
+                <button type="submit" class="modal-submit-btn" data-i18n="auth.accessVault">Access Vault</button>
             </form>
             <div class="modal-footer-switch">
-                <p id="auth-switch-text">New to the community? <a href="#" id="auth-toggle-link">Create an Account (Sign
-                        Up)</a></p>
+                <p id="auth-switch-text"><span data-i18n="auth.newToCommunity">New to the community?</span> <a href="#" id="auth-toggle-link" data-i18n="auth.signUpLink">Create an Account (Sign Up)</a></p>
             </div>
         </div>
     </div>
@@ -286,22 +287,22 @@
         <div class="modal-box">
             <button class="modal-close-btn" id="close-upload-modal">×</button>
             <div class="modal-header">
-                <span class="section-tag">// SHARE CONTENT</span>
-                <h2>Upload Academic Asset</h2>
+                <span class="section-tag" data-i18n="upload.title">// SHARE CONTENT</span>
+                <h2 data-i18n="upload.heading">Upload Academic Asset</h2>
             </div>
             <form id="upload-form" class="modal-form">
                 <div class="form-group">
-                    <label>Document Title</label>
+                    <label data-i18n="upload.docTitle">Document Title</label>
                     <input type="text" id="form-doc-title" placeholder="e.g., Midterm Cheat Sheet" required>
                 </div>
                 <div class="form-group">
-                    <label>Subject / Module Name</label>
+                    <label data-i18n="upload.subject">Subject / Module Name</label>
                     <input type="text" id="form-doc-subject" placeholder="e.g., Organic Chemistry" required>
                 </div>
                 <div class="form-group">
-                    <label>Filière</label>
+                    <label data-i18n="upload.filiere">Filière</label>
                     <select id="form-doc-filiere" required>
-                        <option value="">-- Select --</option>
+                        <option value="" data-i18n="upload.select">-- Select --</option>
                         <option>MP</option>
                         <option>PT</option>
                         <option>PC</option>
@@ -309,17 +310,17 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Niveau</label>
+                    <label data-i18n="upload.niveau">Niveau</label>
                     <select id="form-doc-niveau" required>
-                        <option value="">-- Select --</option>
+                        <option value="" data-i18n="upload.select">-- Select --</option>
                         <option>1ère</option>
                         <option>2ème</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Matière</label>
+                    <label data-i18n="upload.matiere">Matière</label>
                     <select id="form-doc-matiere" required>
-                        <option value="">-- Select --</option>
+                        <option value="" data-i18n="upload.select">-- Select --</option>
                         <option>Analyse</option>
                         <option>Algèbre</option>
                         <option>MSI</option>
@@ -334,9 +335,9 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Type de fichier</label>
+                    <label data-i18n="upload.typeFile">Type de fichier</label>
                     <select id="form-doc-type" required>
-                        <option value="">-- Select --</option>
+                        <option value="" data-i18n="upload.select">-- Select --</option>
                         <option>DS</option>
                         <option>Examen</option>
                         <option>Série</option>
@@ -344,11 +345,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Select PDF File</label>
+                    <label data-i18n="upload.file">Select PDF File</label>
                     <!-- FIXED: Added id="form-upload-file" for script file-parsing reference -->
                     <input type="file" id="form-upload-file" accept=".pdf" required class="dashed-file-input">
                 </div>
-                <button type="submit" class="modal-submit-btn">Submit & Earn 5 Tokens</button>
+                <button type="submit" class="modal-submit-btn" data-i18n="upload.submit">Submit & Earn 5 Tokens</button>
             </form>
         </div>
     </div>
@@ -358,28 +359,28 @@
         <div class="modal-box">
             <button class="modal-close-btn" id="close-help-modal">×</button>
             <div class="modal-header">
-                <span class="section-tag">// SOS FORM</span>
-                <h2>Request Emergency Assistance</h2>
+                <span class="section-tag" data-i18n="help.title">// SOS FORM</span>
+                <h2 data-i18n="help.heading">Request Emergency Assistance</h2>
             </div>
             <form id="help-form" class="modal-form">
                 <div class="form-group">
-                    <label>Problem Topic or Class</label>
+                    <label data-i18n="help.topic">Problem Topic or Class</label>
                     <input type="text" id="form-help-subject" placeholder="e.g., Linear Algebra" required>
                 </div>
                 <div class="form-group">
-                    <label>Problem Brief Summary</label>
+                    <label data-i18n="help.summary">Problem Brief Summary</label>
                     <input type="text" id="form-help-title" placeholder="e.g., Eigenvector calculation error" required>
                 </div>
                 <div class="form-group">
-                    <label>Detailed Question Requirements</label>
+                    <label data-i18n="help.details">Detailed Question Requirements</label>
                     <input type="text" id="form-help-desc" placeholder="Explain what steps you got stuck on..."
                         required>
                 </div>
                 <div class="form-group">
-                    <label>Upload Problem / Reference PDF</label>
+                    <label data-i18n="help.file">Upload Problem / Reference PDF</label>
                     <input type="file" id="form-help-file" accept=".pdf" required class="dashed-file-input">
                 </div>
-                <button type="submit" class="modal-submit-btn">Post Request (-3 Tokens)</button>
+                <button type="submit" class="modal-submit-btn" data-i18n="help.submit">Post Request (-3 Tokens)</button>
             </form>
         </div>
     </div>
@@ -389,20 +390,21 @@
         <div class="modal-box">
             <button class="modal-close-btn" id="close-answer-modal">×</button>
             <div class="modal-header">
-                <span class="section-tag">// PROVIDE SOLUTION</span>
-                <h2>Fulfill Bounty Request</h2>
+                <span class="section-tag" data-i18n="answer.title">// PROVIDE SOLUTION</span>
+                <h2 data-i18n="answer.heading">Fulfill Bounty Request</h2>
             </div>
             <form id="answer-form" class="modal-form">
                 <div class="form-group">
-                    <label>Walkthrough Explanation or Notes</label>
+                    <label data-i18n="answer.walkthrough">Walkthrough Explanation or Notes</label>
                     <input type="text" id="form-answer-desc"
+                        data-i18n-placeholder="answer.walkthroughPlaceholder"
                         placeholder="Write down structural advice or summary guide..." required>
                 </div>
                 <div class="form-group">
-                    <label>Upload Verification / Solution PDF</label>
+                    <label data-i18n="answer.file">Upload Verification / Solution PDF</label>
                     <input type="file" id="form-answer-file" accept=".pdf" required class="dashed-file-input">
                 </div>
-                <button type="submit" class="modal-submit-btn">Transmit Solution & Claim Bounty</button>
+                <button type="submit" class="modal-submit-btn" data-i18n="answer.submit">Transmit Solution & Claim Bounty</button>
             </form>
         </div>
     </div>
