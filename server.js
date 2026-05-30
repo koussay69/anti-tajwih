@@ -5,7 +5,7 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
-const pdfParse = require('pdf-parse');
+const pdfjsLib = require('pdfjs-dist/legacy/build/pdf');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -304,7 +304,7 @@ app.get('/api/vault-data', async (req, res) => {
   });
 });
 
-// --- AI CONTENT CHECK (Groq) ---
+// --- AI CONTENT CHECK (Groq + pdfjs-dist) ---
 async function checkDocumentContent(pdfBuffer, metadata) {
   const key = process.env.GROQ_API_KEY;
   if (!key) {
@@ -312,11 +312,17 @@ async function checkDocumentContent(pdfBuffer, metadata) {
     return null;
   }
   try {
-    const pdfData = await pdfParse(pdfBuffer);
-    const text = (pdfData.text || '').trim();
+    // Extract text using pdfjs-dist
+    const doc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) }).promise;
+    let text = '';
+    for (let i = 1; i <= Math.min(doc.numPages, 5); i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(item => item.str).join(' ') + '\n';
+    }
+    text = text.trim();
     if (text.length < 20) {
-      console.error(`AI check: insufficient text (${text.length} chars), likely scanned`);
-      return { error: `Only ${text.length} chars extracted — scanned PDF?` };
+      return { error: `Only ${text.length} chars extracted — scanned or blank PDF?` };
     }
     const prompt = `You are a content moderator for an academic study platform. Users upload PDF documents to share educational materials.
 
@@ -353,9 +359,7 @@ Set isAcademic to false if content doesn't match the declared metadata or is non
       return { error: `Groq API: ${json.error?.message || response.status}` };
     }
     const content = json?.choices?.[0]?.message?.content || '';
-    if (!content) {
-      return { error: 'Groq returned empty content' };
-    }
+    if (!content) return { error: 'Groq returned empty content' };
     console.log('Groq response:', content.substring(0, 300));
     const jsonMatch = content.match(/\{.*\}/s);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
@@ -364,6 +368,7 @@ Set isAcademic to false if content doesn't match the declared metadata or is non
     console.error('AI check error:', err.message);
     return { error: err.message };
   }
+}
 }
 
 // --- TEST ENDPOINT for AI key ---
