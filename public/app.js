@@ -190,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <h3 class="doc-title">${doc.title}</h3>
                 <p class="doc-author">By: ${doc.author} • 🌟 ${doc.score ? doc.score + '/5 (' + doc.comments.length + ' reviews)' : 'No reviews yet'}</p>
+                <div class="doc-tags">${doc.filiere ? `<span class="tag">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag">${doc.matiere}</span>` : ''}</div>
                 <button class="toggle-comments-btn">// View Reviews & Comments (${doc.comments ? doc.comments.length : 0})</button>
                 <div class="card-comments-tray hidden">
                     <div class="comments-list">
@@ -515,6 +516,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const titleVal = document.getElementById('form-doc-title').value;
             const subjectVal = document.getElementById('form-doc-subject').value;
+            const filiereVal = document.getElementById('form-doc-filiere').value;
+            const niveauVal = document.getElementById('form-doc-niveau').value;
+            const matiereVal = document.getElementById('form-doc-matiere').value;
             const fileInput = document.getElementById('form-upload-file');
             const file = fileInput.files[0];
             if (!file) {
@@ -525,6 +529,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData();
             formData.append('title', titleVal);
             formData.append('subject', subjectVal);
+            formData.append('filiere', filiereVal);
+            formData.append('niveau', niveauVal);
+            formData.append('matiere', matiereVal);
             formData.append('author', state.user);
             formData.append('file', file);
 
@@ -653,22 +660,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- LOCAL SEARCH ENGINE ---
+    function applyFilters() {
+        const query = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
+        const filterFiliere = document.getElementById('filter-filiere')?.value || '';
+        const filterNiveau = document.getElementById('filter-niveau')?.value || '';
+        const filterMatiere = document.getElementById('filter-matiere')?.value || '';
+        const browseCards = document.querySelectorAll('#browse-view .feed-column .doc-card, #primary-feed-target .doc-card');
+
+        browseCards.forEach(card => {
+            const titleText = card.querySelector('.doc-title')?.innerText.toLowerCase() || '';
+            const subjectText = card.querySelector('.doc-subject')?.innerText.toLowerCase() || '';
+            const tags = card.querySelectorAll('.tag');
+            const tagTexts = Array.from(tags).map(t => t.innerText);
+
+            const matchesSearch = !query || titleText.includes(query) || subjectText.includes(query);
+            const matchesFiliere = !filterFiliere || tagTexts.includes(filterFiliere);
+            const matchesNiveau = !filterNiveau || tagTexts.includes(filterNiveau);
+            const matchesMatiere = !filterMatiere || tagTexts.includes(filterMatiere);
+
+            if (matchesSearch && matchesFiliere && matchesNiveau && matchesMatiere) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
+
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            const browseCards = document.querySelectorAll('#browse-view .feed-column .doc-card, #primary-feed-target .doc-card');
+        searchInput.addEventListener('input', applyFilters);
+    }
 
-            browseCards.forEach(card => {
-                const titleText = card.querySelector('.doc-title')?.innerText.toLowerCase() || '';
-                const subjectText = card.querySelector('.doc-subject')?.innerText.toLowerCase() || '';
+    ['filter-filiere', 'filter-niveau', 'filter-matiere'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', applyFilters);
+    });
 
-                if (titleText.includes(query) || subjectText.includes(query)) {
-                    card.classList.remove('hidden');
-                } else {
-                    card.classList.add('hidden');
-                }
-            });
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            document.getElementById('filter-filiere').value = '';
+            document.getElementById('filter-niveau').value = '';
+            document.getElementById('filter-matiere').value = '';
+            applyFilters();
         });
     }
 

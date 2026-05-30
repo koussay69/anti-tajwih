@@ -132,7 +132,7 @@ app.get('/api/vault-data', async (req, res) => {
 
 // --- UPLOAD DOCUMENT ---
 app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
-  const { title, subject, author } = req.body;
+  const { title, subject, author, filiere, niveau, matiere } = req.body;
   if (!author) return res.status(401).json({ error: "Authentication required." });
 
   const normalizedName = author.trim().toLowerCase();
@@ -155,7 +155,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   await supabase.from('users').update({ tokens: profile.tokens + 5, uploadsCount: profile.uploadsCount + 1 }).eq('username', normalizedName);
 
   const docId = `doc-${Date.now()}`;
-  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash });
+  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere });
 
   const updatedProfile = await getUserProfile(normalizedName);
   res.json({ success: true, tokens: updatedProfile.tokens, documents: await getDocumentsWithLockState(normalizedName) });

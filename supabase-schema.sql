@@ -21,7 +21,10 @@ CREATE TABLE IF NOT EXISTS documents (
   author TEXT NOT NULL,
   score INTEGER DEFAULT 0,
   file_path TEXT,
-  file_hash TEXT
+  file_hash TEXT,
+  filiere TEXT,
+  niveau TEXT,
+  matiere TEXT
 );
 
 CREATE TABLE IF NOT EXISTS comments (

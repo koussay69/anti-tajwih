@@ -289,6 +289,53 @@ body {
     cursor: pointer;
 }
 
+.filter-bar {
+    max-width: 550px;
+    margin: 12px auto 0;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.filter-select {
+    background: var(--bg-tray);
+    color: var(--text-main);
+    border: 1px solid var(--text-main);
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 100px;
+}
+
+.clear-filters-btn {
+    background: transparent;
+    color: var(--glow-color);
+    border: 1px solid var(--glow-color);
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.doc-tags {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.tag {
+    background: var(--glow-secondary);
+    color: #000;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* --- Glassmorphic Document Cards System --- */
 .section-header {
     margin-bottom: 25px;

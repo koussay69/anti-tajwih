@@ -62,6 +62,35 @@
                     </svg>
                 </button>
             </div>
+            <div class="filter-bar">
+                <select id="filter-filiere" class="filter-select">
+                    <option value="">Filière (all)</option>
+                    <option>MP</option>
+                    <option>PT</option>
+                    <option>PC</option>
+                    <option>BG</option>
+                </select>
+                <select id="filter-niveau" class="filter-select">
+                    <option value="">Niveau (all)</option>
+                    <option>1ère</option>
+                    <option>2ème</option>
+                </select>
+                <select id="filter-matiere" class="filter-select">
+                    <option value="">Matière (all)</option>
+                    <option>Analyse</option>
+                    <option>Algèbre</option>
+                    <option>MSI</option>
+                    <option>Auto</option>
+                    <option>CM</option>
+                    <option>FM</option>
+                    <option>Physique</option>
+                    <option>Chimie</option>
+                    <option>Informatique</option>
+                    <option>Français</option>
+                    <option>Anglais</option>
+                </select>
+                <button id="clear-filters" class="clear-filters-btn">Clear</button>
+            </div>
         </section>
 
         <main class="container multi-column-layout">
@@ -182,6 +211,41 @@
                 <div class="form-group">
                     <label>Subject / Module Name</label>
                     <input type="text" id="form-doc-subject" placeholder="e.g., Organic Chemistry" required>
+                </div>
+                <div class="form-group">
+                    <label>Filière</label>
+                    <select id="form-doc-filiere" required>
+                        <option value="">-- Select --</option>
+                        <option>MP</option>
+                        <option>PT</option>
+                        <option>PC</option>
+                        <option>BG</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Niveau</label>
+                    <select id="form-doc-niveau" required>
+                        <option value="">-- Select --</option>
+                        <option>1ère</option>
+                        <option>2ème</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Matière</label>
+                    <select id="form-doc-matiere" required>
+                        <option value="">-- Select --</option>
+                        <option>Analyse</option>
+                        <option>Algèbre</option>
+                        <option>MSI</option>
+                        <option>Auto</option>
+                        <option>CM</option>
+                        <option>FM</option>
+                        <option>Physique</option>
+                        <option>Chimie</option>
+                        <option>Informatique</option>
+                        <option>Français</option>
+                        <option>Anglais</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Select PDF File</label>
