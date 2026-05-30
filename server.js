@@ -376,8 +376,9 @@ app.get('/api/admin/ai-test', async (req, res) => {
       const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const json = await resp.json();
       if (!resp.ok) {
+        const fullError = json.error || json;
         if (modelName === modelsToTry[modelsToTry.length - 1]) {
-          return res.json({ ok: false, model: modelName, status: resp.status, error: json.error?.message || JSON.stringify(json), key: keyPreview });
+          return res.json({ ok: false, model: modelName, status: resp.status, error: fullError.message || JSON.stringify(fullError), key: keyPreview, full: fullError });
         }
         continue;
       }
