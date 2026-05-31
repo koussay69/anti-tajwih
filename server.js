@@ -91,7 +91,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const normalizedEmail = googleEmail.toLowerCase();
     let existingUser = await getUserProfile(normalizedEmail);
     if (!existingUser) {
-      const { data: byEmail } = await supabase.from('users').select('*').eq('email', normalizedEmail).maybeSingle();
+      const { data: byEmail } = await supabase.from('users').select('*').ilike('email', normalizedEmail).maybeSingle();
       existingUser = byEmail;
     }
     if (existingUser) {
@@ -245,7 +245,7 @@ app.post('/api/auth/register-google', async (req, res) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   // Check if Google email already has an account
-  const existingByEmail = await supabase.from('users').select('username').eq('email', normalizedEmail).maybeSingle();
+  const existingByEmail = await supabase.from('users').select('*').ilike('email', normalizedEmail).maybeSingle();
   if (existingByEmail) return res.status(400).json({ error: "This Google account is already linked to user '" + (existingByEmail.username || 'unknown') + "'. Sign in instead." });
 
   const existing = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
