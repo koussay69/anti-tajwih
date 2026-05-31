@@ -1864,15 +1864,14 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
     translatePage();
     loadVaultData();
 
-    // Auto-refresh polling every 20s (silent, no toast on success)
+    // Auto-refresh polling every 10s (silent, no toast on success)
     let pollLock = false;
     setInterval(async () => {
         if (pollLock) return;
-        if (document.querySelector('.comment-edit-form[style*="display: block"], .comment-edit-form[style*="display:block"]')) return;
         pollLock = true;
         await loadVaultData();
         pollLock = false;
-    }, 20000);
+    }, 10000);
 
     // Refresh also on visibility change (tab switch)
     document.addEventListener('visibilitychange', () => {
