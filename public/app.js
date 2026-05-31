@@ -1686,8 +1686,7 @@ document.addEventListener('DOMContentLoaded', () => {
           'client_id=' + encodeURIComponent(gisClientId) +
           '&redirect_uri=' + encodeURIComponent(callbackUrl) +
           '&response_type=code' +
-          '&scope=' + encodeURIComponent('openid profile email') +
-          '&access_type=offline';
+          '&scope=' + encodeURIComponent('openid profile email');
         window.location.href = url;
       });
     }

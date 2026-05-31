@@ -73,7 +73,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
         code,
         client_id: clientId,
         client_secret: clientSecret,
-        redirect_uri: req.protocol + '://' + req.get('host') + '/api/auth/google/callback',
+        redirect_uri: (req.protocol + '://' + req.get('host') + '/api/auth/google/callback').replace(/\/$/, ''),
         grant_type: 'authorization_code'
       })
     });
