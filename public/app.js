@@ -1612,11 +1612,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const rawValue = document.getElementById('form-auth-input').value;
             const password = document.getElementById('form-auth-password').value;
-            const email = document.getElementById('form-auth-email')?.value || '';
+            const emailInput = document.getElementById('form-auth-email');
+            const email = emailInput?.value || '';
             const parsedName = isSignUpMode ? rawValue.trim() : rawValue.trim();
+            const isGoogleSignUp = isSignUpMode && emailInput?.hasAttribute('readonly');
 
-            const endpoint = isSignUpMode ? `${API_URL}/auth/register` : `${API_URL}/auth/login`;
-            const body = isSignUpMode
+            const endpoint = isGoogleSignUp ? `${API_URL}/auth/register-google` : isSignUpMode ? `${API_URL}/auth/register` : `${API_URL}/auth/login`;
+            const body = isGoogleSignUp
+                ? { email, username: parsedName, password }
+                : isSignUpMode
                 ? { username: parsedName, password, email }
                 : { username: parsedName, password };
 
@@ -1693,6 +1697,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Google callback response
     const urlParams = new URLSearchParams(window.location.search);
     const googleUser = urlParams.get('google_user');
+    const googleEmail = urlParams.get('google_email');
     const googleError = urlParams.get('google_error');
     if (googleError) {
       showToast('Google sign-in failed: ' + googleError, 'error');
@@ -1707,6 +1712,17 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(t('toast.loggedIn', {user: googleUser}), 'info');
       loadVaultData();
       window.history.replaceState({}, '', window.location.pathname);
+    }
+    if (googleEmail) {
+      window.history.replaceState({}, '', window.location.pathname);
+      // Open auth modal in sign-up mode with email pre-filled
+      setTimeout(() => {
+        if (!isSignUpMode) authToggleLink.click();
+        document.getElementById('form-auth-email').value = googleEmail;
+        document.getElementById('form-auth-email').setAttribute('readonly', true);
+        authModal.classList.add('open');
+        showToast('Choose a username and password to complete sign-up', 'info');
+      }, 100);
     }
 
     if (logoutMockBtn) {

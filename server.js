@@ -87,23 +87,15 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const googleEmail = payload.email;
     if (!googleEmail) return res.redirect('/?google_error=no_email');
 
-    // Lookup or create user
-    let user = await getUserProfile(googleEmail.toLowerCase());
-    if (!user) {
-      let newName = googleEmail.toLowerCase();
-      let existing = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
-      let counter = 1;
-      while (existing) {
-        newName = `${googleEmail.toLowerCase()}_${counter}`;
-        existing = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
-        counter++;
-      }
-      await supabase.from('users').insert({ username: newName, email: googleEmail, password: '', tokens: 0, uploadsCount: 0 });
-      user = await getUserProfile(newName);
+    // Lookup user or ask to sign up
+    const user = await getUserProfile(googleEmail.toLowerCase());
+    if (user) {
+      if (user.banned) return res.redirect('/?google_error=banned');
+      return res.redirect('/?google_user=' + encodeURIComponent(user.username));
     }
-    if (user.banned) return res.redirect('/?google_error=banned');
 
-    res.redirect('/?google_user=' + encodeURIComponent(user.username));
+    // New Google user — redirect to sign-up with email pre-filled
+    res.redirect('/?google_email=' + encodeURIComponent(googleEmail));
   } catch {
     res.redirect('/?google_error=server_error');
   }
@@ -237,6 +229,26 @@ app.post('/api/auth/register', async (req, res) => {
 
   await supabase.from('users').insert({ username: normalizedName, email: email || null, password, tokens: 0, uploadsCount: 0 });
   res.json({ success: true });
+});
+
+app.post('/api/auth/register-google', async (req, res) => {
+  const { email, username, password } = req.body;
+  if (!email || !username || !password) {
+    return res.status(400).json({ error: "Email, username, and password are required." });
+  }
+  const normalizedName = username.trim().toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // Verify this email was just authenticated by Google (check if it's the first time)
+  const existing = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
+  if (existing) return res.status(400).json({ error: "Username already taken." });
+
+  // Check if Google email already has an account
+  const existingEmail = await supabase.from('users').select('username').eq('email', normalizedEmail).maybeSingle();
+  if (existingEmail) return res.status(400).json({ error: "This Google account is already linked to a user." });
+
+  await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
+  res.json({ success: true, username: normalizedName });
 });
 
 app.post('/api/auth/login', async (req, res) => {
