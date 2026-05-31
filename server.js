@@ -80,7 +80,9 @@ async function getDocumentsWithLockState(normalizedUsername) {
 
   const result = [];
   for (const doc of docs) {
-    const { data: comments } = await supabase.from('comments').select('user, text').eq('doc_id', doc.id);
+    const { data: comments } = await supabase.from('comments').select('user, text, rating').eq('doc_id', doc.id);
+    const ratings = (comments || []).map(c => c.rating).filter(r => r > 0);
+    const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length) : 0;
     const isAuthor = normalizedUsername && doc.author.toLowerCase() === normalizedUsername;
 
     const docVotes = (allVotes || []).filter(v => v.doc_id === doc.id);
@@ -104,7 +106,8 @@ async function getDocumentsWithLockState(normalizedUsername) {
       niveau: doc.niveau,
       matiere: doc.matiere,
       type: doc.type,
-      approved: doc.approved === true
+      approved: doc.approved === true,
+      avgRating
     });
   }
   return result;
@@ -537,11 +540,12 @@ app.post('/api/documents/unlock', async (req, res) => {
 
 // --- COMMENT ---
 app.post('/api/documents/comment', async (req, res) => {
-  const { docId, text, user } = req.body;
+  const { docId, text, user, rating } = req.body;
   const { data: doc } = await supabase.from('documents').select('id').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
 
-  await supabase.from('comments').insert({ doc_id: docId, user: user || "Anonymous", text });
+  const r = Math.max(0, Math.min(5, parseInt(rating) || 0));
+  await supabase.from('comments').insert({ doc_id: docId, user: user || "Anonymous", text, rating: r });
 
   const normalizedName = user ? user.trim().toLowerCase() : null;
   res.json({ success: true, documents: await getDocumentsWithLockState(normalizedName) });

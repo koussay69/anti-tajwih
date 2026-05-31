@@ -780,6 +780,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- DYNAMIC CARD BUILDER GENERATORS ---
+    function renderStars(rating) {
+        const full = '★';
+        const empty = '☆';
+        const r = Math.round(rating);
+        return full.repeat(r) + empty.repeat(5 - r);
+    }
+
     function renderDocuments(documents) {
         const targetContainer = document.getElementById('primary-feed-target');
         const myUploadsSection = document.getElementById('user-uploads-target-container');
@@ -816,7 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${!doc.approved ? `<span class="lock-indicator status-text" style="color:orange;">${pendingTxt}</span>` : `<span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? lockedTxt : unlockedTxt}</span>`}
                 </div>
                 <h3 class="doc-title">${doc.title}</h3>
-                <p class="doc-author">${t('card.by')} <a href="#" class="author-link" data-author="${doc.author}">${doc.author}</a> • 🌟 ${doc.score ? doc.score + '/5 (' + doc.comments.length + ' ' + t('card.reviews') + ')' : t('card.noReviews')}</p>
+                <p class="doc-author">${t('card.by')} <a href="#" class="author-link" data-author="${doc.author}">${doc.author}</a> • ${renderStars(doc.avgRating)} ${doc.avgRating ? doc.avgRating.toFixed(1) + '/5 (' + doc.comments.length + ' ' + t('card.reviews') + ')' : t('card.noReviews')}</p>
                 <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}${doc.type ? `<span class="tag tag-type">${doc.type}</span>` : ''}</div>
                 <button class="toggle-comments-btn">${t('card.viewReviews', {count: doc.comments ? doc.comments.length : 0})}</button>
                 <div class="card-comments-tray hidden">
@@ -824,6 +831,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`).join('') : ''}
                     </div>
                     <div class="comment-input-box">
+                        <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
+                            <span class="star-option" data-rating="1">☆</span><span class="star-option" data-rating="2">☆</span><span class="star-option" data-rating="3">☆</span><span class="star-option" data-rating="4">☆</span><span class="star-option" data-rating="5">☆</span>
+                        </div>
                         <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input">
                         <button class="post-comment-btn">${t('card.send')}</button>
                     </div>
@@ -1028,6 +1038,20 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleBtn.addEventListener('click', () => tray.classList.toggle('hidden'));
         }
 
+        const starSelector = card.querySelector('.star-selector');
+        let selectedRating = 0;
+        if (starSelector) {
+            const stars = starSelector.querySelectorAll('.star-option');
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    selectedRating = parseInt(star.dataset.rating);
+                    stars.forEach((s, i) => {
+                        s.textContent = i < selectedRating ? '★' : '☆';
+                    });
+                });
+            });
+        }
+
         if (postBtn && inputField && list) {
             postBtn.addEventListener('click', async () => {
                 if (!state.user) {
@@ -1045,13 +1069,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const res = await fetch(`${API_URL}/documents/comment`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ docId, text: commentText, user: workingUser })
+                        body: JSON.stringify({ docId, text: commentText, user: workingUser, rating: selectedRating })
                     });
                     const data = await res.json();
 
                     if (res.ok) {
                         renderDocuments(data.documents);
                         inputField.value = "";
+                        selectedRating = 0;
+                        if (starSelector) starSelector.querySelectorAll('.star-option').forEach(s => s.textContent = '☆');
                         showToast(t('toast.commentPosted'), "info");
                     }
                 } catch (err) {
@@ -1060,6 +1086,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     newComment.innerHTML = `<strong>${workingUser}:</strong> ${commentText}`;
                     list.appendChild(newComment);
                     inputField.value = "";
+                    selectedRating = 0;
+                    if (starSelector) starSelector.querySelectorAll('.star-option').forEach(s => s.textContent = '☆');
                     showToast(t('toast.commentPosted'), "info");
                 }
             });
@@ -1691,14 +1719,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? aLockedTxt : aUnlockedTxt}</span>
                     </div>
                     <h3 class="doc-title">${doc.title}</h3>
-                    <p class="doc-author">${t('card.by')} ${doc.author}</p>
+                    <p class="doc-author">${t('card.by')} ${doc.author} • ${renderStars(doc.avgRating)} ${doc.avgRating ? doc.avgRating.toFixed(1) + '/5 (' + doc.comments.length + ' ' + t('card.reviews') + ')' : t('card.noReviews')}</p>
                     <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}${doc.type ? `<span class="tag tag-type">${doc.type}</span>` : ''}</div>
                     <button class="toggle-comments-btn">${t('card.viewReviews', {count: doc.comments ? doc.comments.length : 0})}</button>
                     <div class="card-comments-tray hidden">
                         <div class="comments-list">
-                            ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`).join('') : ''}
+                        ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}</div>`).join('') : ''}
                         </div>
                         <div class="comment-input-box">
+                            <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
+                                <span class="star-option" data-rating="1">☆</span><span class="star-option" data-rating="2">☆</span><span class="star-option" data-rating="3">☆</span><span class="star-option" data-rating="4">☆</span><span class="star-option" data-rating="5">☆</span>
+                            </div>
                             <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input">
                             <button class="post-comment-btn">${t('card.send')}</button>
                         </div>
