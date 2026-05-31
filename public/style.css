@@ -952,27 +952,27 @@ body {
     }
 
     .token-badge {
-        font-size: 10px;
-        padding: 4px 10px;
+        font-size: 9px;
+        padding: 3px 8px;
     }
 
     .theme-toggle-btn {
-        font-size: 12px;
-        padding: 4px 8px;
+        font-size: 11px;
+        padding: 3px 6px;
     }
 
     .lang-toggle-btn {
-        font-size: 11px;
-        padding: 4px 6px;
+        font-size: 10px;
+        padding: 3px 5px;
     }
 
     .upload-btn {
-        font-size: 11px;
-        padding: 6px 10px;
+        font-size: 10px;
+        padding: 5px 8px;
     }
 
     .auth-btn {
-        font-size: 11px;
+        font-size: 10px;
     }
 
     .account-trigger {
@@ -1198,6 +1198,20 @@ body {
     .upload-btn {
         font-size: 10px;
         padding: 4px 8px;
+    }
+
+    .auth-btn {
+        font-size: 9px;
+    }
+
+    .theme-toggle-btn {
+        font-size: 10px;
+        padding: 2px 5px;
+    }
+
+    .lang-toggle-btn {
+        font-size: 9px;
+        padding: 2px 4px;
     }
 
     .brand-logo-placeholder {
