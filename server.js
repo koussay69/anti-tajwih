@@ -90,9 +90,10 @@ app.get('/api/auth/google/callback', async (req, res) => {
     // Lookup user by email or username
     const normalizedEmail = googleEmail.toLowerCase();
     let existingUser = await getUserProfile(normalizedEmail);
+    if (existingUser && !existingUser.username) existingUser = null;
     if (!existingUser) {
       const { data: byEmail } = await supabase.from('users').select('*').ilike('email', normalizedEmail).maybeSingle();
-      existingUser = byEmail;
+      existingUser = (byEmail && byEmail.username) ? byEmail : null;
     }
     if (existingUser) {
       if (existingUser.banned) return res.redirect('/?google_error=banned');
@@ -246,7 +247,13 @@ app.post('/api/auth/register-google', async (req, res) => {
 
   // Check if Google email already has an account
   const existingByEmail = await supabase.from('users').select('*').ilike('email', normalizedEmail).maybeSingle();
-  if (existingByEmail) return res.status(400).json({ error: "This Google account is already linked to user '" + (existingByEmail.username || 'unknown') + "'. Sign in instead." });
+  if (existingByEmail && existingByEmail.username) {
+    return res.status(400).json({ error: "This Google account is already linked to user '" + existingByEmail.username + "'. Sign in instead." });
+  }
+  // Orphaned record (email set but no username) — allow re-registration
+  if (existingByEmail && !existingByEmail.username) {
+    await supabase.from('users').delete().ilike('email', normalizedEmail);
+  }
 
   const existing = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
   if (existing) return res.status(400).json({ error: "Username '" + normalizedName + "' is already taken." });
