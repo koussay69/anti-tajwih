@@ -1668,12 +1668,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- GOOGLE SIGN-IN (OAuth access token flow) ---
-    const googleWrapper = document.getElementById('google-btn-wrapper');
+    // --- GOOGLE SIGN-IN (redirect flow) ---
     const googleBtn = document.getElementById('google-signin-btn');
-    if (googleWrapper && googleBtn) {
+    if (googleBtn) {
       let gisClientId = null;
-      let tokenClient = null;
       (async () => {
         try {
           const resp = await fetch(`${API_URL}/config`);
@@ -1681,48 +1679,35 @@ document.addEventListener('DOMContentLoaded', () => {
           gisClientId = cfg.googleClientId || null;
         } catch { /* no config */ }
       })();
-      const poll = setInterval(() => {
-        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && gisClientId) {
-          clearInterval(poll);
-          tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: gisClientId,
-            scope: 'openid profile email',
-            redirect_uri: 'postmessage',
-            callback: async (tokenResponse) => {
-              if (tokenResponse.error) {
-                showToast(tokenResponse.error, 'error');
-                return;
-              }
-              if (!tokenResponse.access_token) {
-                showToast('No access token received', 'error');
-                return;
-              }
-              try {
-                const res = await fetch(`${API_URL}/auth/google`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ accessToken: tokenResponse.access_token })
-                });
-                const data = await res.json();
-                if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
-                state.user = data.username;
-                localStorage.setItem('p2p-vault-user', data.username);
-                if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
-                const profileHeader = document.querySelector('.account-user-name');
-                if (profileHeader) profileHeader.innerText = data.username;
-                authModal.classList.remove('open');
-                showToast(t('toast.loggedIn', {user: data.username}), 'info');
-                loadVaultData();
-              } catch { showToast(t('toast.networkError'), 'error'); }
-            }
-          });
-        }
-      }, 200);
       googleBtn.addEventListener('click', () => {
         if (!gisClientId) { showToast('Google sign-in not configured', 'error'); return; }
-        if (!tokenClient) { showToast('Loading Google sign-in...', 'info'); return; }
-        tokenClient.requestAccessToken();
+        const callbackUrl = window.location.origin + '/api/auth/google/callback';
+        const url = 'https://accounts.google.com/o/oauth2/v2/auth?' +
+          'client_id=' + encodeURIComponent(gisClientId) +
+          '&redirect_uri=' + encodeURIComponent(callbackUrl) +
+          '&response_type=code' +
+          '&scope=' + encodeURIComponent('openid profile email') +
+          '&access_type=offline';
+        window.location.href = url;
       });
+    }
+    // Handle Google callback response
+    const urlParams = new URLSearchParams(window.location.search);
+    const googleUser = urlParams.get('google_user');
+    const googleError = urlParams.get('google_error');
+    if (googleError) {
+      showToast('Google sign-in failed: ' + googleError, 'error');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    if (googleUser && !state.user) {
+      state.user = googleUser;
+      localStorage.setItem('p2p-vault-user', googleUser);
+      if (navAuthBtn) navAuthBtn.innerText = `Hi, ${googleUser}`;
+      const profileHeader = document.querySelector('.account-user-name');
+      if (profileHeader) profileHeader.innerText = googleUser;
+      showToast(t('toast.loggedIn', {user: googleUser}), 'info');
+      loadVaultData();
+      window.history.replaceState({}, '', window.location.pathname);
     }
 
     if (logoutMockBtn) {

@@ -56,6 +56,58 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// Google OAuth callback (redirect flow)
+app.get('/api/auth/google/callback', async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.redirect('/?google_error=no_code');
+
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return res.redirect('/?google_error=not_configured');
+
+  try {
+    const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: req.protocol + '://' + req.get('host') + '/api/auth/google/callback',
+        grant_type: 'authorization_code'
+      })
+    });
+    const tokens = await tokenResp.json();
+    if (!tokenResp.ok) return res.redirect('/?google_error=token_exchange_failed');
+
+    // Decode the ID token JWT to get user info
+    const b64 = tokens.id_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(Buffer.from(b64, 'base64').toString());
+    const googleEmail = payload.email;
+    if (!googleEmail) return res.redirect('/?google_error=no_email');
+
+    // Lookup or create user
+    let user = await getUserProfile(googleEmail.toLowerCase());
+    if (!user) {
+      let newName = googleEmail.toLowerCase();
+      let existing = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
+      let counter = 1;
+      while (existing) {
+        newName = `${googleEmail.toLowerCase()}_${counter}`;
+        existing = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
+        counter++;
+      }
+      await supabase.from('users').insert({ username: newName, email: googleEmail, password: '', tokens: 0, uploadsCount: 0 });
+      user = await getUserProfile(newName);
+    }
+    if (user.banned) return res.redirect('/?google_error=banned');
+
+    res.redirect('/?google_user=' + encodeURIComponent(user.username));
+  } catch {
+    res.redirect('/?google_error=server_error');
+  }
+});
+
 // Auto-broadcast on any successful mutation
 app.use((req, res, next) => {
   if (req.method !== 'GET') {
