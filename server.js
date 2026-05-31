@@ -58,13 +58,19 @@ app.get('/api/config', (req, res) => {
 });
 
 // Google OAuth callback (redirect flow)
+function popupRedirect(res, params) {
+  const qs = Object.entries(params).map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
+  res.send('<!DOCTYPE html><html><body><script>if(window.opener)window.opener.location.href="/?' + qs + '";' +
+    'else window.location.href="/?' + qs + '";window.close()<\/script></body></html>');
+}
+
 app.get('/api/auth/google/callback', async (req, res) => {
   const { code } = req.query;
-  if (!code) return res.redirect('/?google_error=no_code');
+  if (!code) return popupRedirect(res, { google_error: 'no_code' });
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return res.redirect('/?google_error=not_configured');
+  if (!clientId || !clientSecret) return popupRedirect(res, { google_error: 'not_configured' });
 
   try {
     const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
@@ -79,13 +85,13 @@ app.get('/api/auth/google/callback', async (req, res) => {
       })
     });
     const tokens = await tokenResp.json();
-    if (!tokenResp.ok) return res.redirect('/?google_error=token_exchange_failed');
+    if (!tokenResp.ok) return popupRedirect(res, { google_error: 'token_exchange_failed' });
 
     // Decode the ID token JWT to get user info
     const b64 = tokens.id_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     const payload = JSON.parse(Buffer.from(b64, 'base64').toString());
     const googleEmail = payload.email;
-    if (!googleEmail) return res.redirect('/?google_error=no_email');
+    if (!googleEmail) return popupRedirect(res, { google_error: 'no_email' });
 
     // Lookup user by email or username
     const normalizedEmail = googleEmail.toLowerCase();
@@ -96,14 +102,14 @@ app.get('/api/auth/google/callback', async (req, res) => {
       existingUser = (byEmail && byEmail.username) ? byEmail : null;
     }
     if (existingUser) {
-      if (existingUser.banned) return res.redirect('/?google_error=banned');
-      return res.redirect('/?google_user=' + encodeURIComponent(existingUser.username));
+      if (existingUser.banned) return popupRedirect(res, { google_error: 'banned' });
+      return popupRedirect(res, { google_user: existingUser.username });
     }
 
     // New Google user — redirect to sign-up with email pre-filled
-    res.redirect('/?google_email=' + encodeURIComponent(googleEmail));
+    popupRedirect(res, { google_email: googleEmail });
   } catch {
-    res.redirect('/?google_error=server_error');
+    popupRedirect(res, { google_error: 'server_error' });
   }
 });
 
