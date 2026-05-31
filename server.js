@@ -538,16 +538,39 @@ app.post('/api/documents/unlock', async (req, res) => {
   res.json({ success: true, tokens: updatedProfile.tokens, documents: await getDocumentsWithLockState(normalizedName) });
 });
 
-// --- COMMENT ---
+// --- COMMENT (upsert + delete) ---
 app.post('/api/documents/comment', async (req, res) => {
   const { docId, text, user, rating } = req.body;
+  if (!docId) return res.status(400).json({ error: "docId required." });
   const { data: doc } = await supabase.from('documents').select('id').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
 
   const r = Math.max(0, Math.min(5, parseInt(rating) || 0));
-  await supabase.from('comments').insert({ doc_id: docId, user: user || "Anonymous", text, rating: r });
+  const commentUser = user || "Anonymous";
+
+  const { data: existing } = await supabase.from('comments').select('id').eq('doc_id', docId).eq('user', commentUser).maybeSingle();
+
+  if (existing) {
+    await supabase.from('comments').update({ text, rating: r }).eq('id', existing.id);
+  } else {
+    await supabase.from('comments').insert({ doc_id: docId, user: commentUser, text, rating: r });
+  }
 
   const normalizedName = user ? user.trim().toLowerCase() : null;
+  res.json({ success: true, documents: await getDocumentsWithLockState(normalizedName) });
+});
+
+app.delete('/api/documents/comment', async (req, res) => {
+  const { docId, user } = req.query;
+  if (!user) return res.status(401).json({ error: "Authentication required." });
+  if (!docId) return res.status(400).json({ error: "docId required." });
+
+  const { data: doc } = await supabase.from('documents').select('id').eq('id', docId).maybeSingle();
+  if (!doc) return res.status(404).json({ error: "Document not found." });
+
+  await supabase.from('comments').delete().eq('doc_id', docId).eq('user', user);
+
+  const normalizedName = user.trim().toLowerCase();
   res.json({ success: true, documents: await getDocumentsWithLockState(normalizedName) });
 });
 

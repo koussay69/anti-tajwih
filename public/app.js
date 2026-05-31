@@ -65,7 +65,7 @@ window.translations = {
     "toast.reportFailed":"Failed to submit report.",
     "card.pending":"⏳ PENDING REVIEW","card.locked":"🔒 LOCKED","card.unlocked":"✓ UNLOCKED","card.activeShared":"✓ ACTIVE SHARED",
     "card.viewReviews":"View Reviews & Comments ({count})","card.commentPlaceholder":"Ask a question or leave a review...",
-    "card.send":"Send","card.unlockBtn":"Unlock (-1 Token)","card.download":"⬇ Download PDF","card.delete":"🗑 Delete","card.report":"⚑ Report",
+    "card.send":"Send","card.unlockBtn":"Unlock (-1 Token)","card.download":"⬇ Download PDF","card.delete":"🗑 Delete","card.report":"⚑ Report","card.update":"Update","card.deleteComment":"Delete",
     "card.by":"By:","card.byYou":"You","card.reviews":"reviews","card.noReviews":"No reviews yet",
     "bounty.settled":"✅ Settled","bounty.placed":"💰 Bounty Placed","bounty.by":"By:","bounty.you":"You",
     "bounty.bestAnswer":"🏆 Best Answer — Bounty Settled ✓ (+3 Tokens)","bounty.sharedAnswer":"📎 Shared Answer:","bounty.refAttached":"📎 Reference Attached:",
@@ -97,7 +97,7 @@ window.translations = {
     "toast.syncFailed":"Sync failed. Running offline.",
     "toast.loadError":"Failed to load admin panel.",
     "toast.unlocked":"Document unlocked (-1 Token)",
-    "toast.commentPosted":"Peer review submitted.",
+    "toast.commentPosted":"Peer review submitted.","toast.commentDeleted":"Review deleted.",
     "toast.voteFailed":"Vote failed.",
     "toast.networkError":"Network error.",
     "toast.authFailed":"Authentication failed.",
@@ -171,7 +171,7 @@ window.translations = {
     "toast.reportFailed":"Échec du signalement.",
     "card.pending":"⏳ EN ATTENTE","card.locked":"🔒 VERROUILLÉ","card.unlocked":"✓ DÉVERROUILLÉ","card.activeShared":"✓ PUBLIÉ",
     "card.viewReviews":"Voir les Avis ({count})","card.commentPlaceholder":"Posez une question ou laissez un avis...",
-    "card.send":"Envoyer","card.unlockBtn":"Débloquer (-1 Jeton)","card.download":"⬇ Télécharger PDF","card.delete":"🗑 Supprimer","card.report":"⚑ Signaler",
+    "card.send":"Envoyer","card.unlockBtn":"Débloquer (-1 Jeton)","card.download":"⬇ Télécharger PDF","card.delete":"🗑 Supprimer","card.report":"⚑ Signaler","card.update":"Modifier","card.deleteComment":"Supprimer",
     "card.by":"Par :","card.byYou":"Vous","card.reviews":"avis","card.noReviews":"Aucun avis",
     "bounty.settled":"✅ Résolue","bounty.placed":"💰 Demande Active","bounty.by":"Par :","bounty.you":"Vous",
     "bounty.bestAnswer":"🏆 Meilleure Réponse — Demande Résolue ✓ (+3 Jetons)","bounty.sharedAnswer":"📎 Réponse fournie :","bounty.refAttached":"📎 Référence jointe :",
@@ -203,7 +203,7 @@ window.translations = {
     "toast.syncFailed":"Synchronisation échouée.",
     "toast.loadError":"Échec du chargement du panneau admin.",
     "toast.unlocked":"Document déverrouillé (-1 Jeton)",
-    "toast.commentPosted":"Avis soumis.",
+    "toast.commentPosted":"Avis soumis.","toast.commentDeleted":"Avis supprimé.",
     "toast.voteFailed":"Échec du vote.",
     "toast.networkError":"Erreur réseau.",
     "toast.authFailed":"Échec d'authentification.",
@@ -276,7 +276,7 @@ window.translations = {
     "toast.reportFailed":"فشل إرسال البلاغ.",
     "card.pending":"⏳ قيد المراجعة","card.locked":"🔒 مقفول","card.unlocked":"✓ مفتوح","card.activeShared":"✓ منشور",
     "card.viewReviews":"عرض التقييمات ({count})","card.commentPlaceholder":"اطرح سؤالاً أو اترك تقييماً...",
-    "card.send":"إرسال","card.unlockBtn":"فتح (نقطة واحدة)","card.download":"⬇ تحميل PDF","card.delete":"🗑 حذف","card.report":"⚑ إبلاغ",
+    "card.send":"إرسال","card.unlockBtn":"فتح (نقطة واحدة)","card.download":"⬇ تحميل PDF","card.delete":"🗑 حذف","card.report":"⚑ إبلاغ","card.update":"تعديل","card.deleteComment":"حذف",
     "card.by":"بواسطة :","card.byYou":"أنت","card.reviews":"تقييم","card.noReviews":"لا توجد تقييمات",
     "bounty.settled":"✅ تم الحل","bounty.placed":"💰 طلب نشط","bounty.by":"بواسطة :","bounty.you":"أنت",
     "bounty.bestAnswer":"🏆 أفضل إجابة — تمت التسوية ✓ (+3 نقاط)","bounty.sharedAnswer":"📎 الإجابة :","bounty.refAttached":"📎 المرجع :",
@@ -308,7 +308,7 @@ window.translations = {
     "toast.syncFailed":"فشل التزامن.",
     "toast.loadError":"فشل تحميل لوحة الإدارة.",
     "toast.unlocked":"تم فتح الوثيقة (-1 نقطة)",
-    "toast.commentPosted":"تم إرسال التقييم.",
+    "toast.commentPosted":"تم إرسال التقييم.","toast.commentDeleted":"تم حذف التقييم.",
     "toast.voteFailed":"فشل التصويت.",
     "toast.networkError":"خطأ في الشبكة.",
     "toast.authFailed":"فشل المصادقة.",
@@ -817,6 +817,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const pendingTxt = t('card.pending');
             const lockedTxt = t('card.locked');
             const unlockedTxt = t('card.unlocked');
+            const userComment = state.user && doc.comments ? doc.comments.find(c => c.user === state.user) : null;
+            const userRating = userComment ? userComment.rating : 0;
+            const userText = userComment ? userComment.text : '';
+            const starHtml = (function() {
+                let h = '';
+                for (let i = 1; i <= 5; i++) {
+                    h += `<span class="star-option" data-rating="${i}">${i <= userRating ? '★' : '☆'}</span>`;
+                }
+                return h;
+            })();
             card.innerHTML = `
                 <div class="card-meta-top">
                     <span class="doc-subject">${doc.subject}</span>
@@ -828,14 +838,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="toggle-comments-btn">${t('card.viewReviews', {count: doc.comments ? doc.comments.length : 0})}</button>
                 <div class="card-comments-tray hidden">
                     <div class="comments-list">
-                        ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.text}</div>`).join('') : ''}
+                        ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}</div>`).join('') : ''}
                     </div>
                     <div class="comment-input-box">
                         <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
-                            <span class="star-option" data-rating="1">☆</span><span class="star-option" data-rating="2">☆</span><span class="star-option" data-rating="3">☆</span><span class="star-option" data-rating="4">☆</span><span class="star-option" data-rating="5">☆</span>
+                            ${starHtml}
                         </div>
-                        <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input">
-                        <button class="post-comment-btn">${t('card.send')}</button>
+                        <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input" value="${userText ? userText.replace(/"/g, '&quot;') : ''}">
+                        <button class="post-comment-btn">${userComment ? t('card.update') : t('card.send')}</button>
+                        ${userComment ? `<button class="delete-comment-btn unlock-action-btn" style="background:#dc3545; margin-left:6px;">${t('card.deleteComment')}</button>` : ''}
                     </div>
                 </div>
                 <div class="card-footer">
@@ -1042,6 +1053,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let selectedRating = 0;
         if (starSelector) {
             const stars = starSelector.querySelectorAll('.star-option');
+            stars.forEach(s => { if (s.textContent === '★') selectedRating = s.dataset.rating; });
             stars.forEach(star => {
                 star.addEventListener('click', () => {
                     selectedRating = parseInt(star.dataset.rating);
@@ -1089,6 +1101,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedRating = 0;
                     if (starSelector) starSelector.querySelectorAll('.star-option').forEach(s => s.textContent = '☆');
                     showToast(t('toast.commentPosted'), "info");
+                }
+            });
+        }
+
+        const deleteCommentBtn = card.querySelector('.delete-comment-btn');
+        if (deleteCommentBtn) {
+            deleteCommentBtn.addEventListener('click', async () => {
+                if (!state.user) return;
+                try {
+                    const res = await fetch(`${API_URL}/documents/comment?docId=${docId}&user=${encodeURIComponent(state.user)}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (res.ok) {
+                        renderDocuments(data.documents);
+                        showToast(t('toast.commentDeleted'), 'info');
+                    }
+                } catch {
+                    showToast(t('toast.networkError'), 'error');
                 }
             });
         }
@@ -1712,7 +1741,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const downActive = doc.userVote === 'down' ? ' active' : '';
                 const aLockedTxt = t('card.locked');
                 const aUnlockedTxt = t('card.unlocked');
-
+                const aUserComment = state.user && doc.comments ? doc.comments.find(c => c.user === state.user) : null;
+                const aUserRating = aUserComment ? aUserComment.rating : 0;
+                const aUserText = aUserComment ? aUserComment.text : '';
+                const aStarHtml = (function() {
+                    let h = '';
+                    for (let i = 1; i <= 5; i++) {
+                        h += `<span class="star-option" data-rating="${i}">${i <= aUserRating ? '★' : '☆'}</span>`;
+                    }
+                    return h;
+                })();
                 card.innerHTML = `
                     <div class="card-meta-top">
                         <span class="doc-subject">${doc.subject}</span>
@@ -1728,10 +1766,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="comment-input-box">
                             <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
-                                <span class="star-option" data-rating="1">☆</span><span class="star-option" data-rating="2">☆</span><span class="star-option" data-rating="3">☆</span><span class="star-option" data-rating="4">☆</span><span class="star-option" data-rating="5">☆</span>
+                                ${aStarHtml}
                             </div>
-                            <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input">
-                            <button class="post-comment-btn">${t('card.send')}</button>
+                            <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input" value="${aUserText ? aUserText.replace(/"/g, '&quot;') : ''}">
+                            <button class="post-comment-btn">${aUserComment ? t('card.update') : t('card.send')}</button>
+                            ${aUserComment ? `<button class="delete-comment-btn unlock-action-btn" style="background:#dc3545; margin-left:6px;">${t('card.deleteComment')}</button>` : ''}
                         </div>
                     </div>
                     <div class="card-footer">
