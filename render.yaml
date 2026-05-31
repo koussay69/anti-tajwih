@@ -4,3 +4,6 @@ services:
     env: node
     buildCommand: npm install
     startCommand: node server.js
+    envVars:
+      - key: GOOGLE_CLIENT_ID
+        value: 91571016028-rgbra8nmi1bsfcd3v9htgd9kj4dmia11.apps.googleusercontent.com
