@@ -25,6 +25,7 @@ window.translations = {
     "auth.emailOrUsername":"Email or Username","auth.chooseUsername":"Choose a Username",
     "auth.email":"Email Address","auth.avatar":"Profile Picture (JPG)","auth.password":"Password",
     "auth.accessVault":"Access Vault","auth.emailPlaceholder":"name@example.com or username","auth.usernamePlaceholder":"your-username",
+    "auth.or":"or","auth.googleSignIn":"Continue with Google",
     "upload.title":"SHARE CONTENT","upload.heading":"Upload Academic Asset",
     "upload.docTitle":"Document Title","upload.subject":"Subject / Module Name",
     "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Select PDF File",
@@ -135,6 +136,7 @@ window.translations = {
     "auth.emailOrUsername":"Email ou Nom d'utilisateur","auth.chooseUsername":"Choisir un Nom d'utilisateur",
     "auth.email":"Adresse Email","auth.avatar":"Photo de Profil (JPG)","auth.password":"Mot de passe",
     "auth.accessVault":"Accéder au Coffre","auth.emailPlaceholder":"exemple@email.com ou pseudo","auth.usernamePlaceholder":"votre-pseudo",
+    "auth.or":"ou","auth.googleSignIn":"Continuer avec Google",
     "upload.title":"PARTAGER","upload.heading":"Publier un Document",
     "upload.docTitle":"Titre du Document","upload.subject":"Matière / Module",
     "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Choisir un PDF",
@@ -240,6 +242,7 @@ window.translations = {
     "auth.emailOrUsername":"البريد الإلكتروني أو اسم المستخدم","auth.chooseUsername":"اختر اسم مستخدم",
     "auth.email":"البريد الإلكتروني","auth.avatar":"صورة شخصية (JPG)","auth.password":"كلمة المرور",
     "auth.accessVault":"دخول إلى الخزنة","auth.emailPlaceholder":"example@email.com أو اسم المستخدم","auth.usernamePlaceholder":"اسم-المستخدم",
+    "auth.or":"أو","auth.googleSignIn":"المتابعة عبر Google",
     "upload.title":"مشاركة","upload.heading":"نشر وثيقة أكاديمية",
     "upload.docTitle":"عنوان الوثيقة","upload.subject":"المادة / الوحدة",
     "upload.filiere":"الشعبة","upload.niveau":"المستوى","upload.matiere":"المادة","upload.typeFile":"نوع الملف","upload.file":"اختيار ملف PDF",
@@ -1663,6 +1666,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+    }
+
+    // --- GOOGLE SIGN-IN ---
+    const googleBtn = document.getElementById('google-signin-btn');
+    if (googleBtn) {
+      (async () => {
+        try {
+          const configResp = await fetch(`${API_URL}/api/config`);
+          const config = await configResp.json();
+          if (config.googleClientId && typeof google !== 'undefined' && google.accounts) {
+            google.accounts.id.initialize({
+              client_id: config.googleClientId,
+              callback: async (response) => {
+                try {
+                  const res = await fetch(`${API_URL}/auth/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential })
+                  });
+                  const data = await res.json();
+                  if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
+                  state.user = data.username;
+                  localStorage.setItem('p2p-vault-user', data.username);
+                  if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
+                  const profileHeader = document.querySelector('.account-user-name');
+                  if (profileHeader) profileHeader.innerText = data.username;
+                  authModal.classList.remove('open');
+                  showToast(t('toast.loggedIn', {user: data.username}), 'info');
+                  loadVaultData();
+                } catch { showToast(t('toast.networkError'), 'error'); }
+              }
+            });
+            google.accounts.id.renderButton(googleBtn, { theme: 'outline', size: 'large', width: googleBtn.offsetWidth, text: 'continue_with', shape: 'rectangular' });
+          }
+        } catch { /* config not available, hide google button */ }
+      })();
     }
 
     if (logoutMockBtn) {

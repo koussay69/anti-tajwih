@@ -49,6 +49,13 @@ app.get('/events', (req, res) => {
   });
 });
 
+// Expose public config to frontend
+app.get('/api/config', (req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || ''
+  });
+});
+
 // Auto-broadcast on any successful mutation
 app.use((req, res, next) => {
   if (req.method !== 'GET') {
@@ -192,6 +199,44 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(403).json({ error: "Your account has been banned." });
   }
   res.json({ success: true, username: user.username });
+});
+
+// --- GOOGLE OAUTH ---
+app.post('/api/auth/google', async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) return res.status(400).json({ error: "Google credential required." });
+
+  try {
+    const verifyResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    if (!verifyResp.ok) return res.status(401).json({ error: "Invalid Google token." });
+    const payload = await verifyResp.json();
+    const googleEmail = payload.email;
+    const googleName = payload.name || googleEmail.split('@')[0];
+
+    if (!googleEmail) return res.status(400).json({ error: "Google account has no email." });
+
+    // Check if user exists
+    let user = await getUserProfile(googleEmail.toLowerCase());
+    if (!user) {
+      // Create new account with Google email as username
+      const baseName = googleName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      let newName = googleEmail.toLowerCase();
+      // If that username is taken, append numbers
+      let existing = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
+      let counter = 1;
+      while (existing) {
+        newName = `${googleEmail.toLowerCase()}_${counter}`;
+        existing = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
+        counter++;
+      }
+      await supabase.from('users').insert({ username: newName, email: googleEmail, password: '', tokens: 0, uploadsCount: 0 });
+      user = await getUserProfile(newName);
+    }
+    if (user.banned) return res.status(403).json({ error: "Your account has been banned." });
+    res.json({ success: true, username: user.username });
+  } catch {
+    res.status(500).json({ error: "Google authentication failed." });
+  }
 });
 
 // --- CHANGE USERNAME ---
