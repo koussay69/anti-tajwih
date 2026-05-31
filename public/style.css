@@ -559,6 +559,11 @@ body {
     border-color: #000 !important;
 }
 
+.star-selector .star-option,
+.star-display {
+    color: #f5b342;
+}
+
 /* --- Leaderboard Adjustments --- */
 .leaderboard-card {
     padding: 0;

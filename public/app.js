@@ -784,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const full = '★';
         const empty = '☆';
         const r = Math.round(rating);
-        return full.repeat(r) + empty.repeat(5 - r);
+        return `<span class="star-display">${full.repeat(r)}${empty.repeat(5 - r)}</span>`;
     }
 
     function renderDocuments(documents) {
