@@ -87,11 +87,16 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const googleEmail = payload.email;
     if (!googleEmail) return res.redirect('/?google_error=no_email');
 
-    // Lookup user or ask to sign up
-    const user = await getUserProfile(googleEmail.toLowerCase());
-    if (user) {
-      if (user.banned) return res.redirect('/?google_error=banned');
-      return res.redirect('/?google_user=' + encodeURIComponent(user.username));
+    // Lookup user by email or username
+    const normalizedEmail = googleEmail.toLowerCase();
+    let existingUser = await getUserProfile(normalizedEmail);
+    if (!existingUser) {
+      const { data: byEmail } = await supabase.from('users').select('*').eq('email', normalizedEmail).maybeSingle();
+      existingUser = byEmail;
+    }
+    if (existingUser) {
+      if (existingUser.banned) return res.redirect('/?google_error=banned');
+      return res.redirect('/?google_user=' + encodeURIComponent(existingUser.username));
     }
 
     // New Google user — redirect to sign-up with email pre-filled
@@ -241,7 +246,7 @@ app.post('/api/auth/register-google', async (req, res) => {
 
   // Check if Google email already has an account
   const existingByEmail = await supabase.from('users').select('username').eq('email', normalizedEmail).maybeSingle();
-  if (existingByEmail) return res.status(400).json({ error: "This Google account is already linked to user '" + existingByEmail.username + "'. Sign in instead." });
+  if (existingByEmail) return res.status(400).json({ error: "This Google account is already linked to user '" + (existingByEmail.username || 'unknown') + "'. Sign in instead." });
 
   const existing = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
   if (existing) return res.status(400).json({ error: "Username '" + normalizedName + "' is already taken." });
