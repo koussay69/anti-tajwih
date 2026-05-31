@@ -83,3 +83,12 @@ CREATE TABLE IF NOT EXISTS votes (
   direction TEXT NOT NULL CHECK (direction IN ('up', 'down')),
   PRIMARY KEY (doc_id, username)
 );
+
+CREATE TABLE IF NOT EXISTS reports (
+  id SERIAL PRIMARY KEY,
+  document_id TEXT NOT NULL REFERENCES documents(id),
+  user_id TEXT NOT NULL REFERENCES users(username),
+  reason TEXT NOT NULL,
+  custom_review TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);

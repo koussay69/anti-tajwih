@@ -229,6 +229,16 @@
             </div>
             <div id="admin-pending-docs"></div>
             <div class="section-header" style="margin-top:30px;">
+                <span class="section-tag" data-i18n="section.flaggedDocs">// FLAGGED DOCUMENTS</span>
+                <h2 data-i18n="section.flaggedDocsTitle">Flagged Documents (5+ reports)</h2>
+            </div>
+            <div id="admin-flagged-docs"></div>
+            <div class="section-header" style="margin-top:30px;">
+                <span class="section-tag" data-i18n="section.flaggedAuthors">// FLAGGED ACCOUNTS</span>
+                <h2 data-i18n="section.flaggedAuthorsTitle">Flagged Accounts (3+ flagged docs)</h2>
+            </div>
+            <div id="admin-flagged-authors"></div>
+            <div class="section-header" style="margin-top:30px;">
                 <span class="section-tag" data-i18n="section.userManagement">// USER MANAGEMENT</span>
                 <h2 data-i18n="section.allUsers">All Users</h2>
             </div>
@@ -410,6 +420,33 @@
                     <input type="file" id="form-answer-file" accept=".pdf" required class="dashed-file-input">
                 </div>
                 <button type="submit" class="modal-submit-btn" data-i18n="answer.submit">Transmit Solution & Claim Bounty</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- REPORT MODAL -->
+    <div id="report-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close-btn" id="close-report-modal">×</button>
+            <div class="modal-header">
+                <span class="section-tag" data-i18n="report.title">// REPORT</span>
+                <h2 data-i18n="report.heading">Report Document</h2>
+            </div>
+            <form id="report-form" class="modal-form">
+                <div class="form-group">
+                    <label data-i18n="report.reason">Reason</label>
+                    <select id="report-reason" required>
+                        <option value="" data-i18n="report.selectReason">-- Select a reason --</option>
+                        <option value="irrelevant" data-i18n="report.irrelevant">Irrelevant to the title</option>
+                        <option value="low_quality" data-i18n="report.lowQuality">Low quality</option>
+                        <option value="misinformation" data-i18n="report.misinformation">Misinformation</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="report.customReview">Custom Review (optional)</label>
+                    <textarea id="report-custom-review" rows="3" data-i18n-placeholder="report.customPlaceholder" placeholder="Add any additional details..."></textarea>
+                </div>
+                <button type="submit" class="modal-submit-btn" data-i18n="report.submit">Submit Report</button>
             </form>
         </div>
     </div>

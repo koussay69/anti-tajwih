@@ -47,9 +47,25 @@ window.translations = {
     "admin.noPending":"No documents pending review.","admin.searchUsers":"Search users by username...",
     "admin.adjust":"Adjust","admin.unban":"Unban","admin.ban":"Ban","admin.deleteAllDocs":"Delete All Docs",
     "admin.approve":"✅ Approve","admin.reject":"🗑 Reject",
+    "admin.noFlaggedDocs":"No flagged documents.","admin.noFlaggedAuthors":"No flagged accounts.",
+    "admin.flaggedDocCount":"reports","admin.flaggedDocCount2":"Flagged doc","admin.resolve":"🗑 Resolve & Refund",
+    "admin.flaggedAuthor":"🚫 Flagged Author","admin.banAuthor":"Ban Author",
+    "section.flaggedDocs":"// FLAGGED DOCUMENTS","section.flaggedDocsTitle":"Flagged Documents (5+ reports)",
+    "section.flaggedAuthors":"// FLAGGED ACCOUNTS","section.flaggedAuthorsTitle":"Flagged Accounts (3+ flagged docs)",
+    "report.title":"// REPORT","report.heading":"Report Document",
+    "report.reason":"Reason","report.selectReason":"-- Select a reason --",
+    "report.irrelevant":"Irrelevant to the title","report.lowQuality":"Low quality",
+    "report.misinformation":"Misinformation","report.customReview":"Custom Review (optional)",
+    "report.customPlaceholder":"Add any additional details...","report.submit":"Submit Report",
+    "report.reported":"Report submitted. Admin will review.",
+    "report.alreadyReported":"You have already reported this document.",
+    "report.cantSelfReport":"You cannot report your own document.",
+    "report.loginToReport":"Please sign in to report documents.",
+    "toast.reportSubmitted":"Report submitted. Admin will review.",
+    "toast.reportFailed":"Failed to submit report.",
     "card.pending":"⏳ PENDING REVIEW","card.locked":"🔒 LOCKED","card.unlocked":"✓ UNLOCKED","card.activeShared":"✓ ACTIVE SHARED",
     "card.viewReviews":"// View Reviews & Comments ({count})","card.commentPlaceholder":"Ask a question or leave a review...",
-    "card.send":"Send","card.unlockBtn":"Unlock (-1 Token)","card.download":"⬇ Download PDF","card.delete":"🗑 Delete",
+    "card.send":"Send","card.unlockBtn":"Unlock (-1 Token)","card.download":"⬇ Download PDF","card.delete":"🗑 Delete","card.report":"⚑ Report",
     "card.by":"By:","card.byYou":"You","card.reviews":"reviews","card.noReviews":"No reviews yet",
     "bounty.settled":"✅ Settled","bounty.placed":"💰 Bounty Placed","bounty.by":"By:","bounty.you":"You",
     "bounty.bestAnswer":"🏆 Best Answer — Bounty Settled ✓ (+3 Tokens)","bounty.sharedAnswer":"📎 Shared Answer:","bounty.refAttached":"📎 Reference Attached:",
@@ -137,9 +153,25 @@ window.translations = {
     "admin.noPending":"Aucun document en attente.","admin.searchUsers":"Rechercher par nom d'utilisateur...",
     "admin.adjust":"Ajuster","admin.unban":"Débannir","admin.ban":"Bannir","admin.deleteAllDocs":"Tout Supprimer",
     "admin.approve":"✅ Approuver","admin.reject":"🗑 Rejeter",
+    "admin.noFlaggedDocs":"Aucun document signalé.","admin.noFlaggedAuthors":"Aucun compte signalé.",
+    "admin.flaggedDocCount":"signalements","admin.flaggedDocCount2":"Doc signalé","admin.resolve":"🗑 Résoudre & Rembourser",
+    "admin.flaggedAuthor":"🚫 Auteur Signalé","admin.banAuthor":"Bannir l'Auteur",
+    "section.flaggedDocs":"// DOCUMENTS SIGNALÉS","section.flaggedDocsTitle":"Documents Signalés (5+ signalements)",
+    "section.flaggedAuthors":"// COMPTES SIGNALÉS","section.flaggedAuthorsTitle":"Comptes Signalés (3+ docs signalés)",
+    "report.title":"// SIGNALER","report.heading":"Signaler un Document",
+    "report.reason":"Raison","report.selectReason":"-- Choisissez une raison --",
+    "report.irrelevant":"Sans rapport avec le titre","report.lowQuality":"Faible qualité",
+    "report.misinformation":"Désinformation","report.customReview":"Avis personnalisé (facultatif)",
+    "report.customPlaceholder":"Ajoutez des détails supplémentaires...","report.submit":"Soumettre le signalement",
+    "report.reported":"Signalement soumis. L'admin examinera.",
+    "report.alreadyReported":"Vous avez déjà signalé ce document.",
+    "report.cantSelfReport":"Vous ne pouvez pas signaler votre propre document.",
+    "report.loginToReport":"Connectez-vous pour signaler un document.",
+    "toast.reportSubmitted":"Signalement soumis. L'admin examinera.",
+    "toast.reportFailed":"Échec du signalement.",
     "card.pending":"⏳ EN ATTENTE","card.locked":"🔒 VERROUILLÉ","card.unlocked":"✓ DÉVERROUILLÉ","card.activeShared":"✓ PUBLIÉ",
     "card.viewReviews":"// Voir les Avis ({count})","card.commentPlaceholder":"Posez une question ou laissez un avis...",
-    "card.send":"Envoyer","card.unlockBtn":"Débloquer (-1 Jeton)","card.download":"⬇ Télécharger PDF","card.delete":"🗑 Supprimer",
+    "card.send":"Envoyer","card.unlockBtn":"Débloquer (-1 Jeton)","card.download":"⬇ Télécharger PDF","card.delete":"🗑 Supprimer","card.report":"⚑ Signaler",
     "card.by":"Par :","card.byYou":"Vous","card.reviews":"avis","card.noReviews":"Aucun avis",
     "bounty.settled":"✅ Résolue","bounty.placed":"💰 Demande Active","bounty.by":"Par :","bounty.you":"Vous",
     "bounty.bestAnswer":"🏆 Meilleure Réponse — Demande Résolue ✓ (+3 Jetons)","bounty.sharedAnswer":"📎 Réponse fournie :","bounty.refAttached":"📎 Référence jointe :",
@@ -226,9 +258,25 @@ window.translations = {
     "admin.noPending":"لا توجد وثائق قيد المراجعة.","admin.searchUsers":"ابحث باسم المستخدم...",
     "admin.adjust":"تعديل","admin.unban":"إلغاء الحظر","admin.ban":"حظر","admin.deleteAllDocs":"حذف الكل",
     "admin.approve":"✅ موافقة","admin.reject":"🗑 رفض",
+    "admin.noFlaggedDocs":"لا توجد وثائق مُبلغ عنها.","admin.noFlaggedAuthors":"لا توجد حسابات مُبلغ عنها.",
+    "admin.flaggedDocCount":"بلاغات","admin.flaggedDocCount2":"وثيقة مُبلغ عنها","admin.resolve":"🗑 حل & استرداد",
+    "admin.flaggedAuthor":"🚫 مؤلف مُبلغ عنه","admin.banAuthor":"حظر المؤلف",
+    "section.flaggedDocs":"// الوثائق المُبلغ عنها","section.flaggedDocsTitle":"الوثائق المُبلغ عنها (5+ بلاغات)",
+    "section.flaggedAuthors":"// الحسابات المُبلغ عنها","section.flaggedAuthorsTitle":"الحسابات المُبلغ عنها (3+ وثائق مُبلغ عنها)",
+    "report.title":"// إبلاغ","report.heading":"الإبلاغ عن وثيقة",
+    "report.reason":"السبب","report.selectReason":"-- اختر سبباً --",
+    "report.irrelevant":"غير مرتبط بالعنوان","report.lowQuality":"جودة منخفضة",
+    "report.misinformation":"معلومات مضللة","report.customReview":"مراجعة مخصصة (اختياري)",
+    "report.customPlaceholder":"أضف تفاصيل إضافية...","report.submit":"إرسال البلاغ",
+    "report.reported":"تم إرسال البلاغ. سيراجعه المسؤول.",
+    "report.alreadyReported":"لقد أبلغت عن هذه الوثيقة بالفعل.",
+    "report.cantSelfReport":"لا يمكنك الإبلاغ عن وثيقتك الخاصة.",
+    "report.loginToReport":"يرجى تسجيل الدخول للإبلاغ عن الوثائق.",
+    "toast.reportSubmitted":"تم إرسال البلاغ. سيراجعه المسؤول.",
+    "toast.reportFailed":"فشل إرسال البلاغ.",
     "card.pending":"⏳ قيد المراجعة","card.locked":"🔒 مقفول","card.unlocked":"✓ مفتوح","card.activeShared":"✓ منشور",
     "card.viewReviews":"// عرض التقييمات ({count})","card.commentPlaceholder":"اطرح سؤالاً أو اترك تقييماً...",
-    "card.send":"إرسال","card.unlockBtn":"فتح (نقطة واحدة)","card.download":"⬇ تحميل PDF","card.delete":"🗑 حذف",
+    "card.send":"إرسال","card.unlockBtn":"فتح (نقطة واحدة)","card.download":"⬇ تحميل PDF","card.delete":"🗑 حذف","card.report":"⚑ إبلاغ",
     "card.by":"بواسطة :","card.byYou":"أنت","card.reviews":"تقييم","card.noReviews":"لا توجد تقييمات",
     "bounty.settled":"✅ تم الحل","bounty.placed":"💰 طلب نشط","bounty.by":"بواسطة :","bounty.you":"أنت",
     "bounty.bestAnswer":"🏆 أفضل إجابة — تمت التسوية ✓ (+3 نقاط)","bounty.sharedAnswer":"📎 الإجابة :","bounty.refAttached":"📎 المرجع :",
@@ -593,6 +641,80 @@ document.addEventListener('DOMContentLoaded', () => {
                     loadAdminPanel();
                 });
             });
+
+            // --- FLAGGED DOCUMENTS ---
+            const [flaggedDocsRes, flaggedAuthorsRes] = await Promise.all([
+                fetch(`${API_URL}/admin/flagged-docs?user=${encodeURIComponent(state.user)}`),
+                fetch(`${API_URL}/admin/flagged-authors?user=${encodeURIComponent(state.user)}`)
+            ]);
+            const flaggedDocs = await flaggedDocsRes.json();
+            const flaggedAuthors = await flaggedAuthorsRes.json();
+
+            const flaggedDocsDiv = document.getElementById('admin-flagged-docs');
+            if (!flaggedDocs || flaggedDocs.length === 0) {
+                flaggedDocsDiv.innerHTML = `<p style="opacity:0.6;">${t('admin.noFlaggedDocs')}</p>`;
+            } else {
+                flaggedDocsDiv.innerHTML = flaggedDocs.map(d => `
+                    <div class="admin-user-row" style="flex-wrap:wrap; border-left: 4px solid #dc3545;">
+                        <span><strong>${d.title}</strong> ${t('card.by')} ${d.author}</span>
+                        <span>${d.reportCount} ${t('admin.flaggedDocCount')}</span>
+                        <span>${d.filiere || ''} ${d.niveau || ''} ${d.matiere || ''} ${d.type || ''}</span>
+                        <div class="admin-user-actions">
+                            <button class="unlock-action-btn admin-resolve-flagged-btn" data-docid="${d.id}" style="background:#dc3545;">${t('admin.resolve')}</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                flaggedDocsDiv.querySelectorAll('.admin-resolve-flagged-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        if (!confirm('Resolve flagged doc? Author will lose 7 tokens, unlockers refunded 1 each.')) return;
+                        const docId = btn.dataset.docid;
+                        btn.disabled = true; btn.innerText = t('admin.resolve') + '...';
+                        try {
+                            const res = await fetch(`${API_URL}/admin/flagged-docs/${docId}/resolve`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ user: state.user })
+                            });
+                            const data = await res.json();
+                            showToast(data.success ? t('toast.adminDocsDeleted') : data.error || t('toast.networkError'), data.success ? 'success' : 'error');
+                        } catch {
+                            showToast(t('toast.networkError'), 'error');
+                        }
+                        loadAdminPanel();
+                    });
+                });
+            }
+
+            const flaggedAuthorsDiv = document.getElementById('admin-flagged-authors');
+            if (!flaggedAuthors || flaggedAuthors.length === 0) {
+                flaggedAuthorsDiv.innerHTML = `<p style="opacity:0.6;">${t('admin.noFlaggedAuthors')}</p>`;
+            } else {
+                flaggedAuthorsDiv.innerHTML = flaggedAuthors.map(a => `
+                    <div class="admin-user-row" style="flex-wrap:wrap; border-left: 4px solid #dc3545;">
+                        <span><strong>${t('admin.flaggedAuthor')}</strong> ${a.username} (${a.flaggedDocCount} ${t('admin.flaggedDocCount2')})</span>
+                        <span>${t('misc.tokens')}: ${a.tokens}</span>
+                        <div class="admin-user-actions">
+                            <button class="unlock-action-btn admin-ban-flagged-btn" data-user="${a.username}" data-banned="${a.banned}" style="${a.banned ? 'background:green;' : 'background:#dc3545;'}">${a.banned ? t('admin.unban') : t('admin.banAuthor')}</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                flaggedAuthorsDiv.querySelectorAll('.admin-ban-flagged-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const targetUser = btn.dataset.user;
+                        const currentlyBanned = btn.dataset.banned === 'true';
+                        const res = await fetch(`${API_URL}/admin/users/ban`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ user: state.user, targetUser, banned: !currentlyBanned })
+                        });
+                        const data = await res.json();
+                        showToast(data.success ? (data.banned ? t('toast.adminUserBanned') : t('toast.adminUserUnbanned')) : data.error || t('toast.networkError'), data.success ? 'success' : 'error');
+                        loadAdminPanel();
+                    });
+                });
+            }
         } catch {
             showToast(t('toast.loadError'), "error");
         }
@@ -603,6 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadModal = document.getElementById('upload-modal');
     const helpModal = document.getElementById('help-modal');
     const answerModal = document.getElementById('answer-modal');
+    const reportModal = document.getElementById('report-modal');
 
     const navAuthBtn = document.getElementById('nav-auth-btn');
     const navUploadBtn = document.getElementById('nav-upload-btn');
@@ -612,6 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeUpload = document.getElementById('close-upload-modal');
     const closeHelp = document.getElementById('close-help-modal');
     const closeAnswer = document.getElementById('close-answer-modal');
+    const closeReport = document.getElementById('close-report-modal');
 
     if (navAuthBtn) {
         navAuthBtn.addEventListener('click', () => {
@@ -645,12 +769,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closeUpload) closeUpload.addEventListener('click', () => uploadModal.classList.remove('open'));
     if (closeHelp) closeHelp.addEventListener('click', () => helpModal.classList.remove('open'));
     if (closeAnswer) closeAnswer.addEventListener('click', () => answerModal.classList.remove('open'));
+    if (closeReport) closeReport.addEventListener('click', () => { reportModal.classList.remove('open'); reportModal._currentDocId = null; });
 
     window.addEventListener('click', (e) => {
         if (e.target === authModal) authModal.classList.remove('open');
         if (e.target === uploadModal) uploadModal.classList.remove('open');
         if (e.target === helpModal) helpModal.classList.remove('open');
         if (e.target === answerModal) answerModal.classList.remove('open');
+        if (e.target === reportModal) { reportModal.classList.remove('open'); reportModal._currentDocId = null; }
     });
 
     // --- DYNAMIC CARD BUILDER GENERATORS ---
@@ -711,6 +837,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">${t('card.unlockBtn')}</button>` : ''}
                     ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">${t('card.download')}</a>` : ''}
                     ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">${t('card.delete')}</button>` : ''}
+                    ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button class="report-doc-btn unlock-action-btn" style="background:var(--text-main, #888); margin-left:6px;" data-docid="${doc.id}">${t('card.report')}</button>` : ''}
                 </div>
             `;
 
@@ -935,6 +1062,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     inputField.value = "";
                     showToast(t('toast.commentPosted'), "info");
                 }
+            });
+        }
+
+        const reportBtn = card.querySelector('.report-doc-btn');
+        if (reportBtn) {
+            reportBtn.addEventListener('click', () => {
+                if (!state.user) {
+                    showToast(t('report.loginToReport'), 'error');
+                    authModal.classList.add('open');
+                    return;
+                }
+                reportModal._currentDocId = reportBtn.dataset.docid;
+                document.getElementById('report-reason').value = '';
+                document.getElementById('report-custom-review').value = '';
+                reportModal.classList.add('open');
             });
         }
 
@@ -1207,6 +1349,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (answerSubmitBtn) {
                     answerSubmitBtn.disabled = false;
                     answerSubmitBtn.innerText = answerBtnOriginalText;
+                }
+            }
+        });
+    }
+
+    // --- REPORT FORM ---
+    const reportForm = document.getElementById('report-form');
+    if (reportForm) {
+        const reportSubmitBtn = reportForm.querySelector('button[type="submit"]');
+        const reportBtnOriginalText = reportSubmitBtn ? reportSubmitBtn.innerText : '';
+        reportForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const docId = reportModal._currentDocId;
+            if (!docId || !state.user) return;
+
+            if (reportSubmitBtn) {
+                reportSubmitBtn.disabled = true;
+                reportSubmitBtn.innerText = '⏳ Sending...';
+            }
+
+            const reason = document.getElementById('report-reason').value;
+            const customReview = document.getElementById('report-custom-review').value;
+
+            try {
+                const res = await fetch(`${API_URL}/documents/report`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ docId, user: state.user, reason, customReview })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(t('toast.reportSubmitted'), 'success');
+                    reportForm.reset();
+                    reportModal.classList.remove('open');
+                    reportModal._currentDocId = null;
+                } else {
+                    showToast(data.error || t('toast.reportFailed'), 'error');
+                }
+            } catch {
+                showToast(t('toast.reportFailed'), 'error');
+            } finally {
+                if (reportSubmitBtn) {
+                    reportSubmitBtn.disabled = false;
+                    reportSubmitBtn.innerText = reportBtnOriginalText;
                 }
             }
         });
@@ -1526,6 +1712,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">${t('card.unlockBtn')}</button>` : ''}
                         ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">${t('card.download')}</a>` : ''}
                         ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">${t('card.delete')}</button>` : ''}
+                        ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button class="report-doc-btn unlock-action-btn" style="background:var(--text-main, #888); margin-left:6px;" data-docid="${doc.id}">${t('card.report')}</button>` : ''}
                     </div>
                 `;
                 docsContainer.appendChild(card);

@@ -763,6 +763,133 @@ app.delete('/api/admin/users/:username/documents', async (req, res) => {
   res.json({ success: true, deleted: docs?.length || 0, totalDocs, totalUsers, totalBounties });
 });
 
+// --- REPORTING SYSTEM ---
+app.post('/api/documents/report', async (req, res) => {
+  const { docId, user, reason, customReview } = req.body;
+  if (!user) return res.status(401).json({ error: "Authentication required." });
+  if (!docId || !reason) return res.status(400).json({ error: "docId and reason required." });
+
+  const normalizedName = user.trim().toLowerCase();
+
+  // Check user unlocked this doc
+  const { data: unlock } = await supabase.from('unlocked_docs').select('doc_id').eq('username', normalizedName).eq('doc_id', docId).maybeSingle();
+  if (!unlock) return res.status(403).json({ error: "You can only report documents you have unlocked." });
+
+  // Check doc exists
+  const { data: doc } = await supabase.from('documents').select('author').eq('id', docId).maybeSingle();
+  if (!doc) return res.status(404).json({ error: "Document not found." });
+  if (doc.author === normalizedName) return res.status(400).json({ error: "You cannot report your own document." });
+
+  // Check if user already reported this doc
+  const { data: existing } = await supabase.from('reports').select('id').eq('document_id', docId).eq('user_id', normalizedName).maybeSingle();
+  if (existing) return res.status(400).json({ error: "You have already reported this document." });
+
+  await supabase.from('reports').insert({
+    document_id: docId,
+    user_id: normalizedName,
+    reason,
+    custom_review: customReview || ''
+  });
+
+  res.json({ success: true });
+});
+
+app.get('/api/admin/flagged-docs', async (req, res) => {
+  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  // Get doc IDs with >= 5 reports, grouped
+  const { data: reportCounts } = await supabase.from('reports').select('document_id');
+  if (!reportCounts) return res.json([]);
+  const counts = {};
+  reportCounts.forEach(r => { counts[r.document_id] = (counts[r.document_id] || 0) + 1; });
+  const flaggedIds = Object.keys(counts).filter(id => counts[id] >= 5);
+  if (flaggedIds.length === 0) return res.json([]);
+
+  const { data: docs } = await supabase.from('documents').select('*').in('id', flaggedIds);
+  const flagged = (docs || []).map(d => ({
+    ...d,
+    reportCount: counts[d.id],
+    reports: reportCounts.filter(r => r.document_id === d.id).length
+  }));
+  res.json(flagged);
+});
+
+app.get('/api/admin/flagged-authors', async (req, res) => {
+  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  // Get docs with >= 5 reports
+  const { data: reportCounts } = await supabase.from('reports').select('document_id');
+  if (!reportCounts) return res.json([]);
+  const counts = {};
+  reportCounts.forEach(r => { counts[r.document_id] = (counts[r.document_id] || 0) + 1; });
+  const flaggedIds = Object.keys(counts).filter(id => counts[id] >= 5);
+  if (flaggedIds.length === 0) return res.json([]);
+
+  const { data: flaggedDocs } = await supabase.from('documents').select('*').in('id', flaggedIds);
+  const authorCounts = {};
+  (flaggedDocs || []).forEach(d => {
+    const a = d.author?.toLowerCase();
+    if (a) authorCounts[a] = (authorCounts[a] || 0) + 1;
+  });
+  const flaggedAuthors = Object.keys(authorCounts).filter(a => authorCounts[a] >= 3);
+  if (flaggedAuthors.length === 0) return res.json([]);
+
+  const { data: users } = await supabase.from('users').select('*').in('username', flaggedAuthors);
+  res.json((users || []).map(u => ({
+    username: u.username,
+    tokens: u.tokens,
+    banned: u.banned,
+    flaggedDocCount: authorCounts[u.username]
+  })));
+});
+
+app.post('/api/admin/flagged-docs/:docId/resolve', async (req, res) => {
+  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  const { docId } = req.params;
+
+  const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
+  if (!doc) return res.status(404).json({ error: "Document not found." });
+
+  const authorName = doc.author?.toLowerCase();
+
+  // Charge author 7 tokens (clamp to 0)
+  if (authorName) {
+    const { data: authorProfile } = await supabase.from('users').select('tokens').eq('username', authorName).maybeSingle();
+    if (authorProfile) {
+      const newTokens = Math.max(0, authorProfile.tokens - 7);
+      await supabase.from('users').update({ tokens: newTokens }).eq('username', authorName);
+    }
+  }
+
+  // Refund 1 token to each unlocker (excluding the author)
+  const { data: unlockers } = await supabase.from('unlocked_docs').select('username').eq('doc_id', docId);
+  for (const u of unlockers || []) {
+    if (u.username !== authorName) {
+      const { data: prof } = await supabase.from('users').select('tokens').eq('username', u.username).maybeSingle();
+      if (prof) {
+        await supabase.from('users').update({ tokens: prof.tokens + 1 }).eq('username', u.username);
+      }
+    }
+  }
+
+  // Delete associated data
+  const fileName = doc.file_path?.split('/').pop();
+  if (fileName) await supabase.storage.from('documents').remove([fileName]);
+  await supabase.from('reports').delete().eq('document_id', docId);
+  await supabase.from('votes').delete().eq('doc_id', docId);
+  await supabase.from('comments').delete().eq('doc_id', docId);
+  await supabase.from('unlocked_docs').delete().eq('doc_id', docId);
+  await supabase.from('documents').delete().eq('id', docId);
+
+  // Decrement author upload count
+  if (authorName) {
+    const { data: authorProfile } = await supabase.from('users').select('uploadsCount').eq('username', authorName).maybeSingle();
+    if (authorProfile) {
+      await supabase.from('users').update({ uploadsCount: Math.max(0, authorProfile.uploadsCount - 1) }).eq('username', authorName);
+    }
+  }
+
+  res.json({ success: true });
+});
+
 app.listen(PORT, () => {
   console.log(`\n=============================================`);
   console.log(`📡 P2P Core Engine running at: http://localhost:${PORT}`);
