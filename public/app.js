@@ -1688,25 +1688,31 @@ document.addEventListener('DOMContentLoaded', () => {
             client_id: gisClientId,
             scope: 'openid profile email',
             callback: async (tokenResponse) => {
-              if (tokenResponse.access_token) {
-                try {
-                  const res = await fetch(`${API_URL}/auth/google`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ accessToken: tokenResponse.access_token })
-                  });
-                  const data = await res.json();
-                  if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
-                  state.user = data.username;
-                  localStorage.setItem('p2p-vault-user', data.username);
-                  if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
-                  const profileHeader = document.querySelector('.account-user-name');
-                  if (profileHeader) profileHeader.innerText = data.username;
-                  authModal.classList.remove('open');
-                  showToast(t('toast.loggedIn', {user: data.username}), 'info');
-                  loadVaultData();
-                } catch { showToast(t('toast.networkError'), 'error'); }
+              if (tokenResponse.error) {
+                showToast(tokenResponse.error, 'error');
+                return;
               }
+              if (!tokenResponse.access_token) {
+                showToast('No access token received', 'error');
+                return;
+              }
+              try {
+                const res = await fetch(`${API_URL}/auth/google`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ accessToken: tokenResponse.access_token })
+                });
+                const data = await res.json();
+                if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
+                state.user = data.username;
+                localStorage.setItem('p2p-vault-user', data.username);
+                if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
+                const profileHeader = document.querySelector('.account-user-name');
+                if (profileHeader) profileHeader.innerText = data.username;
+                authModal.classList.remove('open');
+                showToast(t('toast.loggedIn', {user: data.username}), 'info');
+                loadVaultData();
+              } catch { showToast(t('toast.networkError'), 'error'); }
             }
           });
         }
