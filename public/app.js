@@ -1691,7 +1691,7 @@ document.addEventListener('DOMContentLoaded', () => {
           '&redirect_uri=' + encodeURIComponent(callbackUrl) +
           '&response_type=code' +
           '&scope=' + encodeURIComponent('openid profile email');
-        window.open(url, 'google-oauth', 'width=600,height=700');
+        window.location.href = url;
       });
     }
     // Handle Google callback response
