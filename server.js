@@ -246,16 +246,12 @@ app.post('/api/auth/register-google', async (req, res) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   // Check if Google email already has an account
-  const existingByEmail = await supabase.from('users').select('*').ilike('email', normalizedEmail).maybeSingle();
-  if (existingByEmail && existingByEmail.username) {
+  const { data: existingByEmail } = await supabase.from('users').select('*').ilike('email', normalizedEmail).maybeSingle();
+  if (existingByEmail) {
     return res.status(400).json({ error: "This Google account is already linked to user '" + existingByEmail.username + "'. Sign in instead." });
   }
-  // Orphaned record (email set but no username) — allow re-registration
-  if (existingByEmail && !existingByEmail.username) {
-    await supabase.from('users').delete().ilike('email', normalizedEmail);
-  }
 
-  const existing = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
+  const { data: existing } = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
   if (existing) return res.status(400).json({ error: "Username '" + normalizedName + "' is already taken." });
 
   await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
@@ -307,11 +303,12 @@ app.post('/api/auth/google', async (req, res) => {
     let user = await getUserProfile(googleEmail.toLowerCase());
     if (!user) {
       let newName = googleEmail.toLowerCase();
-      let existing = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
+      let { data: existing } = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
       let counter = 1;
       while (existing) {
         newName = `${googleEmail.toLowerCase()}_${counter}`;
-        existing = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
+        const result = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
+        existing = result.data;
         counter++;
       }
       await supabase.from('users').insert({ username: newName, email: googleEmail, password: '', tokens: 0, uploadsCount: 0 });
