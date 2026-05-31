@@ -29,6 +29,7 @@ function broadcast(event, data) {
   sseClients.forEach(res => res.write(msg));
 }
 
+app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public', { maxAge: 0, etag: false }));
