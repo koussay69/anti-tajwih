@@ -1178,6 +1178,9 @@ body {
 }
 
 @media (max-width: 480px) {
+    .navbar {
+        padding: 0 10px;
+    }
     .nav-links {
         gap: 8px;
     }
@@ -1220,6 +1223,34 @@ body {
 
     .section-header h2 {
         font-size: 16px;
+    }
+}
+
+@media (max-width: 420px) {
+    .navbar {
+        padding: 0 6px;
+    }
+    .nav-actions {
+        gap: 2px;
+    }
+    .theme-toggle-btn {
+        padding: 2px 4px;
+        font-size: 9px;
+    }
+    .lang-toggle-btn {
+        padding: 2px 3px;
+        font-size: 8px;
+    }
+    .token-badge {
+        font-size: 8px;
+        padding: 2px 6px;
+    }
+    .upload-btn {
+        font-size: 9px;
+        padding: 3px 6px;
+    }
+    .auth-btn {
+        font-size: 8px;
     }
 }
 
