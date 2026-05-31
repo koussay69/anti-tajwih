@@ -1864,6 +1864,24 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
     translatePage();
     loadVaultData();
 
+    // Auto-refresh polling every 20s (silent, no toast on success)
+    let pollLock = false;
+    setInterval(async () => {
+        if (pollLock) return;
+        if (document.querySelector('.comment-edit-form[style*="display: block"], .comment-edit-form[style*="display:block"]')) return;
+        pollLock = true;
+        await loadVaultData();
+        pollLock = false;
+    }, 20000);
+
+    // Refresh also on visibility change (tab switch)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !pollLock) {
+            pollLock = true;
+            loadVaultData().finally(() => { pollLock = false; });
+        }
+    });
+
     // --- LANGUAGE TOGGLE ---
     const langToggleBtn = document.getElementById('lang-toggle-btn');
     if (langToggleBtn) {
