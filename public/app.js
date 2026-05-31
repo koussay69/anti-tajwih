@@ -838,17 +838,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="toggle-comments-btn">${t('card.viewReviews', {count: doc.comments ? doc.comments.length : 0})}</button>
                 <div class="card-comments-tray hidden">
                     <div class="comments-list">
-                        ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}</div>`).join('') : ''}
+                        ${doc.comments ? doc.comments.map(c => {
+                            const isOwn = state.user && c.user === state.user;
+                            return `<div class="comment-item" data-comment-user="${c.user}">
+                                <strong>${isOwn ? t('card.you') : c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}
+                                ${isOwn ? `<span style="margin-left:8px; white-space:nowrap;">
+                                    <button class="edit-comment-btn unlock-action-btn" style="padding:2px 8px; font-size:11px;">${t('card.edit')}</button>
+                                    <button class="delete-comment-btn unlock-action-btn" style="padding:2px 8px; font-size:11px; background:#dc3545;">${t('card.deleteComment')}</button>
+                                </span>` : ''}
+                            </div>`;
+                        }).join('') : ''}
                     </div>
                     <div class="comment-input-box">
                         ${userComment ? `
-                        <div class="user-comment-readonly" style="margin-bottom:8px; padding:8px; border:1px solid var(--text-main); border-radius:8px; opacity:0.9;">
-                            <strong>${t('card.you')}:</strong> ${renderStars(userRating)} ${userText}
-                            <div style="margin-top:6px;">
-                                <button class="edit-comment-btn unlock-action-btn">${t('card.edit')}</button>
-                                <button class="delete-comment-btn unlock-action-btn" style="background:#dc3545; margin-left:6px;">${t('card.deleteComment')}</button>
-                            </div>
-                        </div>
                         <div class="comment-edit-form" style="display:none;">
                             <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
                                 ${starHtml}
@@ -1081,22 +1083,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        const editBtn = card.querySelector('.edit-comment-btn');
         const cancelBtn = card.querySelector('.cancel-edit-btn');
-        const readonlyDiv = card.querySelector('.user-comment-readonly');
         const editForm = card.querySelector('.comment-edit-form');
 
-        if (editBtn && readonlyDiv && editForm) {
-            editBtn.addEventListener('click', () => {
-                readonlyDiv.style.display = 'none';
-                editForm.style.display = 'block';
+        card.querySelectorAll('.edit-comment-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const commentItem = btn.closest('.comment-item');
+                if (commentItem) commentItem.style.display = 'none';
+                if (editForm) editForm.style.display = 'block';
             });
-        }
+        });
 
-        if (cancelBtn && readonlyDiv && editForm) {
+        if (cancelBtn && editForm) {
             cancelBtn.addEventListener('click', () => {
                 editForm.style.display = 'none';
-                readonlyDiv.style.display = 'block';
+                card.querySelectorAll('.comment-item[data-comment-user="' + state.user + '"]').forEach(el => { el.style.display = ''; });
             });
         }
 
@@ -1805,17 +1806,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="toggle-comments-btn">${t('card.viewReviews', {count: doc.comments ? doc.comments.length : 0})}</button>
                     <div class="card-comments-tray hidden">
                         <div class="comments-list">
-                        ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}</div>`).join('') : ''}
+                        ${doc.comments ? doc.comments.map(c => {
+                            const isOwn = state.user && c.user === state.user;
+                            return `<div class="comment-item" data-comment-user="${c.user}">
+                                <strong>${isOwn ? t('card.you') : c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}
+                                ${isOwn ? `<span style="margin-left:8px; white-space:nowrap;">
+                                    <button class="edit-comment-btn unlock-action-btn" style="padding:2px 8px; font-size:11px;">${t('card.edit')}</button>
+                                    <button class="delete-comment-btn unlock-action-btn" style="padding:2px 8px; font-size:11px; background:#dc3545;">${t('card.deleteComment')}</button>
+                                </span>` : ''}
+                            </div>`;
+                        }).join('') : ''}
                         </div>
                         <div class="comment-input-box">
                             ${aUserComment ? `
-                            <div class="user-comment-readonly" style="margin-bottom:8px; padding:8px; border:1px solid var(--text-main); border-radius:8px; opacity:0.9;">
-                                <strong>${t('card.you')}:</strong> ${renderStars(aUserRating)} ${aUserText}
-                                <div style="margin-top:6px;">
-                                    <button class="edit-comment-btn unlock-action-btn">${t('card.edit')}</button>
-                                    <button class="delete-comment-btn unlock-action-btn" style="background:#dc3545; margin-left:6px;">${t('card.deleteComment')}</button>
-                                </div>
-                            </div>
                             <div class="comment-edit-form" style="display:none;">
                                 <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
                                     ${aStarHtml}
