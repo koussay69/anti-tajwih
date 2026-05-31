@@ -22,11 +22,47 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
+// SSE broadcast
+const sseClients = [];
+function broadcast(event, data) {
+  const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  sseClients.forEach(res => res.write(msg));
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public', { maxAge: 0, etag: false }));
 
 // Track last active timestamp for any request with a user identifier
+// SSE endpoint for real-time updates
+app.get('/events', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+  res.write('event: connected\ndata: {}\n\n');
+  sseClients.push(res);
+  req.on('close', () => {
+    const idx = sseClients.indexOf(res);
+    if (idx !== -1) sseClients.splice(idx, 1);
+  });
+});
+
+// Auto-broadcast on any successful mutation
+app.use((req, res, next) => {
+  if (req.method !== 'GET') {
+    const origJson = res.json;
+    res.json = function(body) {
+      if (body && body.success === true) {
+        broadcast('data_changed', {});
+      }
+      return origJson.call(this, body);
+    };
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   const user = req.query.user || req.body?.user;
   if (user && typeof user === 'string' && user.trim()) {

@@ -1864,14 +1864,27 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
     translatePage();
     loadVaultData();
 
-    // Auto-refresh polling every 10s (silent, no toast on success)
+    // Real-time SSE: instant refresh on any change
+    const evtSource = new EventSource('/events');
+    evtSource.addEventListener('data_changed', () => {
+        if (!pollLock) {
+            pollLock = true;
+            loadVaultData().finally(() => { pollLock = false; });
+        }
+    });
+    evtSource.addEventListener('connected', () => {
+        // initial connection, no action needed
+    });
+    evtSource.onerror = () => { /* SSE will auto-reconnect */ };
+
+    // Fallback polling every 30s in case SSE drops
     let pollLock = false;
     setInterval(async () => {
         if (pollLock) return;
         pollLock = true;
         await loadVaultData();
         pollLock = false;
-    }, 10000);
+    }, 30000);
 
     // Refresh also on visibility change (tab switch)
     document.addEventListener('visibilitychange', () => {
