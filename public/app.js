@@ -1671,39 +1671,53 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- GOOGLE SIGN-IN ---
     const googleWrapper = document.getElementById('google-btn-wrapper');
     if (googleWrapper) {
+      let gisClientId = null;
+      let gisReady = false;
+      let gisRendered = false;
       (async () => {
-        let gisClientId = null;
         try {
           const resp = await fetch(`${API_URL}/config`);
           const cfg = await resp.json();
           gisClientId = cfg.googleClientId || null;
         } catch { /* no config */ }
-        if (!gisClientId) return;
-        const poll = setInterval(() => {
-          if (typeof google !== 'undefined' && google.accounts) {
-            clearInterval(poll);
-            google.accounts.id.initialize({
-              client_id: gisClientId,
-              callback: async (response) => {
-                try {
-                  const res = await fetch(`${API_URL}/auth/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ credential: response.credential }) });
-                  const data = await res.json();
-                  if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
-                  state.user = data.username;
-                  localStorage.setItem('p2p-vault-user', data.username);
-                  if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
-                  const profileHeader = document.querySelector('.account-user-name');
-                  if (profileHeader) profileHeader.innerText = data.username;
-                  authModal.classList.remove('open');
-                  showToast(t('toast.loggedIn', {user: data.username}), 'info');
-                  loadVaultData();
-                } catch { showToast(t('toast.networkError'), 'error'); }
-              }
-            });
-            google.accounts.id.renderButton(googleWrapper, { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', width: googleWrapper.offsetWidth || 300 });
-          }
-        }, 200);
       })();
+      const poll = setInterval(() => {
+        if (typeof google !== 'undefined' && google.accounts && gisClientId) {
+          clearInterval(poll);
+          gisReady = true;
+          google.accounts.id.initialize({
+            client_id: gisClientId,
+            callback: async (response) => {
+              try {
+                const res = await fetch(`${API_URL}/auth/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ credential: response.credential }) });
+                const data = await res.json();
+                if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
+                state.user = data.username;
+                localStorage.setItem('p2p-vault-user', data.username);
+                if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
+                const profileHeader = document.querySelector('.account-user-name');
+                if (profileHeader) profileHeader.innerText = data.username;
+                authModal.classList.remove('open');
+                showToast(t('toast.loggedIn', {user: data.username}), 'info');
+                loadVaultData();
+              } catch { showToast(t('toast.networkError'), 'error'); }
+            }
+          });
+          // Render button NOW if modal is already open, otherwise it'll render when modal opens
+          if (authModal.classList.contains('open') && !gisRendered) {
+            gisRendered = true;
+            google.accounts.id.renderButton(googleWrapper, { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular' });
+          }
+        }
+      }, 200);
+      // Render button when modal opens (if GIS ready and not already rendered)
+      const observer = new MutationObserver(() => {
+        if (authModal.classList.contains('open') && gisReady && !gisRendered) {
+          gisRendered = true;
+          google.accounts.id.renderButton(googleWrapper, { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular' });
+        }
+      });
+      observer.observe(authModal, { attributes: true, attributeFilter: ['class'] });
     }
 
     if (logoutMockBtn) {
