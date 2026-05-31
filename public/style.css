@@ -125,6 +125,62 @@ body {
     gap: 20px;
 }
 
+/* Hamburger Menu Button - hidden on desktop */
+.hamburger-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-main);
+    padding: 4px;
+    line-height: 1;
+}
+
+/* Mobile Dropdown Menu */
+@media (max-width: 768px) {
+    .hamburger-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        background: var(--bg-navbar);
+        backdrop-filter: blur(var(--blur-strength));
+        -webkit-backdrop-filter: blur(var(--blur-strength));
+        border-bottom: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        gap: 0;
+        padding: 8px 0;
+        z-index: 999;
+        overflow: visible;
+    }
+    .nav-links.open {
+        display: flex;
+    }
+    .nav-links .nav-link {
+        padding: 12px 20px;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+    .nav-links .nav-link.admin-link {
+        display: none;
+    }
+    .nav-links .nav-link.admin-link:not(.hidden) {
+        display: block;
+    }
+}
+[dir="rtl"] .nav-links {
+    left: auto;
+    right: 0;
+}
+
 /* Theme Toggle Button UI */
 .theme-toggle-btn {
     background: transparent;
