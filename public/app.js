@@ -1669,39 +1669,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- GOOGLE SIGN-IN ---
-    const googleBtn = document.getElementById('google-signin-btn');
-    if (googleBtn) {
-      (async () => {
-        try {
-          const configResp = await fetch(`${API_URL}/api/config`);
-          const config = await configResp.json();
-          if (config.googleClientId && typeof google !== 'undefined' && google.accounts) {
-            google.accounts.id.initialize({
-              client_id: config.googleClientId,
-              callback: async (response) => {
-                try {
-                  const res = await fetch(`${API_URL}/auth/google`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ credential: response.credential })
-                  });
-                  const data = await res.json();
-                  if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
-                  state.user = data.username;
-                  localStorage.setItem('p2p-vault-user', data.username);
-                  if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
-                  const profileHeader = document.querySelector('.account-user-name');
-                  if (profileHeader) profileHeader.innerText = data.username;
-                  authModal.classList.remove('open');
-                  showToast(t('toast.loggedIn', {user: data.username}), 'info');
-                  loadVaultData();
-                } catch { showToast(t('toast.networkError'), 'error'); }
+    const googleContainer = document.getElementById('google-signin-btn');
+    if (googleContainer) {
+      let gisInitialized = false;
+      const initGoogle = () => {
+        if (gisInitialized) return;
+        gisInitialized = true;
+        (async () => {
+          try {
+            const configResp = await fetch(`${API_URL}/config`);
+            const config = await configResp.json();
+            if (!config.googleClientId) return;
+            const waitForGoogle = setInterval(() => {
+              if (typeof google !== 'undefined' && google.accounts) {
+                clearInterval(waitForGoogle);
+                google.accounts.id.initialize({
+                  client_id: config.googleClientId,
+                  callback: async (response) => {
+                    try {
+                      const res = await fetch(`${API_URL}/auth/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ credential: response.credential }) });
+                      const data = await res.json();
+                      if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
+                      state.user = data.username;
+                      localStorage.setItem('p2p-vault-user', data.username);
+                      if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
+                      const profileHeader = document.querySelector('.account-user-name');
+                      if (profileHeader) profileHeader.innerText = data.username;
+                      authModal.classList.remove('open');
+                      showToast(t('toast.loggedIn', {user: data.username}), 'info');
+                      loadVaultData();
+                    } catch { showToast(t('toast.networkError'), 'error'); }
+                  }
+                });
+                google.accounts.id.renderButton(googleContainer, { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular' });
               }
-            });
-            google.accounts.id.renderButton(googleBtn, { theme: 'outline', size: 'large', width: googleBtn.offsetWidth, text: 'continue_with', shape: 'rectangular' });
-          }
-        } catch { /* config not available, hide google button */ }
-      })();
+            }, 200);
+          } catch { /* config unavailable, hide google */ }
+        })();
+      };
+      // Init on modal open
+      const modalObserver = new MutationObserver(() => {
+        if (authModal.classList.contains('open')) initGoogle();
+      });
+      modalObserver.observe(authModal, { attributes: true, attributeFilter: ['class'] });
     }
 
     if (logoutMockBtn) {
