@@ -548,6 +548,17 @@ body {
     color: var(--bg-body);
 }
 
+.report-doc-btn {
+    background: #6c757d !important;
+    color: #fff !important;
+    border-color: #6c757d !important;
+}
+.report-doc-btn:hover {
+    background: #5a6268 !important;
+    border-color: #5a6268 !important;
+    color: #fff !important;
+}
+
 /* --- Leaderboard Adjustments --- */
 .leaderboard-card {
     padding: 0;

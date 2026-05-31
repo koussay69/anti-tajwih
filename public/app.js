@@ -837,7 +837,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">${t('card.unlockBtn')}</button>` : ''}
                     ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">${t('card.download')}</a>` : ''}
                     ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">${t('card.delete')}</button>` : ''}
-                    ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button class="report-doc-btn unlock-action-btn" style="background:var(--text-main, #888); margin-left:6px;" data-docid="${doc.id}">${t('card.report')}</button>` : ''}
+                    ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button class="report-doc-btn unlock-action-btn" style="margin-left:6px;" data-docid="${doc.id}">${t('card.report')}</button>` : ''}
                 </div>
             `;
 
@@ -1712,7 +1712,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">${t('card.unlockBtn')}</button>` : ''}
                         ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">${t('card.download')}</a>` : ''}
                         ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">${t('card.delete')}</button>` : ''}
-                        ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button class="report-doc-btn unlock-action-btn" style="background:var(--text-main, #888); margin-left:6px;" data-docid="${doc.id}">${t('card.report')}</button>` : ''}
+${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button class="report-doc-btn unlock-action-btn" style="margin-left:6px;" data-docid="${doc.id}">${t('card.report')}</button>` : ''}
                     </div>
                 `;
                 docsContainer.appendChild(card);
