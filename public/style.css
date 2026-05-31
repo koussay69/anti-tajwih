@@ -549,14 +549,14 @@ body {
 }
 
 .report-doc-btn {
-    background: #6c757d !important;
+    background: #000 !important;
     color: #fff !important;
-    border-color: #6c757d !important;
+    border-color: #000 !important;
 }
 .report-doc-btn:hover {
-    background: #5a6268 !important;
-    border-color: #5a6268 !important;
-    color: #fff !important;
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #000 !important;
 }
 
 /* --- Leaderboard Adjustments --- */
