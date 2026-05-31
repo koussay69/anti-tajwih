@@ -239,13 +239,12 @@ app.post('/api/auth/register-google', async (req, res) => {
   const normalizedName = username.trim().toLowerCase();
   const normalizedEmail = email.trim().toLowerCase();
 
-  // Verify this email was just authenticated by Google (check if it's the first time)
-  const existing = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
-  if (existing) return res.status(400).json({ error: "Username already taken." });
-
   // Check if Google email already has an account
-  const existingEmail = await supabase.from('users').select('username').eq('email', normalizedEmail).maybeSingle();
-  if (existingEmail) return res.status(400).json({ error: "This Google account is already linked to a user." });
+  const existingByEmail = await supabase.from('users').select('username').eq('email', normalizedEmail).maybeSingle();
+  if (existingByEmail) return res.status(400).json({ error: "This Google account is already linked to user '" + existingByEmail.username + "'. Sign in instead." });
+
+  const existing = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
+  if (existing) return res.status(400).json({ error: "Username '" + normalizedName + "' is already taken." });
 
   await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
   res.json({ success: true, username: normalizedName });
