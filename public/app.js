@@ -65,7 +65,7 @@ window.translations = {
     "toast.reportFailed":"Failed to submit report.",
     "card.pending":"⏳ PENDING REVIEW","card.locked":"🔒 LOCKED","card.unlocked":"✓ UNLOCKED","card.activeShared":"✓ ACTIVE SHARED",
     "card.viewReviews":"View Reviews & Comments ({count})","card.commentPlaceholder":"Ask a question or leave a review...",
-    "card.send":"Send","card.unlockBtn":"Unlock (-1 Token)","card.download":"⬇ Download PDF","card.delete":"🗑 Delete","card.report":"⚑ Report","card.update":"Update","card.deleteComment":"Delete",
+    "card.send":"Send","card.unlockBtn":"Unlock (-1 Token)","card.download":"⬇ Download PDF","card.delete":"🗑 Delete","card.report":"⚑ Report","card.edit":"Edit","card.save":"Save","card.cancel":"Cancel","card.you":"You","card.deleteComment":"Delete",
     "card.by":"By:","card.byYou":"You","card.reviews":"reviews","card.noReviews":"No reviews yet",
     "bounty.settled":"✅ Settled","bounty.placed":"💰 Bounty Placed","bounty.by":"By:","bounty.you":"You",
     "bounty.bestAnswer":"🏆 Best Answer — Bounty Settled ✓ (+3 Tokens)","bounty.sharedAnswer":"📎 Shared Answer:","bounty.refAttached":"📎 Reference Attached:",
@@ -171,7 +171,7 @@ window.translations = {
     "toast.reportFailed":"Échec du signalement.",
     "card.pending":"⏳ EN ATTENTE","card.locked":"🔒 VERROUILLÉ","card.unlocked":"✓ DÉVERROUILLÉ","card.activeShared":"✓ PUBLIÉ",
     "card.viewReviews":"Voir les Avis ({count})","card.commentPlaceholder":"Posez une question ou laissez un avis...",
-    "card.send":"Envoyer","card.unlockBtn":"Débloquer (-1 Jeton)","card.download":"⬇ Télécharger PDF","card.delete":"🗑 Supprimer","card.report":"⚑ Signaler","card.update":"Modifier","card.deleteComment":"Supprimer",
+    "card.send":"Envoyer","card.unlockBtn":"Débloquer (-1 Jeton)","card.download":"⬇ Télécharger PDF","card.delete":"🗑 Supprimer","card.report":"⚑ Signaler","card.edit":"Modifier","card.save":"Enregistrer","card.cancel":"Annuler","card.you":"Vous","card.deleteComment":"Supprimer",
     "card.by":"Par :","card.byYou":"Vous","card.reviews":"avis","card.noReviews":"Aucun avis",
     "bounty.settled":"✅ Résolue","bounty.placed":"💰 Demande Active","bounty.by":"Par :","bounty.you":"Vous",
     "bounty.bestAnswer":"🏆 Meilleure Réponse — Demande Résolue ✓ (+3 Jetons)","bounty.sharedAnswer":"📎 Réponse fournie :","bounty.refAttached":"📎 Référence jointe :",
@@ -276,7 +276,7 @@ window.translations = {
     "toast.reportFailed":"فشل إرسال البلاغ.",
     "card.pending":"⏳ قيد المراجعة","card.locked":"🔒 مقفول","card.unlocked":"✓ مفتوح","card.activeShared":"✓ منشور",
     "card.viewReviews":"عرض التقييمات ({count})","card.commentPlaceholder":"اطرح سؤالاً أو اترك تقييماً...",
-    "card.send":"إرسال","card.unlockBtn":"فتح (نقطة واحدة)","card.download":"⬇ تحميل PDF","card.delete":"🗑 حذف","card.report":"⚑ إبلاغ","card.update":"تعديل","card.deleteComment":"حذف",
+    "card.send":"إرسال","card.unlockBtn":"فتح (نقطة واحدة)","card.download":"⬇ تحميل PDF","card.delete":"🗑 حذف","card.report":"⚑ إبلاغ","card.edit":"تعديل","card.save":"حفظ","card.cancel":"إلغاء","card.you":"أنت","card.deleteComment":"حذف",
     "card.by":"بواسطة :","card.byYou":"أنت","card.reviews":"تقييم","card.noReviews":"لا توجد تقييمات",
     "bounty.settled":"✅ تم الحل","bounty.placed":"💰 طلب نشط","bounty.by":"بواسطة :","bounty.you":"أنت",
     "bounty.bestAnswer":"🏆 أفضل إجابة — تمت التسوية ✓ (+3 نقاط)","bounty.sharedAnswer":"📎 الإجابة :","bounty.refAttached":"📎 المرجع :",
@@ -841,12 +841,29 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}</div>`).join('') : ''}
                     </div>
                     <div class="comment-input-box">
-                        <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
-                            ${starHtml}
+                        ${userComment ? `
+                        <div class="user-comment-readonly" style="margin-bottom:8px; padding:8px; border:1px solid var(--text-main); border-radius:8px; opacity:0.9;">
+                            <strong>${t('card.you')}:</strong> ${renderStars(userRating)} ${userText}
+                            <div style="margin-top:6px;">
+                                <button class="edit-comment-btn unlock-action-btn">${t('card.edit')}</button>
+                                <button class="delete-comment-btn unlock-action-btn" style="background:#dc3545; margin-left:6px;">${t('card.deleteComment')}</button>
+                            </div>
                         </div>
-                        <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input" value="${userText ? userText.replace(/"/g, '&quot;') : ''}">
-                        <button class="post-comment-btn">${userComment ? t('card.update') : t('card.send')}</button>
-                        ${userComment ? `<button class="delete-comment-btn unlock-action-btn" style="background:#dc3545; margin-left:6px;">${t('card.deleteComment')}</button>` : ''}
+                        <div class="comment-edit-form" style="display:none;">
+                            <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
+                                ${starHtml}
+                            </div>
+                            <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input" value="${userText ? userText.replace(/"/g, '&quot;') : ''}">
+                            <button class="save-comment-btn post-comment-btn">${t('card.save')}</button>
+                            <button class="cancel-edit-btn unlock-action-btn" style="margin-left:6px;">${t('card.cancel')}</button>
+                        </div>
+                        ` : `
+                        <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
+                            <span class="star-option" data-rating="1">☆</span><span class="star-option" data-rating="2">☆</span><span class="star-option" data-rating="3">☆</span><span class="star-option" data-rating="4">☆</span><span class="star-option" data-rating="5">☆</span>
+                        </div>
+                        <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input">
+                        <button class="post-comment-btn">${t('card.send')}</button>
+                        `}
                     </div>
                 </div>
                 <div class="card-footer">
@@ -1053,7 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let selectedRating = 0;
         if (starSelector) {
             const stars = starSelector.querySelectorAll('.star-option');
-            stars.forEach(s => { if (s.textContent === '★') selectedRating = s.dataset.rating; });
+            stars.forEach(s => { if (s.textContent === '★') selectedRating = parseInt(s.dataset.rating); });
             stars.forEach(star => {
                 star.addEventListener('click', () => {
                     selectedRating = parseInt(star.dataset.rating);
@@ -1064,8 +1081,28 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        if (postBtn && inputField && list) {
-            postBtn.addEventListener('click', async () => {
+        const editBtn = card.querySelector('.edit-comment-btn');
+        const cancelBtn = card.querySelector('.cancel-edit-btn');
+        const readonlyDiv = card.querySelector('.user-comment-readonly');
+        const editForm = card.querySelector('.comment-edit-form');
+
+        if (editBtn && readonlyDiv && editForm) {
+            editBtn.addEventListener('click', () => {
+                readonlyDiv.style.display = 'none';
+                editForm.style.display = 'block';
+            });
+        }
+
+        if (cancelBtn && readonlyDiv && editForm) {
+            cancelBtn.addEventListener('click', () => {
+                editForm.style.display = 'none';
+                readonlyDiv.style.display = 'block';
+            });
+        }
+
+        const saveOrSendBtn = card.querySelector('.post-comment-btn');
+        if (saveOrSendBtn && inputField && list) {
+            saveOrSendBtn.addEventListener('click', async () => {
                 if (!state.user) {
                     showToast(t('toast.signInToComment'), "error");
                     authModal.classList.add('open');
@@ -1076,6 +1113,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (commentText === "") return;
 
                 const workingUser = state.user;
+                const originalText = saveOrSendBtn.innerText;
+                saveOrSendBtn.disabled = true;
+                saveOrSendBtn.innerText = '⏳ Saving...';
 
                 try {
                     const res = await fetch(`${API_URL}/documents/comment`, {
@@ -1101,6 +1141,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedRating = 0;
                     if (starSelector) starSelector.querySelectorAll('.star-option').forEach(s => s.textContent = '☆');
                     showToast(t('toast.commentPosted'), "info");
+                } finally {
+                    saveOrSendBtn.disabled = false;
+                    saveOrSendBtn.innerText = originalText;
                 }
             });
         }
@@ -1765,12 +1808,29 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${doc.comments ? doc.comments.map(c => `<div class="comment-item"><strong>${c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}</div>`).join('') : ''}
                         </div>
                         <div class="comment-input-box">
-                            <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
-                                ${aStarHtml}
+                            ${aUserComment ? `
+                            <div class="user-comment-readonly" style="margin-bottom:8px; padding:8px; border:1px solid var(--text-main); border-radius:8px; opacity:0.9;">
+                                <strong>${t('card.you')}:</strong> ${renderStars(aUserRating)} ${aUserText}
+                                <div style="margin-top:6px;">
+                                    <button class="edit-comment-btn unlock-action-btn">${t('card.edit')}</button>
+                                    <button class="delete-comment-btn unlock-action-btn" style="background:#dc3545; margin-left:6px;">${t('card.deleteComment')}</button>
+                                </div>
                             </div>
-                            <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input" value="${aUserText ? aUserText.replace(/"/g, '&quot;') : ''}">
-                            <button class="post-comment-btn">${aUserComment ? t('card.update') : t('card.send')}</button>
-                            ${aUserComment ? `<button class="delete-comment-btn unlock-action-btn" style="background:#dc3545; margin-left:6px;">${t('card.deleteComment')}</button>` : ''}
+                            <div class="comment-edit-form" style="display:none;">
+                                <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
+                                    ${aStarHtml}
+                                </div>
+                                <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input" value="${aUserText ? aUserText.replace(/"/g, '&quot;') : ''}">
+                                <button class="save-comment-btn post-comment-btn">${t('card.save')}</button>
+                                <button class="cancel-edit-btn unlock-action-btn" style="margin-left:6px;">${t('card.cancel')}</button>
+                            </div>
+                            ` : `
+                            <div class="star-selector" style="margin-bottom:6px; font-size:22px; cursor:pointer; letter-spacing:3px;">
+                                <span class="star-option" data-rating="1">☆</span><span class="star-option" data-rating="2">☆</span><span class="star-option" data-rating="3">☆</span><span class="star-option" data-rating="4">☆</span><span class="star-option" data-rating="5">☆</span>
+                            </div>
+                            <input type="text" placeholder="${t('card.commentPlaceholder')}" class="inline-comment-input">
+                            <button class="post-comment-btn">${t('card.send')}</button>
+                            `}
                         </div>
                     </div>
                     <div class="card-footer">
