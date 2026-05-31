@@ -125,6 +125,12 @@ body {
     gap: 20px;
 }
 
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Hamburger Menu Button - hidden on desktop */
 .hamburger-btn {
     display: none;
@@ -143,6 +149,9 @@ body {
         display: inline-flex;
         align-items: center;
         justify-content: center;
+    }
+    .logo span {
+        display: none;
     }
     .nav-links {
         display: none;
