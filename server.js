@@ -203,25 +203,34 @@ app.post('/api/auth/login', async (req, res) => {
 
 // --- GOOGLE OAUTH ---
 app.post('/api/auth/google', async (req, res) => {
-  const { credential } = req.body;
-  if (!credential) return res.status(400).json({ error: "Google credential required." });
+  const { credential, accessToken } = req.body;
+  if (!credential && !accessToken) return res.status(400).json({ error: "Google credential or access token required." });
 
   try {
-    const verifyResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
-    if (!verifyResp.ok) return res.status(401).json({ error: "Invalid Google token." });
-    const payload = await verifyResp.json();
-    const googleEmail = payload.email;
-    const googleName = payload.name || googleEmail.split('@')[0];
+    let googleEmail, googleName;
+
+    if (credential) {
+      const verifyResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+      if (!verifyResp.ok) return res.status(401).json({ error: "Invalid Google token." });
+      const payload = await verifyResp.json();
+      googleEmail = payload.email;
+      googleName = payload.name || googleEmail?.split('@')[0];
+    } else {
+      const verifyResp = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!verifyResp.ok) return res.status(401).json({ error: "Invalid Google token." });
+      const payload = await verifyResp.json();
+      googleEmail = payload.email;
+      googleName = payload.name || googleEmail?.split('@')[0];
+    }
 
     if (!googleEmail) return res.status(400).json({ error: "Google account has no email." });
 
     // Check if user exists
     let user = await getUserProfile(googleEmail.toLowerCase());
     if (!user) {
-      // Create new account with Google email as username
-      const baseName = googleName.toLowerCase().replace(/[^a-z0-9]/g, '');
       let newName = googleEmail.toLowerCase();
-      // If that username is taken, append numbers
       let existing = await supabase.from('users').select('username').eq('username', newName).maybeSingle();
       let counter = 1;
       while (existing) {

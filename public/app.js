@@ -1668,12 +1668,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- GOOGLE SIGN-IN ---
+    // --- GOOGLE SIGN-IN (OAuth access token flow) ---
     const googleWrapper = document.getElementById('google-btn-wrapper');
-    if (googleWrapper) {
+    const googleBtn = document.getElementById('google-signin-btn');
+    if (googleWrapper && googleBtn) {
       let gisClientId = null;
-      let gisReady = false;
-      let gisRendered = false;
+      let tokenClient = null;
       (async () => {
         try {
           const resp = await fetch(`${API_URL}/config`);
@@ -1682,42 +1682,40 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch { /* no config */ }
       })();
       const poll = setInterval(() => {
-        if (typeof google !== 'undefined' && google.accounts && gisClientId) {
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && gisClientId) {
           clearInterval(poll);
-          gisReady = true;
-          google.accounts.id.initialize({
+          tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: gisClientId,
-            callback: async (response) => {
-              try {
-                const res = await fetch(`${API_URL}/auth/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ credential: response.credential }) });
-                const data = await res.json();
-                if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
-                state.user = data.username;
-                localStorage.setItem('p2p-vault-user', data.username);
-                if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
-                const profileHeader = document.querySelector('.account-user-name');
-                if (profileHeader) profileHeader.innerText = data.username;
-                authModal.classList.remove('open');
-                showToast(t('toast.loggedIn', {user: data.username}), 'info');
-                loadVaultData();
-              } catch { showToast(t('toast.networkError'), 'error'); }
+            scope: 'openid profile email',
+            callback: async (tokenResponse) => {
+              if (tokenResponse.access_token) {
+                try {
+                  const res = await fetch(`${API_URL}/auth/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accessToken: tokenResponse.access_token })
+                  });
+                  const data = await res.json();
+                  if (!res.ok) { showToast(data.error || 'Google auth failed', 'error'); return; }
+                  state.user = data.username;
+                  localStorage.setItem('p2p-vault-user', data.username);
+                  if (navAuthBtn) navAuthBtn.innerText = `Hi, ${data.username}`;
+                  const profileHeader = document.querySelector('.account-user-name');
+                  if (profileHeader) profileHeader.innerText = data.username;
+                  authModal.classList.remove('open');
+                  showToast(t('toast.loggedIn', {user: data.username}), 'info');
+                  loadVaultData();
+                } catch { showToast(t('toast.networkError'), 'error'); }
+              }
             }
           });
-          // Render button NOW if modal is already open, otherwise it'll render when modal opens
-          if (authModal.classList.contains('open') && !gisRendered) {
-            gisRendered = true;
-            google.accounts.id.renderButton(googleWrapper, { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular' });
-          }
         }
       }, 200);
-      // Render button when modal opens (if GIS ready and not already rendered)
-      const observer = new MutationObserver(() => {
-        if (authModal.classList.contains('open') && gisReady && !gisRendered) {
-          gisRendered = true;
-          google.accounts.id.renderButton(googleWrapper, { theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular' });
-        }
+      googleBtn.addEventListener('click', () => {
+        if (!gisClientId) { showToast('Google sign-in not configured', 'error'); return; }
+        if (!tokenClient) { showToast('Loading Google sign-in...', 'info'); return; }
+        tokenClient.requestAccessToken();
       });
-      observer.observe(authModal, { attributes: true, attributeFilter: ['class'] });
     }
 
     if (logoutMockBtn) {
