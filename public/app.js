@@ -1687,6 +1687,7 @@ document.addEventListener('DOMContentLoaded', () => {
           tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: gisClientId,
             scope: 'openid profile email',
+            redirect_uri: 'postmessage',
             callback: async (tokenResponse) => {
               if (tokenResponse.error) {
                 showToast(tokenResponse.error, 'error');
