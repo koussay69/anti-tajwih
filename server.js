@@ -270,24 +270,30 @@ app.post('/api/auth/register', async (req, res) => {
   if (insertErr) return res.status(500).json({ error: "Failed to create account." });
 
   // Send verification email if SMTP configured
+  let needsVerification = false;
   if (mailTransporter && normalizedEmail) {
-    const token = crypto.randomBytes(32).toString('hex');
-    await supabase.from('verification_tokens').upsert({ email: normalizedEmail, token, created_at: new Date().toISOString() });
-    const baseUrl = req.protocol + '://' + req.get('host');
-    const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&email=' + encodeURIComponent(normalizedEmail);
     try {
-      await mailTransporter.sendMail({
-        from: FROM_EMAIL,
-        to: normalizedEmail,
-        subject: 'Verify your email - Anti-Tajwih',
-        html: `<p>Click to verify your email: <a href="${verifyLink}">${verifyLink}</a></p>`
-      });
+      const token = crypto.randomBytes(32).toString('hex');
+      const { error: vtErr } = await supabase.from('verification_tokens').upsert({ email: normalizedEmail, token, created_at: new Date().toISOString() });
+      if (!vtErr) {
+        needsVerification = true;
+        const baseUrl = req.protocol + '://' + req.get('host');
+        const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&email=' + encodeURIComponent(normalizedEmail);
+        await mailTransporter.sendMail({
+          from: FROM_EMAIL,
+          to: normalizedEmail,
+          subject: 'Verify your email - Anti-Tajwih',
+          html: `<p>Click to verify your email: <a href="${verifyLink}">${verifyLink}</a></p>`
+        });
+      } else {
+        console.error('verification_tokens upsert error:', vtErr.message);
+      }
     } catch (mailErr) {
       console.error('Failed to send verification email:', mailErr.message);
     }
   }
 
-  res.json({ success: true, needsVerification: !!(mailTransporter && normalizedEmail) });
+  res.json({ success: true, needsVerification });
 });
 
 app.post('/api/auth/register-google', async (req, res) => {
@@ -325,35 +331,40 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(403).json({ error: "Your account has been banned." });
   }
   // Check email verification if SMTP configured
-  if (mailTransporter && user.email) {
-    const { data: pendingToken } = await supabase.from('verification_tokens').select('email').eq('email', user.email).maybeSingle();
-    if (pendingToken) {
-      return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
+  try {
+    if (mailTransporter && user.email) {
+      const { data: pendingToken } = await supabase.from('verification_tokens').select('email').eq('email', user.email).maybeSingle();
+      if (pendingToken) {
+        return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
+      }
     }
-  }
+  } catch { /* skip verification check on error */ }
   res.json({ success: true, username: user.username });
 });
 
 // Email verification
 app.get('/api/auth/verify-email', async (req, res) => {
-  const { token, email } = req.query;
-  if (!token || !email) return res.send('<p>Missing verification parameters.</p>');
-  const normalizedEmail = email.toLowerCase();
-  const { data: vt } = await supabase.from('verification_tokens').select('*').eq('email', normalizedEmail).eq('token', token).maybeSingle();
-  if (!vt) return res.send('<p>Invalid or expired verification link.</p>');
-  await supabase.from('verification_tokens').delete().eq('email', normalizedEmail);
-  res.send('<p>Email verified successfully! You can now <a href="/">sign in</a>.</p>');
+  try {
+    const { token, email } = req.query;
+    if (!token || !email) return res.send('<p>Missing verification parameters.</p>');
+    const normalizedEmail = email.toLowerCase();
+    const { data: vt } = await supabase.from('verification_tokens').select('*').eq('email', normalizedEmail).eq('token', token).maybeSingle();
+    if (!vt) return res.send('<p>Invalid or expired verification link.</p>');
+    await supabase.from('verification_tokens').delete().eq('email', normalizedEmail);
+    res.send('<p>Email verified successfully! You can now <a href="/">sign in</a>.</p>');
+  } catch { res.send('<p>Verification failed. Please try again.</p>'); }
 });
 
 app.post('/api/auth/resend-verification', async (req, res) => {
-  const { email } = req.body;
-  if (!email || !mailTransporter) return res.status(400).json({ error: "Email verification not available." });
-  const normalizedEmail = email.toLowerCase();
-  const token = crypto.randomBytes(32).toString('hex');
-  await supabase.from('verification_tokens').upsert({ email: normalizedEmail, token, created_at: new Date().toISOString() });
-  const baseUrl = req.protocol + '://' + req.get('host');
-  const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&email=' + encodeURIComponent(normalizedEmail);
   try {
+    const { email } = req.body;
+    if (!email || !mailTransporter) return res.status(400).json({ error: "Email verification not available." });
+    const normalizedEmail = email.toLowerCase();
+    const token = crypto.randomBytes(32).toString('hex');
+    const { error: vtErr } = await supabase.from('verification_tokens').upsert({ email: normalizedEmail, token, created_at: new Date().toISOString() });
+    if (vtErr) return res.status(500).json({ error: "Verification token error." });
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&email=' + encodeURIComponent(normalizedEmail);
     await mailTransporter.sendMail({
       from: FROM_EMAIL,
       to: normalizedEmail,
@@ -1171,6 +1182,13 @@ app.post('/api/admin/flagged-docs/:docId/resolve', async (req, res) => {
   }
 
   res.json({ success: true });
+});
+
+// Global async error handler to prevent crashes
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err?.message || err);
+  if (res.headersSent) return;
+  res.status(500).json({ error: 'Server error' });
 });
 
 app.listen(PORT, () => {
