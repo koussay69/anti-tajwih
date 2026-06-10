@@ -6,6 +6,20 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const pdfjsLib = require('pdfjs-dist');
+const nodemailer = require('nodemailer');
+let mailTransporter = null;
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  mailTransporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  });
+  console.log('Email transporter configured');
+} else {
+  console.log('SMTP not configured — email verification disabled');
+}
+const FROM_EMAIL = process.env.SMTP_FROM || 'noreply@anti-tajwih.com';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,7 +73,7 @@ app.get('/api/config', (req, res) => {
 
 // Google OAuth callback (redirect flow)
 app.get('/api/auth/google/callback', async (req, res) => {
-  const { code } = req.query;
+  const { code, state } = req.query;
   if (!code) return res.redirect('/?google_error=no_code');
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -86,9 +100,19 @@ app.get('/api/auth/google/callback', async (req, res) => {
     const payload = JSON.parse(Buffer.from(b64, 'base64').toString());
     const googleEmail = payload.email;
     if (!googleEmail) return res.redirect('/?google_error=no_email');
-
-    // Lookup user by email or username
     const normalizedEmail = googleEmail.toLowerCase();
+
+    // === LINK FLOW: state=link:username ===
+    if (state && state.startsWith('link:')) {
+      const usernameToLink = state.slice(5).toLowerCase();
+      const { data: linkUser, error: linkErr } = await supabase.from('users').update({ email: normalizedEmail }).eq('username', usernameToLink).select().maybeSingle();
+      if (linkErr || !linkUser) return res.redirect('/?google_linked=error:user_not_found');
+      // If this Google email was previously stored on another account, remove it
+      await supabase.from('users').update({ email: null }).ilike('email', normalizedEmail).neq('username', usernameToLink);
+      return res.redirect('/?google_linked=' + encodeURIComponent(usernameToLink));
+    }
+
+    // === LOGIN / SIGN-UP FLOW ===
     let existingUser = await getUserProfile(normalizedEmail);
     if (existingUser && !existingUser.username) existingUser = null;
     if (!existingUser) {
@@ -233,8 +257,37 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: "Username already registered." });
   }
 
-  await supabase.from('users').insert({ username: normalizedName, email: email || null, password, tokens: 0, uploadsCount: 0 });
-  res.json({ success: true });
+  // If email provided, check it's not used by another verified user
+  const normalizedEmail = email ? email.trim().toLowerCase() : null;
+  if (normalizedEmail) {
+    const { data: emailUser } = await supabase.from('users').select('username').eq('email', normalizedEmail).maybeSingle();
+    if (emailUser) {
+      return res.status(400).json({ error: "Email already registered." });
+    }
+  }
+
+  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
+  if (insertErr) return res.status(500).json({ error: "Failed to create account." });
+
+  // Send verification email if SMTP configured
+  if (mailTransporter && normalizedEmail) {
+    const token = crypto.randomBytes(32).toString('hex');
+    await supabase.from('verification_tokens').upsert({ email: normalizedEmail, token, created_at: new Date().toISOString() });
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&email=' + encodeURIComponent(normalizedEmail);
+    try {
+      await mailTransporter.sendMail({
+        from: FROM_EMAIL,
+        to: normalizedEmail,
+        subject: 'Verify your email - Anti-Tajwih',
+        html: `<p>Click to verify your email: <a href="${verifyLink}">${verifyLink}</a></p>`
+      });
+    } catch (mailErr) {
+      console.error('Failed to send verification email:', mailErr.message);
+    }
+  }
+
+  res.json({ success: true, needsVerification: !!(mailTransporter && normalizedEmail) });
 });
 
 app.post('/api/auth/register-google', async (req, res) => {
@@ -254,7 +307,8 @@ app.post('/api/auth/register-google', async (req, res) => {
   const { data: existing } = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
   if (existing) return res.status(400).json({ error: "Username '" + normalizedName + "' is already taken." });
 
-  await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
+  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
+  if (insertErr) return res.status(500).json({ error: "Failed to create account: " + insertErr.message });
   res.json({ success: true, username: normalizedName });
 });
 
@@ -270,7 +324,46 @@ app.post('/api/auth/login', async (req, res) => {
   if (user.banned) {
     return res.status(403).json({ error: "Your account has been banned." });
   }
+  // Check email verification if SMTP configured
+  if (mailTransporter && user.email) {
+    const { data: pendingToken } = await supabase.from('verification_tokens').select('email').eq('email', user.email).maybeSingle();
+    if (pendingToken) {
+      return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
+    }
+  }
   res.json({ success: true, username: user.username });
+});
+
+// Email verification
+app.get('/api/auth/verify-email', async (req, res) => {
+  const { token, email } = req.query;
+  if (!token || !email) return res.send('<p>Missing verification parameters.</p>');
+  const normalizedEmail = email.toLowerCase();
+  const { data: vt } = await supabase.from('verification_tokens').select('*').eq('email', normalizedEmail).eq('token', token).maybeSingle();
+  if (!vt) return res.send('<p>Invalid or expired verification link.</p>');
+  await supabase.from('verification_tokens').delete().eq('email', normalizedEmail);
+  res.send('<p>Email verified successfully! You can now <a href="/">sign in</a>.</p>');
+});
+
+app.post('/api/auth/resend-verification', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !mailTransporter) return res.status(400).json({ error: "Email verification not available." });
+  const normalizedEmail = email.toLowerCase();
+  const token = crypto.randomBytes(32).toString('hex');
+  await supabase.from('verification_tokens').upsert({ email: normalizedEmail, token, created_at: new Date().toISOString() });
+  const baseUrl = req.protocol + '://' + req.get('host');
+  const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&email=' + encodeURIComponent(normalizedEmail);
+  try {
+    await mailTransporter.sendMail({
+      from: FROM_EMAIL,
+      to: normalizedEmail,
+      subject: 'Verify your email - Anti-Tajwih',
+      html: `<p>Click to verify your email: <a href="${verifyLink}">${verifyLink}</a></p>`
+    });
+    res.json({ success: true });
+  } catch (mailErr) {
+    res.status(500).json({ error: "Failed to send verification email." });
+  }
 });
 
 // --- GOOGLE OAUTH ---
