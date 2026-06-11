@@ -17,7 +17,10 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true',
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000
   });
 }
 const FROM_EMAIL = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@anti-tajwih.com';
@@ -86,7 +89,7 @@ app.get('/api/debug-smtp', async (req, res) => {
     });
     res.json({ ok: true, from: FROM_EMAIL, user: process.env.SMTP_USER });
   } catch (e) {
-    res.json({ ok: false, error: e.message, stack: e.stack });
+    res.json({ ok: false, error: e.message, stack: e.stack, code: e.code });
   }
 });
 
@@ -306,7 +309,7 @@ app.post('/api/auth/register', async (req, res) => {
               subject: 'Verify your account - Anti-Tajwih',
               html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
             }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000))
           ]);
         } catch (mailErr) {
           console.error('Failed to send verification email:', mailErr.message, mailErr.stack || '');
@@ -401,7 +404,7 @@ app.post('/api/auth/resend-verification', async (req, res) => {
         subject: 'Verify your account - Anti-Tajwih',
         html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
       }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000))
     ]);
     res.json({ success: true });
   } catch (mailErr) {
