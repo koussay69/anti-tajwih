@@ -68,7 +68,8 @@ app.get('/events', (req, res) => {
 // Expose public config to frontend
 app.get('/api/config', (req, res) => {
   res.json({
-    googleClientId: process.env.GOOGLE_CLIENT_ID || ''
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    smtpConfigured: !!mailTransporter
   });
 });
 
