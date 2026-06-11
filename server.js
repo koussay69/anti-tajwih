@@ -138,7 +138,7 @@ app.get('/api/config', (req, res) => {
 app.get('/api/debug-smtp', async (req, res) => {
   try {
     await sendEmail({
-      to: process.env.SMTP_USER || process.env.MAILJET_FROM || 'unknown',
+      to: FROM_EMAIL,
       subject: 'SMTP test - Anti-Tajwih',
       html: '<p>If you receive this, email works!</p>'
     });
