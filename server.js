@@ -120,7 +120,8 @@ app.get('/api/config', (req, res) => {
   res.json({
     googleClientId: process.env.GOOGLE_CLIENT_ID || '',
     smtpConfigured: !!(mailTransporter || resendClient),
-    smtpProvider: resendClient ? 'resend' : mailTransporter ? 'smtp' : null
+    smtpProvider: resendClient ? 'resend' : mailTransporter ? 'smtp' : null,
+    emailVerificationDisabled: !!process.env.DISABLE_EMAIL_VERIFICATION
   });
 });
 
