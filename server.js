@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const pdfjsLib = require('pdfjs-dist');
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 const fs = require('fs');
 const VERIFICATIONS_PATH = path.join(__dirname, 'verifications.json');
 function loadVerifications() { try { return JSON.parse(fs.readFileSync(VERIFICATIONS_PATH, 'utf8')); } catch { return {}; } }
@@ -20,7 +21,8 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     connectionTimeout: 15000,
     greetingTimeout: 15000,
-    socketTimeout: 30000
+    socketTimeout: 30000,
+    lookup: (hostname, opts, cb) => dns.lookup(hostname, { ...opts, family: 4 }, cb)
   });
 }
 const FROM_EMAIL = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@anti-tajwih.com';
