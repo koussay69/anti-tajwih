@@ -13,7 +13,11 @@ const VERIFICATIONS_PATH = path.join(__dirname, 'verifications.json');
 function loadVerifications() { try { return JSON.parse(fs.readFileSync(VERIFICATIONS_PATH, 'utf8')); } catch { return {}; } }
 function saveVerifications(data) { fs.writeFileSync(VERIFICATIONS_PATH, JSON.stringify(data), 'utf8'); }
 let mailTransporter = null;
-if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+const MAILJET_API_KEY = process.env.MAILJET_API_KEY;
+const MAILJET_SECRET_KEY = process.env.MAILJET_SECRET_KEY;
+if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
+  console.log('Mailjet REST API configured');
+} else if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   try {
     const addresses = dns.resolve4Sync(process.env.SMTP_HOST);
     const host = addresses && addresses.length > 0 ? addresses[0] : process.env.SMTP_HOST;
@@ -42,7 +46,41 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     });
   }
 }
-const FROM_EMAIL = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@anti-tajwih.com';
+const FROM_EMAIL = process.env.SMTP_FROM || process.env.MAILJET_FROM || process.env.SMTP_USER || 'noreply@anti-tajwih.com';
+
+async function sendEmail({ to, subject, html }) {
+  if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
+    const basicAuth = Buffer.from(MAILJET_API_KEY + ':' + MAILJET_SECRET_KEY).toString('base64');
+    const res = await fetch('https://api.mailjet.com/v3.1/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + basicAuth,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        Messages: [{
+          From: { Email: FROM_EMAIL, Name: 'Anti-Tajwih' },
+          To: [{ Email: to }],
+          Subject: subject,
+          HTMLPart: html
+        }]
+      })
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error('Mailjet API ' + res.status + ': ' + body.slice(0, 200));
+    }
+    return;
+  }
+  if (mailTransporter) {
+    await Promise.race([
+      mailTransporter.sendMail({ from: FROM_EMAIL, to, subject, html }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000))
+    ]);
+    return;
+  }
+  throw new Error('No email transport configured');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -91,23 +129,20 @@ app.get('/events', (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     googleClientId: process.env.GOOGLE_CLIENT_ID || '',
-    smtpConfigured: !!mailTransporter,
-    smtpProvider: mailTransporter ? 'smtp' : null
+    smtpConfigured: !!(mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)),
+    smtpProvider: MAILJET_API_KEY ? 'mailjet-api' : mailTransporter ? 'smtp' : null
   });
 });
 
 // Debug SMTP endpoint
 app.get('/api/debug-smtp', async (req, res) => {
-  if (!mailTransporter) return res.json({ ok: false, error: 'mailTransporter is null' });
   try {
-    await mailTransporter.verify();
-    await mailTransporter.sendMail({
-      from: FROM_EMAIL,
-      to: process.env.SMTP_USER || 'unknown',
+    await sendEmail({
+      to: process.env.SMTP_USER || process.env.MAILJET_FROM || 'unknown',
       subject: 'SMTP test - Anti-Tajwih',
-      text: 'If you receive this, SMTP works!'
+      html: '<p>If you receive this, email works!</p>'
     });
-    res.json({ ok: true, from: FROM_EMAIL, user: process.env.SMTP_USER });
+    res.json({ ok: true, from: FROM_EMAIL, provider: MAILJET_API_KEY ? 'mailjet-api' : 'smtp' });
   } catch (e) {
     res.json({ ok: false, error: e.message, stack: e.stack, code: e.code });
   }
@@ -312,7 +347,7 @@ app.post('/api/auth/register', async (req, res) => {
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
 
     let needsVerification = false;
-    if (mailTransporter && normalizedEmail) {
+    if ((mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)) && normalizedEmail) {
       try {
         const token = crypto.randomBytes(32).toString('hex');
         const v = loadVerifications();
@@ -322,15 +357,11 @@ app.post('/api/auth/register', async (req, res) => {
         const baseUrl = req.protocol + '://' + req.get('host');
         const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
         try {
-          await Promise.race([
-            mailTransporter.sendMail({
-              from: FROM_EMAIL,
-              to: normalizedEmail,
-              subject: 'Verify your account - Anti-Tajwih',
-              html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
-            }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000))
-          ]);
+          await sendEmail({
+            to: normalizedEmail,
+            subject: 'Verify your account - Anti-Tajwih',
+            html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
+          });
         } catch (mailErr) {
           console.error('Failed to send verification email:', mailErr.message, mailErr.stack || '');
         }
@@ -380,8 +411,8 @@ app.post('/api/auth/login', async (req, res) => {
   if (user.banned) {
     return res.status(403).json({ error: "Your account has been banned." });
   }
-  // Check email verification if SMTP configured
-  if (mailTransporter && user.email) {
+  // Check email verification if SMTP/mail configured
+  if ((mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)) && user.email) {
     const v = loadVerifications();
     if (v[user.username]) {
       return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
@@ -408,7 +439,7 @@ app.get('/api/auth/verify-email', async (req, res) => {
 app.post('/api/auth/resend-verification', async (req, res) => {
   try {
     const { email, username } = req.body;
-    if (!email || !username || !mailTransporter) return res.status(400).json({ error: "Email verification not available." });
+    if (!email || !username || !(mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY))) return res.status(400).json({ error: "Email verification not available." });
     const normalizedEmail = email.toLowerCase();
     const normalizedName = username.toLowerCase();
     const token = crypto.randomBytes(32).toString('hex');
@@ -417,15 +448,11 @@ app.post('/api/auth/resend-verification', async (req, res) => {
     saveVerifications(v);
     const baseUrl = req.protocol + '://' + req.get('host');
     const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
-    await Promise.race([
-      mailTransporter.sendMail({
-        from: FROM_EMAIL,
-        to: normalizedEmail,
-        subject: 'Verify your account - Anti-Tajwih',
-        html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
-      }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000))
-    ]);
+    await sendEmail({
+      to: normalizedEmail,
+      subject: 'Verify your account - Anti-Tajwih',
+      html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
+    });
     res.json({ success: true });
   } catch (mailErr) {
     console.error('Resend verification error:', mailErr.message, mailErr.stack || '');
