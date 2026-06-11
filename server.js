@@ -7,18 +7,8 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const pdfjsLib = require('pdfjs-dist');
 const nodemailer = require('nodemailer');
+// Email verification disabled for now
 let mailTransporter = null;
-if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-  mailTransporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-  });
-  console.log('Email transporter configured');
-} else {
-  console.log('SMTP not configured — email verification disabled');
-}
 const FROM_EMAIL = process.env.SMTP_FROM || 'noreply@anti-tajwih.com';
 
 const app = express();
