@@ -73,6 +73,23 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// Debug SMTP endpoint
+app.get('/api/debug-smtp', async (req, res) => {
+  if (!mailTransporter) return res.json({ ok: false, error: 'mailTransporter is null' });
+  try {
+    await mailTransporter.verify();
+    await mailTransporter.sendMail({
+      from: FROM_EMAIL,
+      to: process.env.SMTP_USER || 'unknown',
+      subject: 'SMTP test - Anti-Tajwih',
+      text: 'If you receive this, SMTP works!'
+    });
+    res.json({ ok: true, from: FROM_EMAIL, user: process.env.SMTP_USER });
+  } catch (e) {
+    res.json({ ok: false, error: e.message, stack: e.stack });
+  }
+});
+
 // Google OAuth callback (redirect flow)
 app.get('/api/auth/google/callback', async (req, res) => {
   const { code, state } = req.query;
