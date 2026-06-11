@@ -13,32 +13,54 @@ const VERIFICATIONS_PATH = path.join(__dirname, 'verifications.json');
 function loadVerifications() { try { return JSON.parse(fs.readFileSync(VERIFICATIONS_PATH, 'utf8')); } catch { return {}; } }
 function saveVerifications(data) { fs.writeFileSync(VERIFICATIONS_PATH, JSON.stringify(data), 'utf8'); }
 let mailTransporter = null;
-function createSmtpTransport(host) {
-  return nodemailer.createTransport({
-    host,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 30000
-  });
-}
-if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+if (process.env.SENDGRID_API_KEY) {
+  const sgHost = 'smtp.sendgrid.net';
+  try {
+    const addresses = dns.resolve4Sync(sgHost);
+    const host = addresses && addresses.length > 0 ? addresses[0] : sgHost;
+    mailTransporter = nodemailer.createTransport({
+      host,
+      port: 587,
+      secure: false,
+      auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000
+    });
+    console.log('SendGrid SMTP configured via IPv4:', host);
+  } catch (e) {
+    console.error('SendGrid DNS resolution failed:', e.message);
+  }
+} else if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   try {
     const addresses = dns.resolve4Sync(process.env.SMTP_HOST);
-    if (addresses && addresses.length > 0) {
-      mailTransporter = createSmtpTransport(addresses[0]);
-      console.log('SMTP using IPv4:', addresses[0]);
-    }
+    const host = addresses && addresses.length > 0 ? addresses[0] : process.env.SMTP_HOST;
+    mailTransporter = nodemailer.createTransport({
+      host,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000
+    });
+    if (host !== process.env.SMTP_HOST) console.log('SMTP using IPv4:', host);
   } catch (e) {
-    console.error('SMTP DNS resolve4 failed, using hostname directly:', e.message);
+    console.error('SMTP DNS resolve4 failed:', e.message);
   }
   if (!mailTransporter) {
-    mailTransporter = createSmtpTransport(process.env.SMTP_HOST);
+    mailTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000
+    });
   }
 }
-const FROM_EMAIL = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@anti-tajwih.com';
+const FROM_EMAIL = process.env.SMTP_FROM || process.env.SENDGRID_FROM || process.env.SMTP_USER || 'noreply@anti-tajwih.com';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -87,7 +109,8 @@ app.get('/events', (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     googleClientId: process.env.GOOGLE_CLIENT_ID || '',
-    smtpConfigured: !!mailTransporter
+    smtpConfigured: !!mailTransporter,
+    smtpProvider: mailTransporter ? (process.env.SENDGRID_API_KEY ? 'sendgrid' : 'smtp') : null
   });
 });
 
