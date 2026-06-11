@@ -347,26 +347,22 @@ app.post('/api/auth/register', async (req, res) => {
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
 
     let needsVerification = false;
-    if ((mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)) && normalizedEmail) {
+    if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)) && normalizedEmail) {
       try {
         const token = crypto.randomBytes(32).toString('hex');
         const v = loadVerifications();
         v[normalizedName] = { token, email: normalizedEmail, createdAt: Date.now() };
         saveVerifications(v);
-        needsVerification = true;
         const baseUrl = req.protocol + '://' + req.get('host');
         const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
-        try {
-          await sendEmail({
-            to: normalizedEmail,
-            subject: 'Verify your account - Anti-Tajwih',
-            html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
-          });
-        } catch (mailErr) {
-          console.error('Failed to send verification email:', mailErr.message, mailErr.stack || '');
-        }
+        await sendEmail({
+          to: normalizedEmail,
+          subject: 'Verify your account - Anti-Tajwih',
+          html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
+        });
+        needsVerification = true;
       } catch (e) {
-        console.error('Verification error:', e?.message || e);
+        console.error('Failed to send verification email:', e?.message || e);
       }
     }
 
@@ -412,7 +408,7 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(403).json({ error: "Your account has been banned." });
   }
   // Check email verification if SMTP/mail configured
-  if ((mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)) && user.email) {
+  if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)) && user.email) {
     const v = loadVerifications();
     if (v[user.username]) {
       return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });

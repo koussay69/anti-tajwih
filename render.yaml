@@ -15,3 +15,5 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
+      - key: DISABLE_EMAIL_VERIFICATION
+        sync: false
