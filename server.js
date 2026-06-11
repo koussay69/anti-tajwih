@@ -7,6 +7,10 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const pdfjsLib = require('pdfjs-dist');
 const nodemailer = require('nodemailer');
+const fs = require('fs');
+const VERIFICATIONS_PATH = path.join(__dirname, 'verifications.json');
+function loadVerifications() { try { return JSON.parse(fs.readFileSync(VERIFICATIONS_PATH, 'utf8')); } catch { return {}; } }
+function saveVerifications(data) { fs.writeFileSync(VERIFICATIONS_PATH, JSON.stringify(data), 'utf8'); }
 let mailTransporter = null;
 if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   mailTransporter = nodemailer.createTransport({
@@ -270,29 +274,27 @@ app.post('/api/auth/register', async (req, res) => {
     if (mailTransporter && normalizedEmail) {
       try {
         const token = crypto.randomBytes(32).toString('hex');
-        const { error: upsertErr } = await supabase.from('verification_tokens').upsert({ username: normalizedName, token, email: normalizedEmail, created_at: new Date().toISOString() });
-        if (!upsertErr) {
-          needsVerification = true;
-          const baseUrl = req.protocol + '://' + req.get('host');
-          const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
-          try {
-            await Promise.race([
-              mailTransporter.sendMail({
-                from: FROM_EMAIL,
-                to: normalizedEmail,
-                subject: 'Verify your account - Anti-Tajwih',
-                html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
-              }),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
-            ]);
-          } catch (mailErr) {
-            console.error('Failed to send verification email:', mailErr.message);
-          }
-        } else {
-          console.error('verification_tokens upsert error:', upsertErr.message);
+        const v = loadVerifications();
+        v[normalizedName] = { token, email: normalizedEmail, createdAt: Date.now() };
+        saveVerifications(v);
+        needsVerification = true;
+        const baseUrl = req.protocol + '://' + req.get('host');
+        const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
+        try {
+          await Promise.race([
+            mailTransporter.sendMail({
+              from: FROM_EMAIL,
+              to: normalizedEmail,
+              subject: 'Verify your account - Anti-Tajwih',
+              html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+          ]);
+        } catch (mailErr) {
+          console.error('Failed to send verification email:', mailErr.message);
         }
-      } catch (vtErr) {
-        console.error('verification_tokens error:', vtErr?.message || vtErr);
+      } catch (e) {
+        console.error('Verification error:', e?.message || e);
       }
     }
 
@@ -338,14 +340,12 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(403).json({ error: "Your account has been banned." });
   }
   // Check email verification if SMTP configured
-  try {
-    if (mailTransporter && user.email) {
-      const { data: pendingToken } = await supabase.from('verification_tokens').select('username').eq('username', user.username).maybeSingle();
-      if (pendingToken) {
-        return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
-      }
+  if (mailTransporter && user.email) {
+    const v = loadVerifications();
+    if (v[user.username]) {
+      return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
     }
-  } catch { /* skip verification check on error */ }
+  }
   res.json({ success: true, username: user.username });
 });
 
@@ -355,9 +355,11 @@ app.get('/api/auth/verify-email', async (req, res) => {
     const { token, username } = req.query;
     if (!token || !username) return res.send('<p>Missing verification parameters.</p>');
     const normalizedName = username.toLowerCase();
-    const { data: vt } = await supabase.from('verification_tokens').select('*').eq('username', normalizedName).eq('token', token).maybeSingle();
-    if (!vt) return res.send('<p>Invalid or expired verification link.</p>');
-    await supabase.from('verification_tokens').delete().eq('username', normalizedName);
+    const v = loadVerifications();
+    const entry = v[normalizedName];
+    if (!entry || entry.token !== token) return res.send('<p>Invalid or expired verification link.</p>');
+    delete v[normalizedName];
+    saveVerifications(v);
     res.send('<p>Account <strong>' + normalizedName + '</strong> verified! You can now <a href="/">sign in</a>.</p>');
   } catch { res.send('<p>Verification failed. Please try again.</p>'); }
 });
@@ -369,8 +371,9 @@ app.post('/api/auth/resend-verification', async (req, res) => {
     const normalizedEmail = email.toLowerCase();
     const normalizedName = username.toLowerCase();
     const token = crypto.randomBytes(32).toString('hex');
-    const { error: vtErr } = await supabase.from('verification_tokens').upsert({ username: normalizedName, token, email: normalizedEmail, created_at: new Date().toISOString() });
-    if (vtErr) return res.status(500).json({ error: "Verification token error." });
+    const v = loadVerifications();
+    v[normalizedName] = { token, email: normalizedEmail, createdAt: Date.now() };
+    saveVerifications(v);
     const baseUrl = req.protocol + '://' + req.get('host');
     const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
     await Promise.race([
