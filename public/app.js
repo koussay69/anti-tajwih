@@ -739,6 +739,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeHelp = document.getElementById('close-help-modal');
     const closeAnswer = document.getElementById('close-answer-modal');
     const closeReport = document.getElementById('close-report-modal');
+    const closeVerify = document.getElementById('close-verify-modal');
+    const verifyModal = document.getElementById('verify-modal');
 
     if (navAuthBtn) {
         navAuthBtn.addEventListener('click', () => {
@@ -753,6 +755,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 authModal.classList.add('open');
             } else {
                 uploadModal.classList.add('open');
+            }
+        });
+    }
+
+    // Resend verification email
+    const resendBtn = document.getElementById('resend-verify-btn');
+    if (resendBtn && verifyModal) {
+        resendBtn.addEventListener('click', async () => {
+            const email = verifyModal.dataset.email;
+            const username = verifyModal.dataset.username;
+            if (!email) return;
+            resendBtn.disabled = true;
+            resendBtn.innerText = 'Sending...';
+            try {
+                const res = await fetch(`${API_URL}/auth/resend-verification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, username })
+                });
+                const data = await res.json();
+                showToast(data.success ? 'Verification resent' : data.error || 'Failed', data.success ? 'success' : 'error');
+            } catch {
+                showToast('Network error', 'error');
+            } finally {
+                resendBtn.disabled = false;
+                resendBtn.innerText = 'Resend Verification';
             }
         });
     }
@@ -791,6 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closeHelp) closeHelp.addEventListener('click', () => helpModal.classList.remove('open'));
     if (closeAnswer) closeAnswer.addEventListener('click', () => answerModal.classList.remove('open'));
     if (closeReport) closeReport.addEventListener('click', () => { reportModal.classList.remove('open'); reportModal._currentDocId = null; });
+    if (closeVerify) closeVerify.addEventListener('click', () => verifyModal.classList.remove('open'));
 
     window.addEventListener('click', (e) => {
         if (e.target === authModal) authModal.classList.remove('open');
@@ -798,6 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === helpModal) helpModal.classList.remove('open');
         if (e.target === answerModal) answerModal.classList.remove('open');
         if (e.target === reportModal) { reportModal.classList.remove('open'); reportModal._currentDocId = null; }
+        if (e.target === verifyModal) verifyModal.classList.remove('open');
     });
 
     // --- DYNAMIC CARD BUILDER GENERATORS ---
@@ -1652,18 +1682,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!res.ok) {
                     if (data.needsVerification) {
-                        showToast(t('toast.verifyEmail'), 'info');
+                        verifyModal.dataset.email = data.email || '';
+                        verifyModal.dataset.username = parsedName;
+                        document.getElementById('verify-email-display').textContent = data.email || '';
+                        verifyModal.classList.add('open');
                     } else {
                         showToast(data.error || t('toast.authFailed'), "error");
                     }
                     return;
                 }
 
-                // If server says verification needed, don't log in
+                // If server says verification needed, show verification modal
                 if (data.needsVerification) {
-                    showToast(t('toast.verifyEmailSent'), 'info');
                     authForm.reset();
                     authModal.classList.remove('open');
+                    const emailInput = document.getElementById('form-auth-email');
+                    const verifyEmail = emailInput?.value || '';
+                    verifyModal.dataset.email = verifyEmail;
+                    verifyModal.dataset.username = parsedName;
+                    document.getElementById('verify-email-display').textContent = verifyEmail;
+                    verifyModal.classList.add('open');
                     return;
                 }
 

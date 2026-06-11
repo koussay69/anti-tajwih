@@ -7,8 +7,15 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const pdfjsLib = require('pdfjs-dist');
 const nodemailer = require('nodemailer');
-// Email verification disabled for now
 let mailTransporter = null;
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  mailTransporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  });
+}
 const FROM_EMAIL = process.env.SMTP_FROM || 'noreply@anti-tajwih.com';
 
 const app = express();
@@ -263,25 +270,29 @@ app.post('/api/auth/register', async (req, res) => {
     if (mailTransporter && normalizedEmail) {
       try {
         const token = crypto.randomBytes(32).toString('hex');
-        const { error: vtErr } = await supabase.from('verification_tokens').upsert({ username: normalizedName, token, email: normalizedEmail, created_at: new Date().toISOString() });
-        if (!vtErr) {
+        const { error: upsertErr } = await supabase.from('verification_tokens').upsert({ username: normalizedName, token, email: normalizedEmail, created_at: new Date().toISOString() });
+        if (!upsertErr) {
           needsVerification = true;
           const baseUrl = req.protocol + '://' + req.get('host');
           const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
-          await Promise.race([
-            mailTransporter.sendMail({
-              from: FROM_EMAIL,
-              to: normalizedEmail,
-              subject: 'Verify your account - Anti-Tajwih',
-              html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
-            }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
-          ]);
+          try {
+            await Promise.race([
+              mailTransporter.sendMail({
+                from: FROM_EMAIL,
+                to: normalizedEmail,
+                subject: 'Verify your account - Anti-Tajwih',
+                html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
+              }),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+            ]);
+          } catch (mailErr) {
+            console.error('Failed to send verification email:', mailErr.message);
+          }
         } else {
-          console.error('verification_tokens upsert error:', vtErr.message);
+          console.error('verification_tokens upsert error:', upsertErr.message);
         }
-      } catch (mailErr) {
-        console.error('Failed to send verification email:', mailErr.message);
+      } catch (vtErr) {
+        console.error('verification_tokens error:', vtErr?.message || vtErr);
       }
     }
 
