@@ -246,54 +246,60 @@ async function getBounties() {
 
 // --- AUTH ---
 app.post('/api/auth/register', async (req, res) => {
-  const { username, password, email } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ error: "Username and password are required." });
-  }
-
-  const normalizedName = username.trim().toLowerCase();
-  const { data: existing } = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
-  if (existing) {
-    return res.status(400).json({ error: "Username already registered." });
-  }
-
-  // Check email limit (max 3 accounts per email)
-  const normalizedEmail = email ? email.trim().toLowerCase() : null;
-  if (normalizedEmail) {
-    const { count: emailCount } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('email', normalizedEmail);
-    if (emailCount >= 3) {
-      return res.status(400).json({ error: "This email already has 3 accounts. Use a different email." });
+  try {
+    const { username, password, email } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required." });
     }
-  }
 
-  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
-  if (insertErr) return res.status(500).json({ error: "Failed to create account." });
+    const normalizedName = username.trim().toLowerCase();
+    const { data: existing } = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
+    if (existing) {
+      return res.status(400).json({ error: "Username already registered." });
+    }
 
-  // Send verification email if SMTP configured
-  let needsVerification = false;
-  if (mailTransporter && normalizedEmail) {
-    try {
-      const token = crypto.randomBytes(32).toString('hex');
-      const { error: vtErr } = await supabase.from('verification_tokens').upsert({ username: normalizedName, token, email: normalizedEmail, created_at: new Date().toISOString() });
-      if (!vtErr) {
-        needsVerification = true;
-        const baseUrl = req.protocol + '://' + req.get('host');
-        const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
-        await mailTransporter.sendMail({
-          from: FROM_EMAIL,
-          to: normalizedEmail,
-          subject: 'Verify your account - Anti-Tajwih',
-          html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
-        });
-      } else {
-        console.error('verification_tokens upsert error:', vtErr.message);
+    const normalizedEmail = email ? email.trim().toLowerCase() : null;
+    if (normalizedEmail) {
+      const { data: emailUsers } = await supabase.from('users').select('username').eq('email', normalizedEmail);
+      if (emailUsers && emailUsers.length >= 3) {
+        return res.status(400).json({ error: "This email already has 3 accounts." });
       }
-    } catch (mailErr) {
-      console.error('Failed to send verification email:', mailErr.message);
     }
-  }
 
-  res.json({ success: true, needsVerification });
+    const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
+    if (insertErr) return res.status(500).json({ error: "Failed to create account." });
+
+    let needsVerification = false;
+    if (mailTransporter && normalizedEmail) {
+      try {
+        const token = crypto.randomBytes(32).toString('hex');
+        const { error: vtErr } = await supabase.from('verification_tokens').upsert({ username: normalizedName, token, email: normalizedEmail, created_at: new Date().toISOString() });
+        if (!vtErr) {
+          needsVerification = true;
+          const baseUrl = req.protocol + '://' + req.get('host');
+          const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
+          await Promise.race([
+            mailTransporter.sendMail({
+              from: FROM_EMAIL,
+              to: normalizedEmail,
+              subject: 'Verify your account - Anti-Tajwih',
+              html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+          ]);
+        } else {
+          console.error('verification_tokens upsert error:', vtErr.message);
+        }
+      } catch (mailErr) {
+        console.error('Failed to send verification email:', mailErr.message);
+      }
+    }
+
+    res.json({ success: true, needsVerification });
+  } catch (err) {
+    console.error('Register error:', err?.message || err);
+    res.status(500).json({ error: 'Registration failed.' });
+  }
 });
 
 app.post('/api/auth/register-google', async (req, res) => {
@@ -366,12 +372,15 @@ app.post('/api/auth/resend-verification', async (req, res) => {
     if (vtErr) return res.status(500).json({ error: "Verification token error." });
     const baseUrl = req.protocol + '://' + req.get('host');
     const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
-    await mailTransporter.sendMail({
-      from: FROM_EMAIL,
-      to: normalizedEmail,
-      subject: 'Verify your account - Anti-Tajwih',
-      html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
-    });
+    await Promise.race([
+      mailTransporter.sendMail({
+        from: FROM_EMAIL,
+        to: normalizedEmail,
+        subject: 'Verify your account - Anti-Tajwih',
+        html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+    ]);
     res.json({ success: true });
   } catch (mailErr) {
     res.status(500).json({ error: "Failed to send verification email." });
