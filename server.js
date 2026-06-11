@@ -7,17 +7,19 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const pdfjsLib = require('pdfjs-dist');
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const dns = require('dns');
 const fs = require('fs');
 const VERIFICATIONS_PATH = path.join(__dirname, 'verifications.json');
 function loadVerifications() { try { return JSON.parse(fs.readFileSync(VERIFICATIONS_PATH, 'utf8')); } catch { return {}; } }
 function saveVerifications(data) { fs.writeFileSync(VERIFICATIONS_PATH, JSON.stringify(data), 'utf8'); }
 let mailTransporter = null;
-const MAILJET_API_KEY = (process.env.MAILJET_API_KEY || '').trim();
-const MAILJET_SECRET_KEY = (process.env.MAILJET_SECRET_KEY || '').trim();
-if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
-  console.log('Mailjet REST API configured');
-} else if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+const RESEND_API_KEY = (process.env.RESEND_API_KEY || '').trim();
+const resendClient = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+if (RESEND_API_KEY) {
+  console.log('Resend API configured');
+}
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   try {
     const addresses = dns.resolve4Sync(process.env.SMTP_HOST);
     const host = addresses && addresses.length > 0 ? addresses[0] : process.env.SMTP_HOST;
@@ -46,35 +48,23 @@ if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
     });
   }
 }
-const FROM_EMAIL = process.env.SMTP_FROM || process.env.MAILJET_FROM || process.env.SMTP_USER || 'noreply@anti-tajwih.com';
+const FROM_EMAIL = process.env.SMTP_FROM || 'onboarding@resend.dev';
 
-async function sendEmail({ to, subject, html }) {
-  if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
-    const basicAuth = Buffer.from(MAILJET_API_KEY + ':' + MAILJET_SECRET_KEY).toString('base64');
-    const res = await fetch('https://api.mailjet.com/v3.1/send', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + basicAuth,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        Messages: [{
-          From: { Email: FROM_EMAIL, Name: 'Anti-Tajwih' },
-          To: [{ Email: to }],
-          Subject: subject,
-          HTMLPart: html
-        }]
-      })
+async function sendEmail({ to, subject, html, text }) {
+  if (resendClient) {
+    const { data, error } = await resendClient.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject,
+      html,
+      text
     });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error('Mailjet API ' + res.status + ': ' + body);
-    }
+    if (error) throw new Error('Resend error: ' + JSON.stringify(error));
     return;
   }
   if (mailTransporter) {
     await Promise.race([
-      mailTransporter.sendMail({ from: FROM_EMAIL, to, subject, html }),
+      mailTransporter.sendMail({ from: FROM_EMAIL, to, subject, html, text }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 30000))
     ]);
     return;
@@ -129,8 +119,8 @@ app.get('/events', (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     googleClientId: process.env.GOOGLE_CLIENT_ID || '',
-    smtpConfigured: !!(mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)),
-    smtpProvider: MAILJET_API_KEY ? 'mailjet-api' : mailTransporter ? 'smtp' : null
+    smtpConfigured: !!(mailTransporter || resendClient),
+    smtpProvider: resendClient ? 'resend' : mailTransporter ? 'smtp' : null
   });
 });
 
@@ -142,7 +132,7 @@ app.get('/api/debug-smtp', async (req, res) => {
       subject: 'SMTP test - Anti-Tajwih',
       html: '<p>If you receive this, email works!</p>'
     });
-    res.json({ ok: true, from: FROM_EMAIL, provider: MAILJET_API_KEY ? 'mailjet-api' : 'smtp' });
+    res.json({ ok: true, from: FROM_EMAIL, provider: resendClient ? 'resend' : 'smtp' });
   } catch (e) {
     res.json({ ok: false, error: e.message, stack: e.stack, code: e.code });
   }
@@ -347,7 +337,7 @@ app.post('/api/auth/register', async (req, res) => {
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
 
     let needsVerification = false;
-    if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)) && normalizedEmail) {
+    if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || resendClient) && normalizedEmail) {
       try {
         const token = crypto.randomBytes(32).toString('hex');
         const v = loadVerifications();
@@ -408,7 +398,7 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(403).json({ error: "Your account has been banned." });
   }
   // Check email verification if SMTP/mail configured
-  if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY)) && user.email) {
+  if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || resendClient) && user.email) {
     const v = loadVerifications();
     if (v[user.username]) {
       return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
@@ -435,7 +425,7 @@ app.get('/api/auth/verify-email', async (req, res) => {
 app.post('/api/auth/resend-verification', async (req, res) => {
   try {
     const { email, username } = req.body;
-    if (!email || !username || !(mailTransporter || (MAILJET_API_KEY && MAILJET_SECRET_KEY))) return res.status(400).json({ error: "Email verification not available." });
+    if (!email || !username || !(mailTransporter || resendClient)) return res.status(400).json({ error: "Email verification not available." });
     const normalizedEmail = email.toLowerCase();
     const normalizedName = username.toLowerCase();
     const token = crypto.randomBytes(32).toString('hex');
