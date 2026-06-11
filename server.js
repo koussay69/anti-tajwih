@@ -257,12 +257,12 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: "Username already registered." });
   }
 
-  // If email provided, check it's not used by another verified user
+  // Check email limit (max 3 accounts per email)
   const normalizedEmail = email ? email.trim().toLowerCase() : null;
   if (normalizedEmail) {
-    const { data: emailUser } = await supabase.from('users').select('username').eq('email', normalizedEmail).maybeSingle();
-    if (emailUser) {
-      return res.status(400).json({ error: "Email already registered." });
+    const { count: emailCount } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('email', normalizedEmail);
+    if (emailCount >= 3) {
+      return res.status(400).json({ error: "This email already has 3 accounts. Use a different email." });
     }
   }
 
@@ -274,16 +274,16 @@ app.post('/api/auth/register', async (req, res) => {
   if (mailTransporter && normalizedEmail) {
     try {
       const token = crypto.randomBytes(32).toString('hex');
-      const { error: vtErr } = await supabase.from('verification_tokens').upsert({ email: normalizedEmail, token, created_at: new Date().toISOString() });
+      const { error: vtErr } = await supabase.from('verification_tokens').upsert({ username: normalizedName, token, email: normalizedEmail, created_at: new Date().toISOString() });
       if (!vtErr) {
         needsVerification = true;
         const baseUrl = req.protocol + '://' + req.get('host');
-        const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&email=' + encodeURIComponent(normalizedEmail);
+        const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
         await mailTransporter.sendMail({
           from: FROM_EMAIL,
           to: normalizedEmail,
-          subject: 'Verify your email - Anti-Tajwih',
-          html: `<p>Click to verify your email: <a href="${verifyLink}">${verifyLink}</a></p>`
+          subject: 'Verify your account - Anti-Tajwih',
+          html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
         });
       } else {
         console.error('verification_tokens upsert error:', vtErr.message);
@@ -333,7 +333,7 @@ app.post('/api/auth/login', async (req, res) => {
   // Check email verification if SMTP configured
   try {
     if (mailTransporter && user.email) {
-      const { data: pendingToken } = await supabase.from('verification_tokens').select('email').eq('email', user.email).maybeSingle();
+      const { data: pendingToken } = await supabase.from('verification_tokens').select('username').eq('username', user.username).maybeSingle();
       if (pendingToken) {
         return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
       }
@@ -345,31 +345,32 @@ app.post('/api/auth/login', async (req, res) => {
 // Email verification
 app.get('/api/auth/verify-email', async (req, res) => {
   try {
-    const { token, email } = req.query;
-    if (!token || !email) return res.send('<p>Missing verification parameters.</p>');
-    const normalizedEmail = email.toLowerCase();
-    const { data: vt } = await supabase.from('verification_tokens').select('*').eq('email', normalizedEmail).eq('token', token).maybeSingle();
+    const { token, username } = req.query;
+    if (!token || !username) return res.send('<p>Missing verification parameters.</p>');
+    const normalizedName = username.toLowerCase();
+    const { data: vt } = await supabase.from('verification_tokens').select('*').eq('username', normalizedName).eq('token', token).maybeSingle();
     if (!vt) return res.send('<p>Invalid or expired verification link.</p>');
-    await supabase.from('verification_tokens').delete().eq('email', normalizedEmail);
-    res.send('<p>Email verified successfully! You can now <a href="/">sign in</a>.</p>');
+    await supabase.from('verification_tokens').delete().eq('username', normalizedName);
+    res.send('<p>Account <strong>' + normalizedName + '</strong> verified! You can now <a href="/">sign in</a>.</p>');
   } catch { res.send('<p>Verification failed. Please try again.</p>'); }
 });
 
 app.post('/api/auth/resend-verification', async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email || !mailTransporter) return res.status(400).json({ error: "Email verification not available." });
+    const { email, username } = req.body;
+    if (!email || !username || !mailTransporter) return res.status(400).json({ error: "Email verification not available." });
     const normalizedEmail = email.toLowerCase();
+    const normalizedName = username.toLowerCase();
     const token = crypto.randomBytes(32).toString('hex');
-    const { error: vtErr } = await supabase.from('verification_tokens').upsert({ email: normalizedEmail, token, created_at: new Date().toISOString() });
+    const { error: vtErr } = await supabase.from('verification_tokens').upsert({ username: normalizedName, token, email: normalizedEmail, created_at: new Date().toISOString() });
     if (vtErr) return res.status(500).json({ error: "Verification token error." });
     const baseUrl = req.protocol + '://' + req.get('host');
-    const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&email=' + encodeURIComponent(normalizedEmail);
+    const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
     await mailTransporter.sendMail({
       from: FROM_EMAIL,
       to: normalizedEmail,
-      subject: 'Verify your email - Anti-Tajwih',
-      html: `<p>Click to verify your email: <a href="${verifyLink}">${verifyLink}</a></p>`
+      subject: 'Verify your account - Anti-Tajwih',
+      html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
     });
     res.json({ success: true });
   } catch (mailErr) {
