@@ -20,7 +20,7 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
   });
 }
-const FROM_EMAIL = process.env.SMTP_FROM || 'noreply@anti-tajwih.com';
+const FROM_EMAIL = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@anti-tajwih.com';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -292,7 +292,7 @@ app.post('/api/auth/register', async (req, res) => {
             new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
           ]);
         } catch (mailErr) {
-          console.error('Failed to send verification email:', mailErr.message);
+          console.error('Failed to send verification email:', mailErr.message, mailErr.stack || '');
         }
       } catch (e) {
         console.error('Verification error:', e?.message || e);
@@ -388,6 +388,7 @@ app.post('/api/auth/resend-verification', async (req, res) => {
     ]);
     res.json({ success: true });
   } catch (mailErr) {
+    console.error('Resend verification error:', mailErr.message, mailErr.stack || '');
     res.status(500).json({ error: "Failed to send verification email." });
   }
 });
