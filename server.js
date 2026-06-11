@@ -13,8 +13,8 @@ const VERIFICATIONS_PATH = path.join(__dirname, 'verifications.json');
 function loadVerifications() { try { return JSON.parse(fs.readFileSync(VERIFICATIONS_PATH, 'utf8')); } catch { return {}; } }
 function saveVerifications(data) { fs.writeFileSync(VERIFICATIONS_PATH, JSON.stringify(data), 'utf8'); }
 let mailTransporter = null;
-const MAILJET_API_KEY = process.env.MAILJET_API_KEY;
-const MAILJET_SECRET_KEY = process.env.MAILJET_SECRET_KEY;
+const MAILJET_API_KEY = (process.env.MAILJET_API_KEY || '').trim();
+const MAILJET_SECRET_KEY = (process.env.MAILJET_SECRET_KEY || '').trim();
 if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
   console.log('Mailjet REST API configured');
 } else if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
@@ -68,7 +68,7 @@ async function sendEmail({ to, subject, html }) {
     });
     if (!res.ok) {
       const body = await res.text();
-      throw new Error('Mailjet API ' + res.status + ': ' + body.slice(0, 200));
+      throw new Error('Mailjet API ' + res.status + ': ' + body);
     }
     return;
   }
