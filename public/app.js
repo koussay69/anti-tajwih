@@ -2037,10 +2037,10 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
                 this.symbol = symbols[Math.floor(Math.random() * symbols.length)];
                 this.x = Math.random() * w;
                 this.y = -20;
-                this.size = 14 + Math.random() * 22;
+                this.size = 20 + Math.random() * 28;
                 this.speed = 0.3 + Math.random() * 0.7;
                 this.drift = (Math.random() - 0.5) * 0.5;
-                this.opacity = 0.05 + Math.random() * 0.25;
+                this.opacity = 0.15 + Math.random() * 0.35;
             }
             update() {
                 this.y += this.speed;
@@ -2049,7 +2049,7 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
             }
             draw() {
                 ctx.font = `${this.size}px serif`;
-                ctx.fillStyle = `rgba(180,180,180,${this.opacity})`;
+                ctx.fillStyle = `rgba(200,200,220,${this.opacity})`;
                 ctx.fillText(this.symbol, this.x, this.y);
             }
         }

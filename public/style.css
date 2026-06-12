@@ -19,6 +19,7 @@
     --blur-strength: 12px;
 
     --transition-speed: 0.3s;
+    --hero-bg: #1a1a2e;
 }
 
 [data-theme="dark"] {
@@ -33,6 +34,7 @@
     --glass-bg: rgba(15, 15, 20, 0.55);
     --glass-border: rgba(255, 255, 255, 0.06);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    --hero-bg: #050508;
 }
 
 * {
@@ -329,7 +331,7 @@ body {
 .hero {
     text-align: center;
     padding: 70px 20px;
-    background: var(--bg-tray);
+    background: var(--hero-bg, #0a0a12);
     border-bottom: 1px solid var(--border-grey);
 }
 
@@ -344,11 +346,13 @@ body {
 }
 
 .hero p {
-    color: var(--text-muted);
+    color: #c8c8d0;
     max-width: 540px;
     margin: 0 auto 30px auto;
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.7;
+    font-weight: 400;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 .search-container {
