@@ -20,6 +20,7 @@
 
     --transition-speed: 0.3s;
     --hero-bg: #1a1a2e;
+    --star-color: #f5b342;
 }
 
 [data-theme="dark"] {
@@ -651,7 +652,7 @@ body {
 
 .star-selector .star-option,
 .star-display {
-    color: #f5b342;
+    color: var(--star-color);
 }
 
 /* --- Leaderboard Adjustments --- */

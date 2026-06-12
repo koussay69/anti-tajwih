@@ -853,10 +853,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DYNAMIC CARD BUILDER GENERATORS ---
     function renderStars(rating) {
-        const full = '★';
-        const empty = '☆';
-        const r = Math.round(rating);
-        return `<span class="star-display">${full.repeat(r)}${empty.repeat(5 - r)}</span>`;
+        const full = '<span style="color:var(--star-color,#f5b342)">★</span>';
+        const empty = '<span style="color:var(--text-muted)">☆</span>';
+        let html = '<span class="star-display">';
+        for (let i = 1; i <= 5; i++) {
+            const fill = Math.max(0, Math.min(1, rating - (i - 1)));
+            if (fill >= 0.92) {
+                html += full;
+            } else if (fill <= 0.08) {
+                html += empty;
+            } else {
+                const pct = Math.round(fill * 100);
+                html += `<span style="display:inline-block;position:relative;width:1em;height:1em;color:var(--text-muted);vertical-align:baseline;">☆<span style="position:absolute;left:0;top:0;overflow:hidden;width:${pct}%;color:var(--star-color,#f5b342);white-space:nowrap;">★</span></span>`;
+            }
+        }
+        html += '</span>';
+        return html;
     }
 
     function renderDocuments(documents, targetSelector) {
