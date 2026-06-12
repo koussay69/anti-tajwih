@@ -14,9 +14,9 @@ const VERIFICATIONS_PATH = path.join(__dirname, 'verifications.json');
 function loadVerifications() { try { return JSON.parse(fs.readFileSync(VERIFICATIONS_PATH, 'utf8')); } catch { return {}; } }
 function saveVerifications(data) { fs.writeFileSync(VERIFICATIONS_PATH, JSON.stringify(data), 'utf8'); }
 let mailTransporter = null;
-const smtp2goKey = (process.env.SMTP2GO_API_KEY || '').trim();
+const mailerSendToken = (process.env.MAILERSEND_TOKEN || '').trim();
 const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
-const emailConfigured = !!(smtp2goKey || resendApiKey || mailTransporter);
+const emailConfigured = !!(mailerSendToken || resendApiKey || mailTransporter);
 if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   try {
     const addresses = dns.resolve4Sync(process.env.SMTP_HOST);
@@ -49,22 +49,25 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
 const FROM_EMAIL = process.env.SMTP_FROM || 'noreply@anti-tajwih.com';
 
 async function sendEmail({ to, subject, html, text }) {
-  if (smtp2goKey) {
-    const res = await fetch('https://api.smtp2go.com/v3/email/send', {
+  if (mailerSendToken) {
+    const res = await fetch('https://api.mailersend.com/v1/email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': 'Bearer ' + mailerSendToken,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        api_key: smtp2goKey,
-        to: [to],
-        sender: FROM_EMAIL,
+        from: { email: FROM_EMAIL },
+        to: [{ email: to }],
         subject,
-        html_body: html,
-        text_body: text || ''
+        html,
+        text: text || ''
       })
     });
-    const body = await res.json();
-    if (body.data && body.data.error_code) throw new Error('SMTP2GO error: ' + (body.data.error || JSON.stringify(body.data)));
-    if (!res.ok) throw new Error('SMTP2GO HTTP ' + res.status + ': ' + JSON.stringify(body));
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error('MailerSend error: ' + res.status + ' ' + body.slice(0, 300));
+    }
     return;
   }
   if (resendApiKey) {
@@ -131,7 +134,7 @@ app.get('/api/config', (req, res) => {
   res.json({
     googleClientId: process.env.GOOGLE_CLIENT_ID || '',
     smtpConfigured: emailConfigured,
-    smtpProvider: smtp2goKey ? 'smtp2go' : resendApiKey ? 'resend' : mailTransporter ? 'smtp' : null,
+    smtpProvider: mailerSendToken ? 'mailersend' : resendApiKey ? 'resend' : mailTransporter ? 'smtp' : null,
     emailVerificationDisabled: !!process.env.DISABLE_EMAIL_VERIFICATION
   });
 });
@@ -144,7 +147,7 @@ app.get('/api/debug-smtp', async (req, res) => {
       subject: 'SMTP test - Anti-Tajwih',
       html: '<p>If you receive this, email works!</p>'
     });
-    res.json({ ok: true, from: FROM_EMAIL, provider: smtp2goKey ? 'smtp2go' : resendApiKey ? 'resend' : mailTransporter ? 'smtp' : null });
+    res.json({ ok: true, from: FROM_EMAIL, provider: mailerSendToken ? 'mailersend' : resendApiKey ? 'resend' : mailTransporter ? 'smtp' : null });
   } catch (e) {
     res.json({ ok: false, error: e.message, stack: e.stack, code: e.code });
   }

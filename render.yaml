@@ -9,7 +9,7 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
-      - key: SMTP2GO_API_KEY
+      - key: MAILERSEND_TOKEN
         sync: false
       - key: SMTP_FROM
         sync: false
