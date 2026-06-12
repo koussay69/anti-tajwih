@@ -32,7 +32,9 @@ window.translations = {
     "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Select PDF File",
     "upload.submit":"Submit & Earn 5 Tokens","upload.select":"-- Select --",
     "help.title":"SOS FORM","help.heading":"Request Emergency Assistance",
-    "help.submit":"Post Request (-3 Tokens)","help.topic":"Problem Topic or Class","help.summary":"Problem Brief Summary","help.details":"Detailed Question Requirements","help.file":"Upload Problem / Reference PDF",
+    "help.submit":"Post Request (-3 Tokens)","help.topic":"Problem Topic or Class","help.summary":"Problem Brief Summary","help.details":"Detailed Question Requirements","help.file":"Upload Problem / Reference PDF","help.tabProblems":"Problems","help.tabCourses":"Course Requests",
+    "course.title":"COURSE REQUEST","course.heading":"Request Course Materials",
+    "course.postRequest":"Request a Course (-3 Tokens)","course.courseName":"Course Name","course.details":"What materials do you need?","course.file":"Upload Reference / Syllabus PDF","course.submit":"Request Course (-3 Tokens)","course.empty":"No course requests yet. Be the first to request one!",
     "answer.title":"PROVIDE SOLUTION","answer.heading":"Fulfill Bounty Request",
     "answer.walkthrough":"Walkthrough Explanation or Notes","answer.walkthroughPlaceholder":"Write down structural advice or summary guide...",
     "answer.file":"Upload Verification / Solution PDF",
@@ -70,7 +72,7 @@ window.translations = {
     "card.send":"Send","card.unlockBtn":"Unlock (-1 Token)","card.download":"⬇ Download PDF","card.delete":"🗑 Delete","card.report":"⚑ Report","card.edit":"Edit","card.save":"Save","card.cancel":"Cancel","card.you":"You","card.deleteComment":"Delete",
     "card.by":"By:","card.byYou":"You","card.reviews":"reviews","card.noReviews":"No reviews yet",
     "bounty.settled":"✅ Settled","bounty.placed":"💰 Bounty Placed","bounty.by":"By:","bounty.you":"You",
-    "bounty.bestAnswer":"🏆 Best Answer — Bounty Settled ✓ (+3 Tokens)","bounty.sharedAnswer":"📎 Shared Answer:","bounty.refAttached":"📎 Reference Attached:",
+    "bounty.bestAnswer":"🏆 Best Answer — Bounty Settled ✓ (+3 Tokens)","bounty.sharedAnswer":"📎 Shared Answer:","bounty.refAttached":"📎 Reference Attached:","bounty.empty":"No problems posted yet. Be the first to ask!",
     "author.documentsBy":"Documents by",
     "toast.themeChanged":"Theme changed to {mode} mode!","toast.langChanged":"Language changed to {lang}!",
     "toast.signInToVote":"Please sign in to vote on documents.",
@@ -146,7 +148,9 @@ window.translations = {
     "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Choisir un PDF",
     "upload.submit":"Publier et Gagner 5 Jetons","upload.select":"-- Sélectionner --",
     "help.title":"SOS FORMULAIRE","help.heading":"Demander de l'Aide",
-    "help.submit":"Publier la Demande (-3 Jetons)","help.topic":"Sujet du Problème","help.summary":"Résumé du Problème","help.details":"Détails de la Question","help.file":"Joindre le PDF du Problème",
+    "help.submit":"Publier la Demande (-3 Jetons)","help.topic":"Sujet du Problème","help.summary":"Résumé du Problème","help.details":"Détails de la Question","help.file":"Joindre le PDF du Problème","help.tabProblems":"Problèmes","help.tabCourses":"Demandes de Cours",
+    "course.title":"DEMANDE DE COURS","course.heading":"Demander des Supports de Cours",
+    "course.postRequest":"Demander un Cours (-3 Jetons)","course.courseName":"Nom du Cours","course.details":"De quels matériels avez-vous besoin ?","course.file":"Télécharger le PDF de Référence / Syllabus","course.submit":"Demander le Cours (-3 Jetons)","course.empty":"Aucune demande de cours pour l'instant. Soyez le premier à en faire une !",
     "answer.title":"PROPOSER UNE SOLUTION","answer.heading":"Répondre à la Demande",
     "answer.walkthrough":"Explication ou Notes","answer.walkthroughPlaceholder":"Écrivez vos conseils ou un résumé guide...",
     "answer.file":"Joindre le PDF de Solution",
@@ -180,7 +184,7 @@ window.translations = {
     "card.send":"Envoyer","card.unlockBtn":"Débloquer (-1 Jeton)","card.download":"⬇ Télécharger PDF","card.delete":"🗑 Supprimer","card.report":"⚑ Signaler","card.edit":"Modifier","card.save":"Enregistrer","card.cancel":"Annuler","card.you":"Vous","card.deleteComment":"Supprimer",
     "card.by":"Par :","card.byYou":"Vous","card.reviews":"avis","card.noReviews":"Aucun avis",
     "bounty.settled":"✅ Résolue","bounty.placed":"💰 Demande Active","bounty.by":"Par :","bounty.you":"Vous",
-    "bounty.bestAnswer":"🏆 Meilleure Réponse — Demande Résolue ✓ (+3 Jetons)","bounty.sharedAnswer":"📎 Réponse fournie :","bounty.refAttached":"📎 Référence jointe :",
+    "bounty.bestAnswer":"🏆 Meilleure Réponse — Demande Résolue ✓ (+3 Jetons)","bounty.sharedAnswer":"📎 Réponse fournie :","bounty.refAttached":"📎 Référence jointe :","bounty.empty":"Aucun problème posté pour l'instant. Soyez le premier à demander !",
     "author.documentsBy":"Documents par",
     "toast.themeChanged":"Thème changé en mode {mode} !","toast.langChanged":"Langue changée en {lang} !",
     "toast.signInToVote":"Connectez-vous pour voter.",
@@ -254,7 +258,9 @@ window.translations = {
     "upload.filiere":"الشعبة","upload.niveau":"المستوى","upload.matiere":"المادة","upload.typeFile":"نوع الملف","upload.file":"اختيار ملف PDF",
     "upload.submit":"نشر وربح 5 نقاط","upload.select":"-- اختر --",
     "help.title":"طلب مساعدة","help.heading":"طلب مساعدة عاجلة",
-    "help.submit":"نشر الطلب (-3 نقاط)","help.topic":"موضوع المشكلة","help.summary":"ملخص المشكلة","help.details":"تفاصيل السؤال","help.file":"رفع ملف المشكلة",
+    "help.submit":"نشر الطلب (-3 نقاط)","help.topic":"موضوع المشكلة","help.summary":"ملخص المشكلة","help.details":"تفاصيل السؤال","help.file":"رفع ملف المشكلة","help.tabProblems":"مشاكل","help.tabCourses":"طلبات المقررات",
+    "course.title":"طلب مادة دراسية","course.heading":"طلب مواد دراسية",
+    "course.postRequest":"اطلب مقرراً (-3 نقاط)","course.courseName":"اسم المقرر","course.details":"ما المواد التي تحتاجها؟","course.file":"رفع ملف مرجعي / المنهج بصيغة PDF","course.submit":"طلب المقرر (-3 نقاط)","course.empty":"لا توجد طلبات مقررات بعد. كن أول من يطلب!",
     "answer.title":"تقديم حل","answer.heading":"الرد على الطلب",
     "answer.walkthrough":"شرح أو ملاحظات","answer.walkthroughPlaceholder":"اكتب نصائحك أو ملخصاً إرشادياً...",
     "answer.file":"رفع ملف الحل PDF",
@@ -288,7 +294,7 @@ window.translations = {
     "card.send":"إرسال","card.unlockBtn":"فتح (نقطة واحدة)","card.download":"⬇ تحميل PDF","card.delete":"🗑 حذف","card.report":"⚑ إبلاغ","card.edit":"تعديل","card.save":"حفظ","card.cancel":"إلغاء","card.you":"أنت","card.deleteComment":"حذف",
     "card.by":"بواسطة :","card.byYou":"أنت","card.reviews":"تقييم","card.noReviews":"لا توجد تقييمات",
     "bounty.settled":"✅ تم الحل","bounty.placed":"💰 طلب نشط","bounty.by":"بواسطة :","bounty.you":"أنت",
-    "bounty.bestAnswer":"🏆 أفضل إجابة — تمت التسوية ✓ (+3 نقاط)","bounty.sharedAnswer":"📎 الإجابة :","bounty.refAttached":"📎 المرجع :",
+    "bounty.bestAnswer":"🏆 أفضل إجابة — تمت التسوية ✓ (+3 نقاط)","bounty.sharedAnswer":"📎 الإجابة :","bounty.refAttached":"📎 المرجع :","bounty.empty":"لا توجد مشاكل منشورة بعد. كن أول من يطلب!",
     "author.documentsBy":"وثائق بواسطة",
     "toast.themeChanged":"تم تغيير السمة إلى وضع {mode} !","toast.langChanged":"تم تغيير اللغة إلى {lang} !",
     "toast.signInToVote":"يرجى تسجيل الدخول للتصويت.",
@@ -774,20 +780,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let activeHelpTab = 'problem';
+
     // --- REFACTORED MODAL SYSTEM (GUARDED INTERCEPTIONS) ---
     const authModal = document.getElementById('auth-modal');
     const uploadModal = document.getElementById('upload-modal');
     const helpModal = document.getElementById('help-modal');
+    const courseModal = document.getElementById('course-modal');
     const answerModal = document.getElementById('answer-modal');
     const reportModal = document.getElementById('report-modal');
 
     const navAuthBtn = document.getElementById('nav-auth-btn');
     const navUploadBtn = document.getElementById('nav-upload-btn');
     const openHelpModalBtn = document.getElementById('open-help-modal-btn');
+    const openCourseModalBtn = document.getElementById('open-course-modal-btn');
 
     const closeAuth = document.getElementById('close-auth-modal');
     const closeUpload = document.getElementById('close-upload-modal');
     const closeHelp = document.getElementById('close-help-modal');
+    const closeCourse = document.getElementById('close-course-modal');
     const closeAnswer = document.getElementById('close-answer-modal');
     const closeReport = document.getElementById('close-report-modal');
 
@@ -837,9 +848,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (openCourseModalBtn) {
+        openCourseModalBtn.addEventListener('click', () => {
+            if (!state.user) {
+                showToast(t('toast.signInToBounty'), "error");
+                authModal.classList.add('open');
+            } else {
+                courseModal.classList.add('open');
+            }
+        });
+    }
+
     if (closeAuth) closeAuth.addEventListener('click', () => authModal.classList.remove('open'));
     if (closeUpload) closeUpload.addEventListener('click', () => uploadModal.classList.remove('open'));
     if (closeHelp) closeHelp.addEventListener('click', () => helpModal.classList.remove('open'));
+    if (closeCourse) closeCourse.addEventListener('click', () => courseModal.classList.remove('open'));
     if (closeAnswer) closeAnswer.addEventListener('click', () => answerModal.classList.remove('open'));
     if (closeReport) closeReport.addEventListener('click', () => { reportModal.classList.remove('open'); reportModal._currentDocId = null; });
 
@@ -847,8 +870,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === authModal) authModal.classList.remove('open');
         if (e.target === uploadModal) uploadModal.classList.remove('open');
         if (e.target === helpModal) helpModal.classList.remove('open');
+        if (e.target === courseModal) courseModal.classList.remove('open');
         if (e.target === answerModal) answerModal.classList.remove('open');
         if (e.target === reportModal) { reportModal.classList.remove('open'); reportModal._currentDocId = null; }
+    });
+
+    function switchHelpTab(type) {
+        activeHelpTab = type;
+        document.querySelectorAll('.help-tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
+        if (openHelpModalBtn) openHelpModalBtn.style.display = type === 'problem' ? '' : 'none';
+        if (openCourseModalBtn) openCourseModalBtn.style.display = type === 'course' ? '' : 'none';
+        const stored = state._allBounties || [];
+        renderBounties(stored);
+    }
+
+    document.querySelectorAll('.help-tab').forEach(tab => {
+        tab.addEventListener('click', () => switchHelpTab(tab.dataset.type));
     });
 
     // --- DYNAMIC CARD BUILDER GENERATORS ---
@@ -1018,11 +1055,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBounties(bounties) {
+        state._allBounties = bounties;
         const helpBoardGrid = document.getElementById('help-board-grid');
         if (!helpBoardGrid) return;
         helpBoardGrid.innerHTML = '';
 
-        bounties.forEach(bounty => {
+        const filtered = bounties.filter(b => (b.type || 'problem') === activeHelpTab);
+
+        if (filtered.length === 0) {
+            helpBoardGrid.innerHTML = `<p style="text-align:center;padding:40px;color:var(--text-muted);">${activeHelpTab === 'course' ? t('course.empty') : t('bounty.empty')}</p>`;
+            return;
+        }
+
+        filtered.forEach(bounty => {
+            const isCourse = (bounty.type || 'problem') === 'course';
             const ticketCard = document.createElement('div');
             ticketCard.className = 'help-ticket-card';
             ticketCard.dataset.id = bounty.id;
@@ -1474,7 +1520,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         subject: hSubject,
                         desc: hDesc,
                         fileName: fileName,
-                        author: userDisplay
+                        author: userDisplay,
+                        type: 'problem'
                     })
                 });
                 const data = await res.json();
@@ -1496,6 +1543,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (helpSubmitBtn) {
                     helpSubmitBtn.disabled = false;
                     helpSubmitBtn.innerText = helpBtnOriginalText;
+                }
+            }
+        });
+    }
+
+    // --- COURSE REQUEST FORM ---
+    const courseForm = document.getElementById('course-form');
+    if (courseForm) {
+        const courseSubmitBtn = courseForm.querySelector('button[type="submit"]');
+        const courseBtnOriginalText = courseSubmitBtn ? courseSubmitBtn.innerText : '';
+        courseForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!state.user) return;
+
+            if (state.tokens < 3) {
+                showToast(t('toast.insufficientTokensBounty'), "error");
+                courseModal.classList.remove('open');
+                return;
+            }
+
+            if (courseSubmitBtn) {
+                courseSubmitBtn.disabled = true;
+                courseSubmitBtn.innerText = '⏳ Posting...';
+            }
+
+            const cSubject = document.getElementById('form-course-subject').value;
+            const cDesc = document.getElementById('form-course-desc').value;
+            const cFileInput = document.getElementById('form-course-file');
+            const fileName = cFileInput.files[0] ? cFileInput.files[0].name : "Syllabus_Reference.pdf";
+            const userDisplay = state.user;
+
+            try {
+                const res = await fetch(`${API_URL}/bounties/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: cSubject,
+                        subject: cSubject,
+                        desc: cDesc,
+                        fileName: fileName,
+                        author: userDisplay,
+                        type: 'course'
+                    })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    state.tokens = data.tokens;
+                    updateTokenUI();
+                    showToast(t('toast.bountyPlaced'), "info");
+                    renderBounties(data.bounties);
+                    courseForm.reset();
+                    courseModal.classList.remove('open');
+                } else {
+                    showToast(data.error || t('toast.networkError'), "error");
+                }
+            } catch (err) {
+                showToast(t('toast.networkError'), "error");
+            } finally {
+                if (courseSubmitBtn) {
+                    courseSubmitBtn.disabled = false;
+                    courseSubmitBtn.innerText = courseBtnOriginalText;
                 }
             }
         });

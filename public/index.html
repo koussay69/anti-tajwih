@@ -175,10 +175,17 @@
         <main class="container">
             <div class="section-header help-desk-header-flex">
                 <div>
-                    <span class="section-tag" data-i18n="section.sos">SOS EMERGENCY ROOM</span>
-                    <h2 data-i18n="section.problems">Personal Problem Statements</h2>
+                    <span class="section-tag" data-i18n="section.helpDesk">HELP DESK</span>
+                    <h2 data-i18n="section.helpDesk">Help Desk / Requests</h2>
+                </div>
+            </div>
+            <div class="help-toolbar">
+                <div class="help-tabs">
+                    <button class="help-tab active" data-type="problem" data-i18n="help.tabProblems">Problems</button>
+                    <button class="help-tab" data-type="course" data-i18n="help.tabCourses">Course Requests</button>
                 </div>
                 <button class="ask-help-trigger-btn" id="open-help-modal-btn" data-i18n="bounty.postProblem">Post a Problem (-3 Tokens)</button>
+                <button class="ask-help-trigger-btn" id="open-course-modal-btn" style="display:none" data-i18n="course.postRequest">Request a Course (-3 Tokens)</button>
             </div>
             <div id="help-board-grid" class="help-grid-layout"></div>
         </main>
@@ -451,6 +458,32 @@
                     <input type="file" id="form-help-file" accept=".pdf" required class="dashed-file-input">
                 </div>
                 <button type="submit" class="modal-submit-btn" data-i18n="help.submit">Post Request (-3 Tokens)</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- COURSE REQUEST MODAL (-3 TOKENS) -->
+    <div id="course-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close-btn" id="close-course-modal">×</button>
+            <div class="modal-header">
+                <span class="section-tag" data-i18n="course.title">COURSE REQUEST</span>
+                <h2 data-i18n="course.heading">Request Course Materials</h2>
+            </div>
+            <form id="course-form" class="modal-form">
+                <div class="form-group">
+                    <label data-i18n="course.courseName">Course Name</label>
+                    <input type="text" id="form-course-subject" placeholder="e.g., Linear Algebra" required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="course.details">What materials do you need?</label>
+                    <input type="text" id="form-course-desc" placeholder="e.g., Lecture notes, exercises, exam solutions..." required>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="course.file">Upload Reference / Syllabus PDF</label>
+                    <input type="file" id="form-course-file" accept=".pdf" required class="dashed-file-input">
+                </div>
+                <button type="submit" class="modal-submit-btn" data-i18n="course.submit">Request Course (-3 Tokens)</button>
             </form>
         </div>
     </div>

@@ -724,6 +724,44 @@ body {
     margin-bottom: 30px;
 }
 
+.help-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.help-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-tray);
+    border-radius: 8px;
+    padding: 3px;
+}
+
+.help-tab {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.help-tab.active {
+    background: var(--bg-card);
+    color: var(--text-main);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.help-tab:hover:not(.active) {
+    color: var(--text-main);
+}
+
 .help-grid-layout {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -1116,6 +1154,15 @@ body {
         align-items: stretch;
     }
 
+    .help-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .help-tabs {
+        justify-content: center;
+    }
+
     .ask-help-trigger-btn {
         text-align: center;
     }
@@ -1207,6 +1254,9 @@ body {
     flex-direction: row-reverse;
 }
 [dir="rtl"] .help-desk-header-flex {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .help-toolbar {
     flex-direction: row-reverse;
 }
 [dir="rtl"] .modal-box {
