@@ -1150,6 +1150,8 @@ app.post('/api/admin/users/cleanup', async (req, res) => {
       preview.push(u.username);
       if (!dryRun) {
         console.log('Deleting user:', u.username);
+        await supabaseAdmin.from('votes').delete().eq('username', u.username);
+        await supabaseAdmin.from('bounties').delete().eq('author', u.username);
         const { error: delErr } = await supabaseAdmin.from('users').delete().eq('username', u.username);
         if (delErr) console.error('Failed to delete', u.username, delErr.message);
         else { deleted++; console.log('Deleted:', u.username); }
