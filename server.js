@@ -14,11 +14,9 @@ const VERIFICATIONS_PATH = path.join(__dirname, 'verifications.json');
 function loadVerifications() { try { return JSON.parse(fs.readFileSync(VERIFICATIONS_PATH, 'utf8')); } catch { return {}; } }
 function saveVerifications(data) { fs.writeFileSync(VERIFICATIONS_PATH, JSON.stringify(data), 'utf8'); }
 let mailTransporter = null;
-const RESEND_API_KEY = (process.env.RESEND_API_KEY || '').trim();
-const resendClient = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
-if (RESEND_API_KEY) {
-  console.log('Resend API configured');
-}
+const smtp2goKey = (process.env.SMTP2GO_API_KEY || '').trim();
+const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+const emailConfigured = !!(smtp2goKey || resendApiKey || mailTransporter);
 if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   try {
     const addresses = dns.resolve4Sync(process.env.SMTP_HOST);
@@ -48,17 +46,30 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     });
   }
 }
-const FROM_EMAIL = process.env.SMTP_FROM || 'onboarding@resend.dev';
+const FROM_EMAIL = process.env.SMTP_FROM || 'noreply@anti-tajwih.com';
 
 async function sendEmail({ to, subject, html, text }) {
-  if (resendClient) {
-    const { data, error } = await resendClient.emails.send({
-      from: FROM_EMAIL,
-      to,
-      subject,
-      html,
-      text
+  if (smtp2goKey) {
+    const res = await fetch('https://api.smtp2go.com/v3/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: smtp2goKey,
+        to: [to],
+        sender: FROM_EMAIL,
+        subject,
+        html_body: html,
+        text_body: text || ''
+      })
     });
+    const body = await res.json();
+    if (body.data && body.data.error_code) throw new Error('SMTP2GO error: ' + (body.data.error || JSON.stringify(body.data)));
+    if (!res.ok) throw new Error('SMTP2GO HTTP ' + res.status + ': ' + JSON.stringify(body));
+    return;
+  }
+  if (resendApiKey) {
+    const rc = new Resend(resendApiKey);
+    const { error } = await rc.emails.send({ from: FROM_EMAIL, to, subject, html, text });
     if (error) throw new Error('Resend error: ' + JSON.stringify(error));
     return;
   }
@@ -119,8 +130,8 @@ app.get('/events', (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     googleClientId: process.env.GOOGLE_CLIENT_ID || '',
-    smtpConfigured: !!(mailTransporter || resendClient),
-    smtpProvider: resendClient ? 'resend' : mailTransporter ? 'smtp' : null,
+    smtpConfigured: emailConfigured,
+    smtpProvider: smtp2goKey ? 'smtp2go' : resendApiKey ? 'resend' : mailTransporter ? 'smtp' : null,
     emailVerificationDisabled: !!process.env.DISABLE_EMAIL_VERIFICATION
   });
 });
@@ -133,7 +144,7 @@ app.get('/api/debug-smtp', async (req, res) => {
       subject: 'SMTP test - Anti-Tajwih',
       html: '<p>If you receive this, email works!</p>'
     });
-    res.json({ ok: true, from: FROM_EMAIL, provider: resendClient ? 'resend' : 'smtp' });
+    res.json({ ok: true, from: FROM_EMAIL, provider: smtp2goKey ? 'smtp2go' : resendApiKey ? 'resend' : mailTransporter ? 'smtp' : null });
   } catch (e) {
     res.json({ ok: false, error: e.message, stack: e.stack, code: e.code });
   }
@@ -338,7 +349,7 @@ app.post('/api/auth/register', async (req, res) => {
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
 
     let needsVerification = false;
-    if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || resendClient) && normalizedEmail) {
+    if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || emailConfigured) && normalizedEmail) {
       try {
         const token = crypto.randomBytes(32).toString('hex');
         const v = loadVerifications();
@@ -399,7 +410,7 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(403).json({ error: "Your account has been banned." });
   }
   // Check email verification if SMTP/mail configured
-  if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || resendClient) && user.email) {
+  if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || emailConfigured) && user.email) {
     const v = loadVerifications();
     if (v[user.username]) {
       return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
@@ -426,7 +437,7 @@ app.get('/api/auth/verify-email', async (req, res) => {
 app.post('/api/auth/resend-verification', async (req, res) => {
   try {
     const { email, username } = req.body;
-    if (!email || !username || !(mailTransporter || resendClient)) return res.status(400).json({ error: "Email verification not available." });
+    if (!email || !username || !(mailTransporter || emailConfigured)) return res.status(400).json({ error: "Email verification not available." });
     const normalizedEmail = email.toLowerCase();
     const normalizedName = username.toLowerCase();
     const token = crypto.randomBytes(32).toString('hex');
