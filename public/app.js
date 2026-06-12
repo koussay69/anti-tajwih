@@ -2117,7 +2117,7 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
                 this.x = Math.random() * w;
                 this.y = -20;
                 this.size = 20 + Math.random() * 28;
-                this.speed = 0.3 + Math.random() * 0.7;
+                this.speed = 0.5 + Math.random() * 1.2;
                 this.drift = (Math.random() - 0.5) * 0.5;
                 this.opacity = 0.15 + Math.random() * 0.35;
             }
@@ -2144,7 +2144,7 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
             ctx.scale(devicePixelRatio, devicePixelRatio);
         }
         resize();
-        const count = Math.min(50, Math.floor(w * h / 15000));
+        const count = Math.min(80, Math.floor(w * h / 8000));
         for (let i = 0; i < count; i++) {
             const p = new MathSymbol();
             p.y = Math.random() * h;
