@@ -1072,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="contributor-item">
                 <span class="contributor-rank">#${i + 1}</span>
                 <span class="contributor-name">${c.user}</span>
-                <span class="contributor-count">+${c.net}</span>
+                <span class="contributor-count">${c.net > 0 ? '+' : ''}${c.net}</span>
             </div>
         `).join('')}</div>`;
     }
@@ -1596,6 +1596,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const filterNiveau = document.getElementById('filter-niveau')?.value || '';
         const filterMatiere = document.getElementById('filter-matiere')?.value || '';
         const filterType = document.getElementById('filter-type')?.value || '';
+        const hasFilters = query || filterFiliere || filterNiveau || filterMatiere || filterType;
+
+        const topDocsTarget = document.getElementById('top-docs-target');
+        const contributorsSection = document.getElementById('contributors-section');
+        const primaryFeed = document.getElementById('primary-feed-target');
+
+        if (hasFilters) {
+            if (topDocsTarget) topDocsTarget.style.display = 'none';
+            if (contributorsSection) contributorsSection.style.display = 'none';
+            if (primaryFeed) primaryFeed.style.display = '';
+        } else {
+            if (topDocsTarget) topDocsTarget.style.display = '';
+            if (contributorsSection) contributorsSection.style.display = '';
+            if (primaryFeed) primaryFeed.style.display = 'none';
+        }
+
         const browseCards = document.querySelectorAll('#primary-feed-target .doc-card');
         let visible = 0;
         browseCards.forEach(card => {
