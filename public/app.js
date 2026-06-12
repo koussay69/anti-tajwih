@@ -1953,7 +1953,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const profileDiv = document.getElementById('author-profile');
             profileDiv.innerHTML = `
-                <div class="account-card-box" style="text-align:center;">
+                <div class="account-card-box" style="text-align:center;align-items:center;">
                     ${data.avatar_url ? `<img src="${data.avatar_url}" alt="Avatar" style="width:80px; height:80px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:2px solid var(--text-main);">` : ''}
                     <h3>${data.username}</h3>
                     <p class="account-data-row">${t('misc.tokens')}: ${data.tokens}</p>
