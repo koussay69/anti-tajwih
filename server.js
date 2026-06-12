@@ -351,27 +351,7 @@ app.post('/api/auth/register', async (req, res) => {
     const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
 
-    let needsVerification = false;
-    if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || emailConfigured) && normalizedEmail) {
-      try {
-        const token = crypto.randomBytes(32).toString('hex');
-        const v = loadVerifications();
-        v[normalizedName] = { token, email: normalizedEmail, createdAt: Date.now() };
-        saveVerifications(v);
-        const baseUrl = req.protocol + '://' + req.get('host');
-        const verifyLink = baseUrl + '/api/auth/verify-email?token=' + token + '&username=' + encodeURIComponent(normalizedName);
-        await sendEmail({
-          to: normalizedEmail,
-          subject: 'Verify your account - Anti-Tajwih',
-          html: `<p>Click to verify <strong>${normalizedName}</strong>: <a href="${verifyLink}">${verifyLink}</a></p>`
-        });
-        needsVerification = true;
-      } catch (e) {
-        console.error('Failed to send verification email:', e?.message || e);
-      }
-    }
-
-    res.json({ success: true, needsVerification });
+    res.json({ success: true });
   } catch (err) {
     console.error('Register error:', err?.message || err);
     res.status(500).json({ error: 'Registration failed.' });
@@ -412,13 +392,6 @@ app.post('/api/auth/login', async (req, res) => {
   if (user.banned) {
     return res.status(403).json({ error: "Your account has been banned." });
   }
-  // Check email verification if SMTP/mail configured
-  if (!process.env.DISABLE_EMAIL_VERIFICATION && (mailTransporter || emailConfigured) && user.email) {
-    const v = loadVerifications();
-    if (v[user.username]) {
-      return res.status(403).json({ error: "Please verify your email first.", needsVerification: true, email: user.email });
-    }
-  }
   res.json({ success: true, username: user.username });
 });
 
@@ -440,7 +413,7 @@ app.get('/api/auth/verify-email', async (req, res) => {
 app.post('/api/auth/resend-verification', async (req, res) => {
   try {
     const { email, username } = req.body;
-    if (!email || !username || !(mailTransporter || emailConfigured)) return res.status(400).json({ error: "Email verification not available." });
+    if (!email || !username) return res.status(400).json({ error: "Email verification not available." });
     const normalizedEmail = email.toLowerCase();
     const normalizedName = username.toLowerCase();
     const token = crypto.randomBytes(32).toString('hex');

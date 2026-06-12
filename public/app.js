@@ -25,7 +25,7 @@ window.translations = {
     "auth.emailOrUsername":"Email or Username","auth.chooseUsername":"Choose a Username",
     "auth.email":"Email Address","auth.avatar":"Profile Picture (JPG)","auth.password":"Password",
     "auth.accessVault":"Access Vault","auth.emailPlaceholder":"name@example.com or username","auth.usernamePlaceholder":"your-username",
-    "auth.or":"or","auth.googleSignIn":"Continue with Google","auth.verifyEmail":"📧 Verify Your Email","auth.verificationSent":"A verification link has been sent to:","auth.verifyInstruction":"Please check your inbox and click the link to activate your account.","auth.resend":"Resend Verification",
+    "auth.or":"or","auth.googleSignIn":"Continue with Google",
     "upload.title":"SHARE CONTENT","upload.heading":"Upload Academic Asset",
     "upload.docTitle":"Document Title","upload.subject":"Subject / Module Name",
     "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Select PDF File",
@@ -136,7 +136,7 @@ window.translations = {
     "auth.emailOrUsername":"Email ou Nom d'utilisateur","auth.chooseUsername":"Choisir un Nom d'utilisateur",
     "auth.email":"Adresse Email","auth.avatar":"Photo de Profil (JPG)","auth.password":"Mot de passe",
     "auth.accessVault":"Accéder au Coffre","auth.emailPlaceholder":"exemple@email.com ou pseudo","auth.usernamePlaceholder":"votre-pseudo",
-    "auth.or":"ou","auth.googleSignIn":"Continuer avec Google","auth.verifyEmail":"📧 Vérifiez Votre Email","auth.verificationSent":"Un lien de vérification a été envoyé à :","auth.verifyInstruction":"Veuillez vérifier votre boîte de réception et cliquer sur le lien pour activer votre compte.","auth.resend":"Renvoyer la Vérification",
+    "auth.or":"ou","auth.googleSignIn":"Continuer avec Google",
     "upload.title":"PARTAGER","upload.heading":"Publier un Document",
     "upload.docTitle":"Titre du Document","upload.subject":"Matière / Module",
     "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Choisir un PDF",
@@ -242,7 +242,7 @@ window.translations = {
     "auth.emailOrUsername":"البريد الإلكتروني أو اسم المستخدم","auth.chooseUsername":"اختر اسم مستخدم",
     "auth.email":"البريد الإلكتروني","auth.avatar":"صورة شخصية (JPG)","auth.password":"كلمة المرور",
     "auth.accessVault":"دخول إلى الخزنة","auth.emailPlaceholder":"example@email.com أو اسم المستخدم","auth.usernamePlaceholder":"اسم-المستخدم",
-    "auth.or":"أو","auth.googleSignIn":"المتابعة عبر Google","auth.verifyEmail":"📧 تحقق من بريدك الإلكتروني","auth.verificationSent":"تم إرسال رابط التحقق إلى:","auth.verifyInstruction":"يرجى التحقق من صندوق الوارد الخاص بك والنقر على الرابط لتفعيل حسابك.","auth.resend":"إعادة إرسال التحقق",
+    "auth.or":"أو","auth.googleSignIn":"المتابعة عبر Google",
     "upload.title":"مشاركة","upload.heading":"نشر وثيقة أكاديمية",
     "upload.docTitle":"عنوان الوثيقة","upload.subject":"المادة / الوحدة",
     "upload.filiere":"الشعبة","upload.niveau":"المستوى","upload.matiere":"المادة","upload.typeFile":"نوع الملف","upload.file":"اختيار ملف PDF",
@@ -739,8 +739,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeHelp = document.getElementById('close-help-modal');
     const closeAnswer = document.getElementById('close-answer-modal');
     const closeReport = document.getElementById('close-report-modal');
-    const closeVerify = document.getElementById('close-verify-modal');
-    const verifyModal = document.getElementById('verify-modal');
 
     if (navAuthBtn) {
         navAuthBtn.addEventListener('click', () => {
@@ -755,32 +753,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 authModal.classList.add('open');
             } else {
                 uploadModal.classList.add('open');
-            }
-        });
-    }
-
-    // Resend verification email
-    const resendBtn = document.getElementById('resend-verify-btn');
-    if (resendBtn && verifyModal) {
-        resendBtn.addEventListener('click', async () => {
-            const email = verifyModal.dataset.email;
-            const username = verifyModal.dataset.username;
-            if (!email) return;
-            resendBtn.disabled = true;
-            resendBtn.innerText = 'Sending...';
-            try {
-                const res = await fetch(`${API_URL}/auth/resend-verification`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, username })
-                });
-                const data = await res.json();
-                showToast(data.success ? 'Verification resent' : data.error || 'Failed', data.success ? 'success' : 'error');
-            } catch {
-                showToast('Network error', 'error');
-            } finally {
-                resendBtn.disabled = false;
-                resendBtn.innerText = 'Resend Verification';
             }
         });
     }
@@ -819,7 +791,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closeHelp) closeHelp.addEventListener('click', () => helpModal.classList.remove('open'));
     if (closeAnswer) closeAnswer.addEventListener('click', () => answerModal.classList.remove('open'));
     if (closeReport) closeReport.addEventListener('click', () => { reportModal.classList.remove('open'); reportModal._currentDocId = null; });
-    if (closeVerify) closeVerify.addEventListener('click', () => verifyModal.classList.remove('open'));
 
     window.addEventListener('click', (e) => {
         if (e.target === authModal) authModal.classList.remove('open');
@@ -827,7 +798,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === helpModal) helpModal.classList.remove('open');
         if (e.target === answerModal) answerModal.classList.remove('open');
         if (e.target === reportModal) { reportModal.classList.remove('open'); reportModal._currentDocId = null; }
-        if (e.target === verifyModal) verifyModal.classList.remove('open');
     });
 
     // --- DYNAMIC CARD BUILDER GENERATORS ---
@@ -1681,27 +1651,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
 
                 if (!res.ok) {
-                    if (data.needsVerification) {
-                        verifyModal.dataset.email = data.email || '';
-                        verifyModal.dataset.username = parsedName;
-                        document.getElementById('verify-email-display').textContent = data.email || '';
-                        verifyModal.classList.add('open');
-                    } else {
-                        showToast(data.error || t('toast.authFailed'), "error");
-                    }
-                    return;
-                }
-
-                // If server says verification needed, show verification modal
-                if (data.needsVerification) {
-                    authForm.reset();
-                    authModal.classList.remove('open');
-                    const emailInput = document.getElementById('form-auth-email');
-                    const verifyEmail = emailInput?.value || '';
-                    verifyModal.dataset.email = verifyEmail;
-                    verifyModal.dataset.username = parsedName;
-                    document.getElementById('verify-email-display').textContent = verifyEmail;
-                    verifyModal.classList.add('open');
+                    showToast(data.error || t('toast.authFailed'), "error");
                     return;
                 }
 
