@@ -92,6 +92,7 @@ const PORT = process.env.PORT || 3000;
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY in environment.');
@@ -99,6 +100,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseAdmin = SUPABASE_SERVICE_KEY ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY) : supabase;
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
@@ -1146,7 +1148,7 @@ app.post('/api/admin/users/cleanup', async (req, res) => {
     if (!count || count === 0) {
       preview.push(u.username);
       if (!dryRun) {
-        const { error: delErr } = await supabase.from('users').delete().eq('username', u.username);
+        const { error: delErr } = await supabaseAdmin.from('users').delete().eq('username', u.username);
         if (delErr) console.error('Failed to delete', u.username, delErr.message);
         else deleted++;
       }
