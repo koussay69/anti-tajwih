@@ -114,6 +114,9 @@ function broadcast(event, data) {
 app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
+app.get('/google86b2930c731ec5e2.html', (req, res) => {
+  res.type('html').send('google-site-verification: google86b2930c731ec5e2.html');
+});
 app.use(express.static('public', { maxAge: 0, etag: false }));
 
 // Track last active timestamp for any request with a user identifier
