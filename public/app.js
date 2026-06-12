@@ -2023,4 +2023,65 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
             loadVaultData();
         });
     }
+
+    // --- MATH SYMBOLS ANIMATION ---
+    function initMathAnimation() {
+        const canvas = document.getElementById('math-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let w, h;
+        const symbols = ['π', '√', '∫', 'Σ', '∞', 'θ', 'α', 'β', 'Δ', '∂', '±', '÷', '×', '∑', '∏', '∪', '∩', '⊂', '⊃', '∈', '∀', '∃', '→', '⇒', '⇔', '⊕', '⊗', '∇', 'λ', 'μ', 'Ω', '∂', '∅', '≅', '≈', '≠', '≤', '≥', '∝', '·'];
+        class MathSymbol {
+            constructor() { this.reset(); }
+            reset() {
+                this.symbol = symbols[Math.floor(Math.random() * symbols.length)];
+                this.x = Math.random() * w;
+                this.y = -20;
+                this.size = 14 + Math.random() * 22;
+                this.speed = 0.3 + Math.random() * 0.7;
+                this.drift = (Math.random() - 0.5) * 0.5;
+                this.opacity = 0.05 + Math.random() * 0.25;
+            }
+            update() {
+                this.y += this.speed;
+                this.x += this.drift;
+                if (this.y > h + 20) this.reset();
+            }
+            draw() {
+                ctx.font = `${this.size}px serif`;
+                ctx.fillStyle = `rgba(180,180,180,${this.opacity})`;
+                ctx.fillText(this.symbol, this.x, this.y);
+            }
+        }
+        const particles = [];
+        function resize() {
+            w = canvas.parentElement.offsetWidth;
+            h = canvas.parentElement.offsetHeight;
+            canvas.width = w * devicePixelRatio;
+            canvas.height = h * devicePixelRatio;
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            ctx.scale(devicePixelRatio, devicePixelRatio);
+        }
+        resize();
+        const count = Math.min(50, Math.floor(w * h / 15000));
+        for (let i = 0; i < count; i++) {
+            const p = new MathSymbol();
+            p.y = Math.random() * h;
+            particles.push(p);
+        }
+        let frame;
+        function animate() {
+            ctx.clearRect(0, 0, w, h);
+            for (const p of particles) { p.update(); p.draw(); }
+            frame = requestAnimationFrame(animate);
+        }
+        animate();
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resize, 200);
+        });
+    }
+    initMathAnimation();
 });
