@@ -1060,7 +1060,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!helpBoardGrid) return;
         helpBoardGrid.innerHTML = '';
 
-        const filtered = bounties.filter(b => (b.type || 'problem') === activeHelpTab);
+        const filtered = bounties.filter(b => {
+            const t = b.id && b.id.startsWith('course-') ? 'course' : 'problem';
+            return t === activeHelpTab;
+        });
 
         if (filtered.length === 0) {
             helpBoardGrid.innerHTML = `<p style="text-align:center;padding:40px;color:var(--text-muted);">${activeHelpTab === 'course' ? t('course.empty') : t('bounty.empty')}</p>`;
@@ -1068,7 +1071,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         filtered.forEach(bounty => {
-            const isCourse = (bounty.type || 'problem') === 'course';
+            const isCourse = bounty.id && bounty.id.startsWith('course-');
             const ticketCard = document.createElement('div');
             ticketCard.className = 'help-ticket-card';
             ticketCard.dataset.id = bounty.id;

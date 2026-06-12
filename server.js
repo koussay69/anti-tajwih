@@ -262,9 +262,6 @@ app.use((req, res, next) => {
   try {
     await supabase.rpc('exec_sql', { sql: "ALTER TABLE documents ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT false" });
   } catch (_) {}
-  try {
-    await supabase.rpc('exec_sql', { sql: "ALTER TABLE bounties ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'problem'" });
-  } catch (_) {}
 })();
 
 // --- HELPERS ---
@@ -1013,7 +1010,7 @@ app.post('/api/bounties/create', async (req, res) => {
 
   const prefix = type === 'course' ? 'course' : 'bounty';
   const bountyId = `${prefix}-${Date.now()}`;
-  await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc, file_name: fileName || 'Specs_Attached.pdf', author, type: type || 'problem' });
+  await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc, file_name: fileName || 'Specs_Attached.pdf', author });
 
   const updatedProfile = await getUserProfile(normalizedName);
   res.json({ success: true, tokens: updatedProfile.tokens, bounties: await getBounties() });
