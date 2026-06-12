@@ -956,9 +956,11 @@ app.post('/api/documents/comment', async (req, res) => {
   const { data: existing } = await supabase.from('comments').select('id').eq('doc_id', docId).eq('user', commentUser).maybeSingle();
 
   if (existing) {
-    await supabase.from('comments').update({ text, rating: r }).eq('id', existing.id);
+    const { error: updErr } = await supabase.from('comments').update({ text, rating: r }).eq('id', existing.id);
+    if (updErr) return res.status(500).json({ error: "Failed to update comment." });
   } else {
-    await supabase.from('comments').insert({ doc_id: docId, user: commentUser, text, rating: r, created_at: new Date().toISOString() });
+    const { error: insErr } = await supabase.from('comments').insert({ doc_id: docId, user: commentUser, text, rating: r });
+    if (insErr) return res.status(500).json({ error: "Failed to save comment." });
   }
 
   const normalizedName = user ? user.trim().toLowerCase() : null;
@@ -973,7 +975,8 @@ app.delete('/api/documents/comment', async (req, res) => {
   const { data: doc } = await supabase.from('documents').select('id').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
 
-  await supabase.from('comments').delete().eq('doc_id', docId).eq('user', user);
+  const { error: delErr } = await supabase.from('comments').delete().eq('doc_id', docId).eq('user', user);
+  if (delErr) return res.status(500).json({ error: "Failed to delete comment." });
 
   const normalizedName = user.trim().toLowerCase();
   res.json({ success: true, documents: await getDocumentsWithLockState(normalizedName) });
