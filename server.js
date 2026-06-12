@@ -10,9 +10,10 @@ const nodemailer = require('nodemailer');
 const { Resend } = require('resend');
 const dns = require('dns');
 const fs = require('fs');
-const VERIFICATIONS_PATH = path.join(__dirname, 'verifications.json');
-function loadVerifications() { try { return JSON.parse(fs.readFileSync(VERIFICATIONS_PATH, 'utf8')); } catch { return {}; } }
-function saveVerifications(data) { fs.writeFileSync(VERIFICATIONS_PATH, JSON.stringify(data), 'utf8'); }
+const BANNED_IPS_PATH = path.join(__dirname, 'banned_ips.json');
+const USER_IPS_PATH = path.join(__dirname, 'user_ips.json');
+function loadJson(p) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return {}; } }
+function saveJson(p, d) { fs.writeFileSync(p, JSON.stringify(d), 'utf8'); }
 let mailTransporter = null;
 const mailerSendToken = (process.env.MAILERSEND_TOKEN || '').trim();
 const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
@@ -340,16 +341,30 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: "Username already registered." });
     }
 
+    const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+    const bannedIps = loadJson(BANNED_IPS_PATH);
+    if (bannedIps[clientIp]) {
+      return res.status(403).json({ error: "Registration blocked." });
+    }
+
     const normalizedEmail = email ? email.trim().toLowerCase() : null;
     if (normalizedEmail) {
       const { data: emailUsers } = await supabase.from('users').select('username').eq('email', normalizedEmail);
       if (emailUsers && emailUsers.length >= 3) {
         return res.status(400).json({ error: "This email already has 3 accounts." });
       }
+      const { data: bannedEmailUser } = await supabase.from('users').select('banned').eq('email', normalizedEmail).eq('banned', true).maybeSingle();
+      if (bannedEmailUser) {
+        return res.status(403).json({ error: "This email is blocked." });
+      }
     }
 
     const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
+
+    const userIps = loadJson(USER_IPS_PATH);
+    userIps[normalizedName] = clientIp;
+    saveJson(USER_IPS_PATH, userIps);
 
     res.json({ success: true });
   } catch (err) {
@@ -375,8 +390,21 @@ app.post('/api/auth/register-google', async (req, res) => {
   const { data: existing } = await supabase.from('users').select('username').eq('username', normalizedName).maybeSingle();
   if (existing) return res.status(400).json({ error: "Username '" + normalizedName + "' is already taken." });
 
+  const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+  const bannedIps = loadJson(BANNED_IPS_PATH);
+  if (bannedIps[clientIp]) {
+    return res.status(403).json({ error: "Registration blocked." });
+  }
+  const { data: bannedEmailUser } = await supabase.from('users').select('banned').eq('email', normalizedEmail).eq('banned', true).maybeSingle();
+  if (bannedEmailUser) {
+    return res.status(403).json({ error: "This email is blocked." });
+  }
+
   const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
   if (insertErr) return res.status(500).json({ error: "Failed to create account: " + insertErr.message });
+  const userIps = loadJson(USER_IPS_PATH);
+  userIps[normalizedName] = clientIp;
+  saveJson(USER_IPS_PATH, userIps);
   res.json({ success: true, username: normalizedName });
 });
 
@@ -1092,6 +1120,15 @@ app.post('/api/admin/users/ban', async (req, res) => {
   if (!profile) return res.status(404).json({ error: "User not found." });
   if (profile.admin) return res.status(400).json({ error: "Cannot ban another admin." });
   await supabase.from('users').update({ banned: !!banned }).eq('username', targetUser.trim().toLowerCase());
+  if (banned) {
+    const userIps = loadJson(USER_IPS_PATH);
+    const ip = userIps[targetUser.trim().toLowerCase()];
+    if (ip) {
+      const bannedIps = loadJson(BANNED_IPS_PATH);
+      bannedIps[ip] = true;
+      saveJson(BANNED_IPS_PATH, bannedIps);
+    }
+  }
   res.json({ success: true, banned: !!banned });
 });
 

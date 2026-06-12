@@ -1,2 +1,4 @@
 node_modules/
 .env
+banned_ips.json
+user_ips.json
