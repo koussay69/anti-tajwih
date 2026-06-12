@@ -34,7 +34,7 @@ window.translations = {
     "help.title":"SOS FORM","help.heading":"Request Emergency Assistance",
     "help.submit":"Post Request (-3 Tokens)","help.topic":"Problem Topic or Class","help.summary":"Problem Brief Summary","help.details":"Detailed Question Requirements","help.file":"Upload Problem / Reference PDF","help.tabProblems":"Problems","help.tabCourses":"Course Requests",
     "course.title":"COURSE REQUEST","course.heading":"Request Course Materials",
-    "course.postRequest":"Request a Course (-3 Tokens)","course.courseName":"Course Name","course.details":"What materials do you need?","course.file":"Upload Reference / Syllabus PDF","course.submit":"Request Course (-3 Tokens)","course.empty":"No course requests yet. Be the first to request one!",
+    "course.postRequest":"Request a Course (-3 Tokens)","course.courseName":"Course Name","course.details":"What materials do you need?","course.submit":"Request Course (-3 Tokens)","course.empty":"No course requests yet. Be the first to request one!",
     "answer.title":"PROVIDE SOLUTION","answer.heading":"Fulfill Bounty Request",
     "answer.walkthrough":"Walkthrough Explanation or Notes","answer.walkthroughPlaceholder":"Write down structural advice or summary guide...",
     "answer.file":"Upload Verification / Solution PDF",
@@ -150,7 +150,7 @@ window.translations = {
     "help.title":"SOS FORMULAIRE","help.heading":"Demander de l'Aide",
     "help.submit":"Publier la Demande (-3 Jetons)","help.topic":"Sujet du Problème","help.summary":"Résumé du Problème","help.details":"Détails de la Question","help.file":"Joindre le PDF du Problème","help.tabProblems":"Problèmes","help.tabCourses":"Demandes de Cours",
     "course.title":"DEMANDE DE COURS","course.heading":"Demander des Supports de Cours",
-    "course.postRequest":"Demander un Cours (-3 Jetons)","course.courseName":"Nom du Cours","course.details":"De quels matériels avez-vous besoin ?","course.file":"Télécharger le PDF de Référence / Syllabus","course.submit":"Demander le Cours (-3 Jetons)","course.empty":"Aucune demande de cours pour l'instant. Soyez le premier à en faire une !",
+    "course.postRequest":"Demander un Cours (-3 Jetons)","course.courseName":"Nom du Cours","course.details":"De quels matériels avez-vous besoin ?","course.submit":"Demander le Cours (-3 Jetons)","course.empty":"Aucune demande de cours pour l'instant. Soyez le premier à en faire une !",
     "answer.title":"PROPOSER UNE SOLUTION","answer.heading":"Répondre à la Demande",
     "answer.walkthrough":"Explication ou Notes","answer.walkthroughPlaceholder":"Écrivez vos conseils ou un résumé guide...",
     "answer.file":"Joindre le PDF de Solution",
@@ -260,7 +260,7 @@ window.translations = {
     "help.title":"طلب مساعدة","help.heading":"طلب مساعدة عاجلة",
     "help.submit":"نشر الطلب (-3 نقاط)","help.topic":"موضوع المشكلة","help.summary":"ملخص المشكلة","help.details":"تفاصيل السؤال","help.file":"رفع ملف المشكلة","help.tabProblems":"مشاكل","help.tabCourses":"طلبات المقررات",
     "course.title":"طلب مادة دراسية","course.heading":"طلب مواد دراسية",
-    "course.postRequest":"اطلب مقرراً (-3 نقاط)","course.courseName":"اسم المقرر","course.details":"ما المواد التي تحتاجها؟","course.file":"رفع ملف مرجعي / المنهج بصيغة PDF","course.submit":"طلب المقرر (-3 نقاط)","course.empty":"لا توجد طلبات مقررات بعد. كن أول من يطلب!",
+    "course.postRequest":"اطلب مقرراً (-3 نقاط)","course.courseName":"اسم المقرر","course.details":"ما المواد التي تحتاجها؟","course.submit":"طلب المقرر (-3 نقاط)","course.empty":"لا توجد طلبات مقررات بعد. كن أول من يطلب!",
     "answer.title":"تقديم حل","answer.heading":"الرد على الطلب",
     "answer.walkthrough":"شرح أو ملاحظات","answer.walkthroughPlaceholder":"اكتب نصائحك أو ملخصاً إرشادياً...",
     "answer.file":"رفع ملف الحل PDF",
@@ -1570,8 +1570,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const cSubject = document.getElementById('form-course-subject').value;
             const cDesc = document.getElementById('form-course-desc').value;
-            const cFileInput = document.getElementById('form-course-file');
-            const fileName = cFileInput.files[0] ? cFileInput.files[0].name : "Syllabus_Reference.pdf";
             const userDisplay = state.user;
 
             try {
@@ -1582,7 +1580,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         title: cSubject,
                         subject: cSubject,
                         desc: cDesc,
-                        fileName: fileName,
                         author: userDisplay,
                         type: 'course'
                     })
