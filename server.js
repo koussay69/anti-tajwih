@@ -102,6 +102,15 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = SUPABASE_SERVICE_KEY ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY) : supabase;
 
+// Ensure comments have created_at column (best-effort migration)
+(async () => {
+  try {
+    await supabaseAdmin.rpc('execute_sql', { sql: 'ALTER TABLE comments ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()' });
+  } catch (e) {
+    // RPC function may not exist — column was already added manually or migration not possible
+  }
+})();
+
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 // SSE broadcast
@@ -649,6 +658,40 @@ app.get('/api/vault-data', async (req, res) => {
     }
   }
 
+  // Top 3 docs by net upvotes
+  const topDocs = [...docs]
+    .filter(d => d.approved)
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
+    .slice(0, 3)
+    .map(d => ({ id: d.id, title: d.title, author: d.author, score: d.score, subject: d.subject, matiere: d.matiere }));
+
+  // Top 5 weekly contributors by review count
+  let weeklyContributors = [];
+  try {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentComments } = await supabase.from('comments').select('user, created_at').gte('created_at', weekAgo);
+    if (recentComments && recentComments.length > 0) {
+      const countMap = {};
+      for (const c of recentComments) {
+        if (c.user) countMap[c.user] = (countMap[c.user] || 0) + 1;
+      }
+      weeklyContributors = Object.entries(countMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([user, count]) => ({ user, count }));
+    }
+  } catch {
+    // created_at may not exist yet — fallback to all-time
+    const { data: allComments } = await supabase.from('comments').select('user').catch(() => ({ data: null }));
+    if (allComments && allComments.length > 0) {
+      const countMap = {};
+      for (const c of allComments) { if (c.user) countMap[c.user] = (countMap[c.user] || 0) + 1; }
+      weeklyContributors = Object.entries(countMap)
+        .sort((a, b) => b[1] - a[1]).slice(0, 5)
+        .map(([user, count]) => ({ user, count }));
+    }
+  }
+
   res.json({
     state: {
       tokens: profile ? profile.tokens : 0,
@@ -663,6 +706,8 @@ app.get('/api/vault-data', async (req, res) => {
       totalDownloads
     },
     documents: docs,
+    topDocs,
+    topContributors: weeklyContributors,
     bounties
   });
 });
@@ -913,7 +958,7 @@ app.post('/api/documents/comment', async (req, res) => {
   if (existing) {
     await supabase.from('comments').update({ text, rating: r }).eq('id', existing.id);
   } else {
-    await supabase.from('comments').insert({ doc_id: docId, user: commentUser, text, rating: r });
+    await supabase.from('comments').insert({ doc_id: docId, user: commentUser, text, rating: r, created_at: new Date().toISOString() });
   }
 
   const normalizedName = user ? user.trim().toLowerCase() : null;

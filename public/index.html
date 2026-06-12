@@ -121,14 +121,27 @@
         </section>
 
         <main class="container multi-column-layout">
-            <!-- Left Side: Document Feed -->
+            <!-- Left Side: Featured Content -->
             <div class="feed-column">
                 <div class="section-header">
-                    <span class="section-tag" data-i18n="section.archiveFeed">ARCHIVE FEED</span>
-                    <h2 data-i18n="section.trending">Trending Documents</h2>
+                    <span class="section-tag" data-i18n="section.trending">TRENDING</span>
+                    <h2 data-i18n="section.topDocs">Top Documents</h2>
                 </div>
+                <div class="doc-grid" id="top-docs-target"></div>
 
-                <div class="doc-grid" id="primary-feed-target"></div>
+                <div class="section-header" style="margin-top:40px;">
+                    <span class="section-tag" data-i18n="section.contributors">CONTRIBUTORS</span>
+                    <h2 data-i18n="section.weeklyContributors">Weekly Top Contributors</h2>
+                </div>
+                <div id="top-contributors-target"></div>
+
+                <div id="primary-feed-target" class="doc-grid" style="display:none;"></div>
+
+                <div class="section-header" style="margin-top:40px;">
+                    <span class="section-tag" data-i18n="section.bounties">BOUNTIES</span>
+                    <h2 data-i18n="section.helpDesk">Help Desk / Bounties</h2>
+                </div>
+                <div id="bounties-target"></div>
             </div>
         </main>
     </div>

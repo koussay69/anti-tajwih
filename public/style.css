@@ -1306,3 +1306,55 @@ body {
     padding: 6px 8px;
     font-size: 13px;
 }
+
+.contributors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.contributor-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-grey);
+    border-radius: 8px;
+}
+.contributor-rank {
+    font-weight: 700;
+    color: var(--glow-color);
+    min-width: 28px;
+}
+.contributor-name {
+    flex: 1;
+    color: var(--text-main);
+    font-weight: 500;
+}
+.contributor-count {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.doc-score {
+    font-weight: 700;
+    color: var(--glow-color);
+    background: rgba(0,242,254,0.1);
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+}
+.doc-subject-tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+.doc-card-body {
+    padding: 8px 0;
+}
+.doc-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}

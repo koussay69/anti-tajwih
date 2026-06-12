@@ -18,6 +18,7 @@ window.translations = {
     "section.pendingReviews":"PENDING REVIEWS","section.awaitingApproval":"Awaiting Approval",
     "section.userManagement":"USER MANAGEMENT","section.allUsers":"All Users",
     "section.authorProfile":"AUTHOR PROFILE","section.authorUploads":"UPLOADS",
+    "section.topDocs":"Top Documents","section.weeklyContributors":"Weekly Top Contributors","section.bounties":"BOUNTIES","section.helpDesk":"Help Desk / Bounties",
     "bounty.postProblem":"Post a Problem (-3 Tokens)","bounty.provideAnswer":"Provide Answer (+3 Tokens)","bounty.selectBest":"Select as Best Answer",
     "auth.signIn":"Sign In to Anti-Tajwih","auth.createAccount":"Create Your Account",
     "auth.signInLink":"Sign In instead","auth.signUpLink":"Create an Account (Sign Up)",
@@ -112,7 +113,8 @@ window.translations = {
     "toast.deleteConfirm":"Delete this document permanently?",
     "toast.deleteAllConfirm":"Delete all documents for this user?",    "toast.verifyEmail":"Please verify your email first.","toast.verifyEmailSent":"Verification email sent. Check your inbox.",
     // misc
-    "misc.tokens":"Tokens","misc.documents":"Documents","misc.uploads":"Uploads",
+    "misc.tokens":"Tokens","misc.documents":"Documents","misc.uploads":"Uploads","misc.reviews":"reviews",
+    "section.noDocs":"No documents yet.","section.noContributors":"No contributions this week.",
   },
   FR: {
     "lang.en":"EN","lang.fr":"FR","lang.ar":"AR",
@@ -130,6 +132,7 @@ window.translations = {
     "section.pendingReviews":"EN ATTENTE","section.awaitingApproval":"En Attente d'Approbation",
     "section.userManagement":"GESTION","section.allUsers":"Tous les Utilisateurs",
     "section.authorProfile":"PROFIL AUTEUR","section.authorUploads":"PUBLICATIONS",
+    "section.topDocs":"Top Documents","section.weeklyContributors":"Contributeurs de la Semaine","section.bounties":"BOUNTIES","section.helpDesk":"Help Desk / Demandes",
     "bounty.postProblem":"Publier un Problème (-3 Jetons)","bounty.provideAnswer":"Proposer une Solution (+3 Jetons)","bounty.selectBest":"Choisir comme Meilleure Réponse",
     "auth.signIn":"Connexion à Anti-Tajwih","auth.createAccount":"Créer Votre Compte",
     "auth.signInLink":"Se connecter","auth.signUpLink":"Créer un Compte (S'inscrire)",
@@ -219,7 +222,7 @@ window.translations = {
     "toast.adminDocsDeleted":"Documents supprimés.",
     "toast.deleteConfirm":"Supprimer ce document définitivement ?",
     "toast.deleteAllConfirm":"Supprimer tous les documents de cet utilisateur ?",    "toast.verifyEmail":"Vérifiez votre email d'abord.","toast.verifyEmailSent":"Email de vérification envoyé. Vérifiez votre boîte.",
-    "misc.tokens":"Jetons","misc.documents":"Documents","misc.uploads":"Publications",
+    "misc.tokens":"Jetons","misc.documents":"Documents","misc.uploads":"Publications","misc.reviews":"avis",
   },
   AR: {
     "lang.en":"EN","lang.fr":"FR","lang.ar":"AR",
@@ -237,6 +240,7 @@ window.translations = {
     "section.pendingReviews":"قيد المراجعة","section.awaitingApproval":"بانتظار الموافقة",
     "section.userManagement":"إدارة المستخدمين","section.allUsers":"جميع المستخدمين",
     "section.authorProfile":"ملف الناشر","section.authorUploads":"المنشورات",
+    "section.topDocs":"أفضل الوثائق","section.weeklyContributors":"مساهمو الأسبوع","section.bounties":"الطلبات","section.helpDesk":"مكتب المساعدة / الطلبات",
     "bounty.postProblem":"انشر مشكلة (-3 نقاط)","bounty.provideAnswer":"تقديم حل (+3 نقاط)","bounty.selectBest":"اختيار كأفضل إجابة",
     "auth.signIn":"تسجيل الدخول","auth.createAccount":"إنشاء حساب",
     "auth.signInLink":"تسجيل الدخول","auth.signUpLink":"إنشاء حساب (اشتراك)",
@@ -326,7 +330,7 @@ window.translations = {
     "toast.adminDocsDeleted":"تم حذف الوثائق.",
     "toast.deleteConfirm":"حذف هذه الوثيقة نهائياً؟",
     "toast.deleteAllConfirm":"حذف جميع وثائق هذا المستخدم؟",    "toast.verifyEmail":"يرجى التحقق من بريدك الإلكتروني أولاً.","toast.verifyEmailSent":"تم إرسال بريد التحقق. تفقد صندوق الوارد.",
-    "misc.tokens":"نقاط","misc.documents":"وثائق","misc.uploads":"منشورات",
+    "misc.tokens":"نقاط","misc.documents":"وثائق","misc.uploads":"منشورات","misc.reviews":"مراجعات",
   }
 };
 
@@ -421,6 +425,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(t('toast.accountDeleted'), "info");
             }
             updateAccountVisibility();
+            if (data.topDocs) {
+                renderTopDocs(data.topDocs);
+            }
+            if (data.topContributors) {
+                renderTopContributors(data.topContributors);
+            }
             if (data.documents) {
                 renderDocuments(data.documents);
             }
@@ -1039,6 +1049,43 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             showToast(t('toast.voteFailed'), "error");
         }
+    }
+
+    function renderTopDocs(topDocs) {
+        const target = document.getElementById('top-docs-target');
+        if (!target) return;
+        if (!topDocs || topDocs.length === 0) {
+            target.innerHTML = `<p class="empty-state-notice" data-i18n="section.noDocs">${t('section.noDocs') || 'No documents yet.'}</p>`;
+            return;
+        }
+        target.innerHTML = topDocs.map(d => `
+            <div class="doc-card" data-doc-id="${d.id}">
+                <div class="doc-card-header">
+                    <span class="doc-subject-tag">${d.subject || 'General'}</span>
+                    <span class="doc-score">+${d.score || 0}</span>
+                </div>
+                <div class="doc-card-body">
+                    <h3 class="doc-title">${d.title}</h3>
+                    <p class="doc-meta">${d.author} · ${d.matiere || ''}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderTopContributors(contributors) {
+        const target = document.getElementById('top-contributors-target');
+        if (!target) return;
+        if (!contributors || contributors.length === 0) {
+            target.innerHTML = `<p class="empty-state-notice" data-i18n="section.noContributors">${t('section.noContributors') || 'No contributions this week.'}</p>`;
+            return;
+        }
+        target.innerHTML = `<div class="contributors-list">${contributors.map((c, i) => `
+            <div class="contributor-item">
+                <span class="contributor-rank">#${i + 1}</span>
+                <span class="contributor-name">${c.user}</span>
+                <span class="contributor-count">${c.count} ${t('misc.reviews') || 'reviews'}</span>
+            </div>
+        `).join('')}</div>`;
     }
 
     function initializeVotingSystem(cardElement) {
