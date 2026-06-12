@@ -377,9 +377,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let activeTicketForAnswer = null;
+    let topDocIds = [];
     const API_URL = window.location.origin + '/api';
 
     // --- LIVE SYNCHRONIZER: DATABASE TO UI ---
+    function recomputeTopDocIds(documents) {
+        const sorted = [...documents].filter(d => d.approved).sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3);
+        topDocIds = sorted.map(d => d.id);
+    }
+
     async function loadVaultData() {
         try {
             if (state.user) {
@@ -425,11 +431,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(t('toast.accountDeleted'), "info");
             }
             updateAccountVisibility();
-            if (data.topDocs && data.documents) {
-                const topIds = data.topDocs.map(d => d.id);
-                const topFullDocs = data.documents.filter(d => topIds.includes(d.id));
-                renderDocuments(topFullDocs, '#top-docs-target');
-            }
             if (data.documents) {
                 // Compute top contributors by net upvotes across all docs
                 const voteMap = {};
@@ -859,6 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderDocuments(documents, targetSelector) {
+        if (!targetSelector && documents) recomputeTopDocIds(documents);
         const targetContainer = targetSelector ? document.querySelector(targetSelector) : document.getElementById('primary-feed-target');
         if (targetSelector && targetContainer) {
             targetContainer.innerHTML = '';
@@ -1598,22 +1600,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const filterType = document.getElementById('filter-type')?.value || '';
         const hasFilters = query || filterFiliere || filterNiveau || filterMatiere || filterType;
 
-        const topDocsTarget = document.getElementById('top-docs-target');
-        const contributorsSection = document.getElementById('contributors-section');
-        const primaryFeed = document.getElementById('primary-feed-target');
         const browseHeading = document.getElementById('browse-heading');
         const browseTag = document.getElementById('browse-section-tag');
+        const contributorsSection = document.getElementById('contributors-section');
 
         if (hasFilters) {
-            if (topDocsTarget) topDocsTarget.style.display = 'none';
             if (contributorsSection) contributorsSection.style.display = 'none';
-            if (primaryFeed) primaryFeed.style.display = '';
             if (browseHeading) { browseHeading.textContent = t('section.searchResults'); browseHeading.dataset.i18n = 'section.searchResults'; }
             if (browseTag) { browseTag.textContent = t('section.searchTag'); browseTag.dataset.i18n = 'section.searchTag'; }
         } else {
-            if (topDocsTarget) topDocsTarget.style.display = '';
             if (contributorsSection) contributorsSection.style.display = '';
-            if (primaryFeed) primaryFeed.style.display = 'none';
             if (browseHeading) { browseHeading.textContent = t('section.topDocs'); browseHeading.dataset.i18n = 'section.topDocs'; }
             if (browseTag) { browseTag.textContent = t('section.trending'); browseTag.dataset.i18n = 'section.trending'; }
         }
@@ -1621,6 +1617,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const browseCards = document.querySelectorAll('#primary-feed-target .doc-card');
         let visible = 0;
         browseCards.forEach(card => {
+            const cardId = parseInt(card.dataset.id);
+            const isTop = topDocIds.includes(cardId);
+
+            if (!hasFilters) {
+                if (isTop) {
+                    card.classList.remove('hidden');
+                    visible++;
+                } else {
+                    card.classList.add('hidden');
+                }
+                return;
+            }
+
             const cardText = card.innerText.toLowerCase();
             const tagType = card.querySelector('.tag-type');
 
