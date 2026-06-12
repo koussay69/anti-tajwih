@@ -43,7 +43,7 @@ window.translations = {
     "account.newUsernamePlaceholder":"New username","account.currentPasswordPlaceholder":"Current password","account.newPasswordPlaceholder":"New password",
     "account.yourStats":"📊 Your Stats","account.settings":"⚙ Settings",
     "account.changeUsername":"Change Username","account.save":"Save","account.changePassword":"Change Password",
-    "account.logOut":"Log Out","account.linkGoogle":"Link Google Account","account.linkGoogleLinked":"Google account linked to",
+    "account.logOut":"Log Out","account.signInPrompt":"Sign in to view your account.",
     "admin.users":"Users:","admin.documents":"Documents:","admin.bounties":"Bounties:","admin.online":"🟢 Online (30m):",
     "admin.noPending":"No documents pending review.","admin.searchUsers":"Search users by username...",
     "admin.adjust":"Adjust","admin.unban":"Unban","admin.ban":"Ban","admin.deleteAllDocs":"Delete All Docs",
@@ -110,7 +110,7 @@ window.translations = {
     "toast.adminUserUnbanned":"User unbanned.",
     "toast.adminDocsDeleted":"Documents deleted.",
     "toast.deleteConfirm":"Delete this document permanently?",
-    "toast.deleteAllConfirm":"Delete all documents for this user?",    "toast.googleLinked":"Google account linked!","toast.googleLinkError":"Failed to link Google account.","toast.verifyEmail":"Please verify your email first.","toast.verifyEmailSent":"Verification email sent. Check your inbox.",
+    "toast.deleteAllConfirm":"Delete all documents for this user?",    "toast.verifyEmail":"Please verify your email first.","toast.verifyEmailSent":"Verification email sent. Check your inbox.",
     // misc
     "misc.tokens":"Tokens","misc.documents":"Documents","misc.uploads":"Uploads",
   },
@@ -151,7 +151,7 @@ window.translations = {
     "account.changePhoto":"Changer la Photo","account.anonymous":"Étudiant Anonyme",
     "account.yourStats":"📊 Vos Statistiques","account.settings":"⚙ Paramètres",
     "account.changeUsername":"Changer le Pseudo","account.save":"Sauvegarder","account.changePassword":"Changer le Mot de Passe",
-    "account.logOut":"Déconnexion","account.linkGoogle":"Lier un compte Google","account.linkGoogleLinked":"Compte Google lié à",
+    "account.logOut":"Déconnexion","account.signInPrompt":"Connectez-vous pour voir votre compte.",
     "admin.users":"Utilisateurs :","admin.documents":"Documents :","admin.bounties":"Demandes :","admin.online":"🟢 En ligne (30m) :",
     "admin.noPending":"Aucun document en attente.","admin.searchUsers":"Rechercher par nom d'utilisateur...",
     "admin.adjust":"Ajuster","admin.unban":"Débannir","admin.ban":"Bannir","admin.deleteAllDocs":"Tout Supprimer",
@@ -218,7 +218,7 @@ window.translations = {
     "toast.adminUserUnbanned":"Utilisateur débanni.",
     "toast.adminDocsDeleted":"Documents supprimés.",
     "toast.deleteConfirm":"Supprimer ce document définitivement ?",
-    "toast.deleteAllConfirm":"Supprimer tous les documents de cet utilisateur ?",    "toast.googleLinked":"Compte Google lié !","toast.googleLinkError":"Échec de la liaison du compte Google.","toast.verifyEmail":"Vérifiez votre email d'abord.","toast.verifyEmailSent":"Email de vérification envoyé. Vérifiez votre boîte.",
+    "toast.deleteAllConfirm":"Supprimer tous les documents de cet utilisateur ?",    "toast.verifyEmail":"Vérifiez votre email d'abord.","toast.verifyEmailSent":"Email de vérification envoyé. Vérifiez votre boîte.",
     "misc.tokens":"Jetons","misc.documents":"Documents","misc.uploads":"Publications",
   },
   AR: {
@@ -258,7 +258,7 @@ window.translations = {
     "account.changePhoto":"تغيير الصورة","account.anonymous":"طالب مجهول",
     "account.yourStats":"📊 إحصائياتك","account.settings":"⚙ الإعدادات",
     "account.changeUsername":"تغيير اسم المستخدم","account.save":"حفظ","account.changePassword":"تغيير كلمة المرور",
-    "account.logOut":"تسجيل الخروج","account.linkGoogle":"ربط حساب Google","account.linkGoogleLinked":"تم ربط حساب Google بـ",
+    "account.logOut":"تسجيل الخروج","account.signInPrompt":"سجل الدخول لعرض حسابك.",
     "admin.users":"المستخدمون :","admin.documents":"الوثائق :","admin.bounties":"الطلبات :","admin.online":"🟢 متصل (30د) :",
     "admin.noPending":"لا توجد وثائق قيد المراجعة.","admin.searchUsers":"ابحث باسم المستخدم...",
     "admin.adjust":"تعديل","admin.unban":"إلغاء الحظر","admin.ban":"حظر","admin.deleteAllDocs":"حذف الكل",
@@ -325,7 +325,7 @@ window.translations = {
     "toast.adminUserUnbanned":"تم إلغاء حظر المستخدم.",
     "toast.adminDocsDeleted":"تم حذف الوثائق.",
     "toast.deleteConfirm":"حذف هذه الوثيقة نهائياً؟",
-    "toast.deleteAllConfirm":"حذف جميع وثائق هذا المستخدم؟",    "toast.googleLinked":"تم ربط حساب Google!","toast.googleLinkError":"فشل ربط حساب Google.","toast.verifyEmail":"يرجى التحقق من بريدك الإلكتروني أولاً.","toast.verifyEmailSent":"تم إرسال بريد التحقق. تفقد صندوق الوارد.",
+    "toast.deleteAllConfirm":"حذف جميع وثائق هذا المستخدم؟",    "toast.verifyEmail":"يرجى التحقق من بريدك الإلكتروني أولاً.","toast.verifyEmailSent":"تم إرسال بريد التحقق. تفقد صندوق الوارد.",
     "misc.tokens":"نقاط","misc.documents":"وثائق","misc.uploads":"منشورات",
   }
 };
@@ -420,6 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (adminLink) adminLink.classList.add('hidden');
                 showToast(t('toast.accountDeleted'), "info");
             }
+            updateAccountVisibility();
             if (data.documents) {
                 renderDocuments(data.documents);
             }
@@ -467,6 +468,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 navImg.style.display = 'none';
                 navPlaceholder.style.display = '';
             }
+        }
+    }
+
+    function updateAccountVisibility() {
+        const loggedIn = document.getElementById('account-logged-in-content');
+        const loggedOut = document.getElementById('account-logged-out-content');
+        if (!loggedIn || !loggedOut) return;
+        if (state.user) {
+            loggedIn.classList.remove('hidden');
+            loggedOut.classList.add('hidden');
+        } else {
+            loggedIn.classList.add('hidden');
+            loggedOut.classList.remove('hidden');
         }
     }
 
@@ -523,6 +537,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const activeSection = document.getElementById(targetId);
             if (activeSection) activeSection.classList.remove('hidden');
 
+            if (targetId === 'account-view') {
+                updateAccountVisibility();
+            }
             if (targetId === 'admin-view') {
                 loadAdminPanel();
                 if (window._onlinePoll) clearInterval(window._onlinePoll);
@@ -1729,22 +1746,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
     // --- LINK GOOGLE ACCOUNT (in account page) ---
-    const linkGoogleBtn = document.getElementById('link-google-btn');
-    if (linkGoogleBtn) {
-      linkGoogleBtn.addEventListener('click', () => {
-        if (!gisClientId) { showToast('Google sign-in not configured', 'error'); return; }
-        if (!state.user) { showToast('Please sign in first', 'error'); return; }
-        const callbackUrl = window.location.origin + '/api/auth/google/callback';
-        const url = 'https://accounts.google.com/o/oauth2/v2/auth?' +
-          'client_id=' + encodeURIComponent(gisClientId) +
-          '&redirect_uri=' + encodeURIComponent(callbackUrl) +
-          '&response_type=code' +
-          '&state=' + encodeURIComponent('link:' + state.user) +
-          '&scope=' + encodeURIComponent('openid profile email');
-        window.location.href = url;
-      });
-    }
-    // Handle Google callback response
     const urlParams = new URLSearchParams(window.location.search);
     const googleUser = urlParams.get('google_user');
     const googleEmail = urlParams.get('google_email');
@@ -1773,17 +1774,6 @@ document.addEventListener('DOMContentLoaded', () => {
         authModal.classList.add('open');
         showToast('Choose a username and password to complete sign-up', 'info');
       }, 100);
-    }
-
-    const googleLinked = urlParams.get('google_linked');
-    if (googleLinked) {
-      window.history.replaceState({}, '', window.location.pathname);
-      if (googleLinked.startsWith('error:')) {
-        showToast(t('toast.googleLinkError') + ' (' + googleLinked.slice(6) + ')', 'error');
-      } else {
-        showToast(t('toast.googleLinked'), 'success');
-        loadVaultData();
-      }
     }
 
     if (logoutMockBtn) {

@@ -203,16 +203,6 @@ app.get('/api/auth/google/callback', async (req, res) => {
     if (!googleEmail) return res.redirect('/?google_error=no_email');
     const normalizedEmail = googleEmail.toLowerCase();
 
-    // === LINK FLOW: state=link:username ===
-    if (state && state.startsWith('link:')) {
-      const usernameToLink = state.slice(5).toLowerCase();
-      const { data: linkUser, error: linkErr } = await supabase.from('users').update({ email: normalizedEmail }).eq('username', usernameToLink).select().maybeSingle();
-      if (linkErr || !linkUser) return res.redirect('/?google_linked=error:user_not_found');
-      // If this Google email was previously stored on another account, remove it
-      await supabase.from('users').update({ email: null }).ilike('email', normalizedEmail).neq('username', usernameToLink);
-      return res.redirect('/?google_linked=' + encodeURIComponent(usernameToLink));
-    }
-
     // === LOGIN / SIGN-UP FLOW ===
     let existingUser = await getUserProfile(normalizedEmail);
     if (existingUser && !existingUser.username) existingUser = null;
