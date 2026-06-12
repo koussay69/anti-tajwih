@@ -90,6 +90,7 @@ window.translations = {
     "toast.loggedIn":"Logged in as {user}",
     "toast.loggedOut":"Logged out.",
     "toast.deleted":"Document deleted.",
+    "toast.accountDeleted":"Your account was deleted. Please create a new account.",
     "toast.avatarUpdated":"Profile picture updated.",
     "toast.selectPdf":"Please select a PDF file.",
     "toast.noSelfBounty":"Cannot answer your own bounty.",
@@ -197,6 +198,7 @@ window.translations = {
     "toast.loggedIn":"Connecté en tant que {user}",
     "toast.loggedOut":"Déconnecté.",
     "toast.deleted":"Document supprimé.",
+    "toast.accountDeleted":"Votre compte a été supprimé. Veuillez en créer un nouveau.",
     "toast.avatarUpdated":"Photo de profil mise à jour.",
     "toast.selectPdf":"Sélectionnez un fichier PDF.",
     "toast.noSelfBounty":"Vous ne pouvez pas répondre à votre propre demande.",
@@ -303,6 +305,7 @@ window.translations = {
     "toast.loggedIn":"تم تسجيل الدخول كـ {user}",
     "toast.loggedOut":"تم تسجيل الخروج.",
     "toast.deleted":"تم حذف الوثيقة.",
+    "toast.accountDeleted":"تم حذف حسابك. يرجى إنشاء حساب جديد.",
     "toast.avatarUpdated":"تم تحديث الصورة الشخصية.",
     "toast.selectPdf":"يرجى اختيار ملف PDF.",
     "toast.noSelfBounty":"لا يمكنك الإجابة على طلبك الخاص.",
@@ -404,6 +407,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 adminLink.classList.toggle('hidden', !state.admin);
             }
 
+            if (!data.state.user && state.user) {
+                localStorage.removeItem('p2p-vault-user');
+                state.user = null;
+                state.admin = false;
+                state.tokens = 0;
+                state.uploadsCount = 0;
+                if (navAuthBtn) navAuthBtn.innerText = t('nav.signIn');
+                const profileHeader = document.querySelector('.account-user-name');
+                if (profileHeader) profileHeader.innerText = '';
+                const adminLink = document.getElementById('admin-nav-link');
+                if (adminLink) adminLink.classList.add('hidden');
+                showToast(t('toast.accountDeleted'), "info");
+            }
             if (data.documents) {
                 renderDocuments(data.documents);
             }

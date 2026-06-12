@@ -663,7 +663,7 @@ app.get('/api/vault-data', async (req, res) => {
     state: {
       tokens: profile ? profile.tokens : 0,
       uploadsCount: profile ? docs.filter(d => d.author?.toLowerCase() === normalizedName).length : 0,
-      user: normalizedName || null,
+      user: profile ? normalizedName : null,
       admin: profile ? !!profile.admin : false,
       banned: profile ? !!profile.banned : false,
       avatar_url: profile ? profile.avatar_url : null,
