@@ -1132,6 +1132,28 @@ app.post('/api/admin/users/ban', async (req, res) => {
   res.json({ success: true, banned: !!banned });
 });
 
+app.post('/api/admin/users/cleanup', async (req, res) => {
+  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  const { dryRun } = req.body;
+  const { data: users } = await supabase.from('users').select('username, admin, flagged');
+  if (!users) return res.json({ success: true, deleted: 0, dryRun });
+  const toDelete = users.filter(u => !u.admin && !u.flagged);
+  let deleted = 0;
+  let preview = [];
+  for (const u of toDelete) {
+    const { count } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('author', u.username);
+    if (!count || count === 0) {
+      preview.push(u.username);
+      if (!dryRun) {
+        await supabase.from('users').delete().eq('username', u.username);
+        deleted++;
+      }
+    }
+  }
+  if (dryRun) res.json({ success: true, dryRun: true, wouldDelete: preview.length, preview });
+  else res.json({ success: true, deleted });
+});
+
 app.delete('/api/admin/users/:username/documents', async (req, res) => {
   if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
   const { username } = req.params;
