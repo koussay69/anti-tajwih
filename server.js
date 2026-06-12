@@ -138,7 +138,8 @@ app.get('/api/config', (req, res) => {
     googleClientId: process.env.GOOGLE_CLIENT_ID || '',
     smtpConfigured: emailConfigured,
     smtpProvider: mailerSendToken ? 'mailersend' : resendApiKey ? 'resend' : mailTransporter ? 'smtp' : null,
-    emailVerificationDisabled: !!process.env.DISABLE_EMAIL_VERIFICATION
+    emailVerificationDisabled: !!process.env.DISABLE_EMAIL_VERIFICATION,
+    hasServiceKey: !!SUPABASE_SERVICE_KEY
   });
 });
 
@@ -1148,9 +1149,10 @@ app.post('/api/admin/users/cleanup', async (req, res) => {
     if (!count || count === 0) {
       preview.push(u.username);
       if (!dryRun) {
+        console.log('Deleting user:', u.username);
         const { error: delErr } = await supabaseAdmin.from('users').delete().eq('username', u.username);
         if (delErr) console.error('Failed to delete', u.username, delErr.message);
-        else deleted++;
+        else { deleted++; console.log('Deleted:', u.username); }
       }
     }
   }
