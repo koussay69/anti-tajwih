@@ -1617,7 +1617,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const browseCards = document.querySelectorAll('#primary-feed-target .doc-card');
         let visible = 0;
         browseCards.forEach(card => {
-            const cardId = parseInt(card.dataset.id);
+            const cardId = card.dataset.id;
             const isTop = topDocIds.includes(cardId);
 
             if (!hasFilters) {
