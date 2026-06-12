@@ -1146,8 +1146,9 @@ app.post('/api/admin/users/cleanup', async (req, res) => {
     if (!count || count === 0) {
       preview.push(u.username);
       if (!dryRun) {
-        await supabase.from('users').delete().eq('username', u.username);
-        deleted++;
+        const { error: delErr } = await supabase.from('users').delete().eq('username', u.username);
+        if (delErr) console.error('Failed to delete', u.username, delErr.message);
+        else deleted++;
       }
     }
   }
