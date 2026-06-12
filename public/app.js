@@ -2127,8 +2127,9 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
                 if (this.y > h + 20) this.reset();
             }
             draw() {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
                 ctx.font = `${this.size}px serif`;
-                ctx.fillStyle = `rgba(200,200,220,${this.opacity})`;
+                ctx.fillStyle = isDark ? `rgba(200,200,220,${this.opacity})` : `rgba(60,60,80,${this.opacity + 0.2})`;
                 ctx.fillText(this.symbol, this.x, this.y);
             }
         }

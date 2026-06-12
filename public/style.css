@@ -352,13 +352,17 @@ body {
 }
 
 .hero p {
-    color: #c8c8d0;
+    color: var(--text-main);
     max-width: 540px;
     margin: 0 auto 30px auto;
     font-size: 16px;
     line-height: 1.7;
     font-weight: 400;
     letter-spacing: 0.01em;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+[data-theme="dark"] .hero p {
+    color: #c8c8d0;
     text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
