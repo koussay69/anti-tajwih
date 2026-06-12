@@ -1378,7 +1378,7 @@ body {
 }
 .contributor-rank {
     font-weight: 700;
-    color: var(--glow-color);
+    color: var(--text-main);
     min-width: 28px;
 }
 .contributor-name {
