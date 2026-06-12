@@ -117,6 +117,18 @@ app.use(express.json());
 app.get('/google86b2930c731ec5e2.html', (req, res) => {
   res.type('html').send('google-site-verification: google86b2930c731ec5e2.html');
 });
+app.get('/robots.txt', (req, res) => {
+  res.type('text').send('User-agent: *\nAllow: /\nSitemap: https://antitajwih.onrender.com/sitemap.xml\n');
+});
+app.get('/sitemap.xml', async (req, res) => {
+  const base = 'https://antitajwih.onrender.com';
+  const { data: docs } = await supabase.from('documents').select('id, updated_at').order('updated_at', { ascending: false }).limit(500);
+  let urls = `<url><loc>${base}/</loc><priority>1.0</priority></url>`;
+  for (const d of docs || []) {
+    urls += `<url><loc>${base}/?doc=${d.id}</loc><lastmod>${(d.updated_at || '').split('T')[0]}</lastmod><priority>0.8</priority></url>`;
+  }
+  res.type('xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`);
+});
 app.use(express.static('public', { maxAge: 0, etag: false }));
 
 // Track last active timestamp for any request with a user identifier
