@@ -425,13 +425,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(t('toast.accountDeleted'), "info");
             }
             updateAccountVisibility();
-            if (data.topDocs) {
-                renderTopDocs(data.topDocs);
-            }
-            if (data.topContributors) {
-                renderTopContributors(data.topContributors);
+            if (data.topDocs && data.documents) {
+                const topIds = data.topDocs.map(d => d.id);
+                const topFullDocs = data.documents.filter(d => topIds.includes(d.id));
+                renderDocuments(topFullDocs, '#top-docs-target');
             }
             if (data.documents) {
+                // Compute top contributors by net upvotes across all docs
+                const voteMap = {};
+                for (const d of data.documents) {
+                    if (!d.author) continue;
+                    voteMap[d.author] = (voteMap[d.author] || 0) + (d.score || 0);
+                }
+                const sorted = Object.entries(voteMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                renderTopContributors(sorted.map(([user, net]) => ({ user, net })));
                 renderDocuments(data.documents);
             }
             if (data.bounties) {
@@ -851,10 +858,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<span class="star-display">${full.repeat(r)}${empty.repeat(5 - r)}</span>`;
     }
 
-    function renderDocuments(documents) {
-        const targetContainer = document.getElementById('primary-feed-target');
-        const myUploadsSection = document.getElementById('user-uploads-target-container');
-        const savedContainer = document.getElementById('saved-docs-target-container');
+    function renderDocuments(documents, targetSelector) {
+        const targetContainer = targetSelector ? document.querySelector(targetSelector) : document.getElementById('primary-feed-target');
+        if (targetSelector && targetContainer) {
+            targetContainer.innerHTML = '';
+        }
+        const myUploadsSection = targetSelector ? null : document.getElementById('user-uploads-target-container');
+        const savedContainer = targetSelector ? null : document.getElementById('saved-docs-target-container');
 
         const placeholderUploads = document.getElementById('no-uploads-placeholder');
         const placeholderSaved = document.getElementById('no-saved-placeholder');
@@ -1051,39 +1061,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderTopDocs(topDocs) {
-        const target = document.getElementById('top-docs-target');
-        if (!target) return;
-        if (!topDocs || topDocs.length === 0) {
-            target.innerHTML = `<p class="empty-state-notice" data-i18n="section.noDocs">${t('section.noDocs') || 'No documents yet.'}</p>`;
-            return;
-        }
-        target.innerHTML = topDocs.map(d => `
-            <div class="doc-card" data-doc-id="${d.id}">
-                <div class="doc-card-header">
-                    <span class="doc-subject-tag">${d.subject || 'General'}</span>
-                    <span class="doc-score">+${d.score || 0}</span>
-                </div>
-                <div class="doc-card-body">
-                    <h3 class="doc-title">${d.title}</h3>
-                    <p class="doc-meta">${d.author} · ${d.matiere || ''}</p>
-                </div>
-            </div>
-        `).join('');
-    }
-
     function renderTopContributors(contributors) {
         const target = document.getElementById('top-contributors-target');
         if (!target) return;
         if (!contributors || contributors.length === 0) {
-            target.innerHTML = `<p class="empty-state-notice" data-i18n="section.noContributors">${t('section.noContributors') || 'No contributions this week.'}</p>`;
+            target.innerHTML = `<p class="empty-state-notice" data-i18n="section.noContributors">${t('section.noContributors') || 'No contributors yet.'}</p>`;
             return;
         }
         target.innerHTML = `<div class="contributors-list">${contributors.map((c, i) => `
             <div class="contributor-item">
                 <span class="contributor-rank">#${i + 1}</span>
                 <span class="contributor-name">${c.user}</span>
-                <span class="contributor-count">${c.count} ${t('misc.reviews') || 'reviews'}</span>
+                <span class="contributor-count">+${c.net}</span>
             </div>
         `).join('')}</div>`;
     }
