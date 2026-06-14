@@ -652,13 +652,16 @@ body {
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
     border-radius: 6px;
 }
 
 .unlock-action-btn:hover {
     background: var(--text-main);
     color: var(--bg-body);
+}
+.unlock-action-btn:active {
+    transform: scale(0.96);
 }
 
 .report-doc-btn {
@@ -1519,4 +1522,10 @@ body {
     font-size: 13px;
     color: var(--text-muted);
     margin-top: 4px;
+}
+button {
+    transition: transform 0.1s ease;
+}
+button:active {
+    transform: scale(0.97);
 }
