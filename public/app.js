@@ -1549,8 +1549,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const progressEl = document.getElementById('upload-progress');
             const progressBar = document.getElementById('upload-progress-bar');
             const progressText = document.getElementById('upload-progress-text');
-            progressEl.style.display = 'flex';
-
+            if (progressEl) { progressEl.style.display = 'flex'; }
             const formData = new FormData();
             formData.append('title', titleVal);
             formData.append('subject', subjectVal);
@@ -1606,8 +1605,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uploadSubmitBtn.disabled = false;
                     uploadSubmitBtn.innerText = uploadBtnOriginalText;
                 }
-                progressEl.style.display = 'none';
-                progressBar.style.width = '0%';
+                if (progressEl) progressEl.style.display = 'none';
+                if (progressBar) progressBar.style.width = '0%';
             }
         });
     }
