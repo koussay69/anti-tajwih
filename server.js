@@ -16,7 +16,7 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
+const JWT_SECRET = process.env.JWT_SECRET || (() => { try { const p = path.join(__dirname, '.jwt_secret'); if (fs.existsSync(p)) return fs.readFileSync(p, 'utf8').trim(); const s = crypto.randomBytes(64).toString('hex'); fs.writeFileSync(p, s); return s; } catch { return crypto.randomBytes(64).toString('hex'); } })();
 const BCRYPT_ROUNDS = 12;
 const BANNED_IPS_PATH = path.join(__dirname, 'banned_ips.json');
 const USER_IPS_PATH = path.join(__dirname, 'user_ips.json');

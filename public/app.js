@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 adminLink.classList.toggle('hidden', !state.admin);
             }
 
-            if (!data.state.user && state.user) {
+            if (data.state.banned && state.user) {
                 localStorage.removeItem('p2p-vault-user');
                 state.user = null;
                 state.admin = false;
