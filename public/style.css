@@ -1318,7 +1318,10 @@ body {
         padding: 0 10px;
     }
     .logo {
-        font-size: 13px;
+        font-size: 12px;
+    }
+    .logo img {
+        height: 24px !important;
     }
     .nav-links {
         gap: 8px;
@@ -1370,7 +1373,10 @@ body {
         padding: 0 6px;
     }
     .logo {
-        font-size: 11px;
+        font-size: 10px;
+    }
+    .logo img {
+        height: 20px !important;
     }
     .nav-actions {
         gap: 2px;
