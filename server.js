@@ -842,7 +842,7 @@ async function checkDocumentContent(pdfBuffer, metadata) {
     // Extract text using pdfjs-dist
     const doc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) }).promise;
     let text = '';
-    for (let i = 1; i <= Math.min(doc.numPages, 5); i++) {
+    for (let i = 1; i <= Math.min(doc.numPages, 3); i++) {
       const page = await doc.getPage(i);
       const content = await page.getTextContent();
       text += content.items.map(item => item.str).join(' ') + '\n';
@@ -1569,8 +1569,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Server error' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n=============================================`);
   console.log(`📡 P2P Core Engine running at: http://localhost:${PORT}`);
   console.log(`=============================================\n`);
 });
+server.timeout = 180000;
