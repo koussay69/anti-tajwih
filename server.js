@@ -971,7 +971,11 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
     return res.status(400).json({ error: `Upload rejected: ${rejectionReason || aiError}` });
   }
 
-  await supabase.from('documents').insert({ id: docId, subject, title, author, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere, type, approved });
+  const { error: insertErr } = await supabase.from('documents').insert({ id: docId, subject, title, author: normalizedName, score: 0, file_path: publicUrl, file_hash: fileHash, filiere, niveau, matiere, type, approved });
+  if (insertErr) {
+    await supabase.storage.from('documents').remove([fileName]).catch(() => {});
+    return res.status(500).json({ error: 'Failed to save document: ' + insertErr.message });
+  }
 
   if (approved) {
     await supabase.from('users').update({ tokens: profile.tokens + 5, uploadsCount: profile.uploadsCount + 1 }).eq('username', normalizedName);
