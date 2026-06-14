@@ -407,7 +407,7 @@ async function getDocumentsWithLockState(normalizedUsername) {
     const { data: comments } = await supabase.from('comments').select('user, text, rating').eq('doc_id', doc.id);
     const ratings = (comments || []).map(c => c.rating).filter(r => r > 0);
     const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length) : 0;
-    const isAuthor = normalizedUsername && doc.author.toLowerCase() === normalizedUsername;
+    const isAuthor = normalizedUsername && doc.author?.toLowerCase() === normalizedUsername;
 
     const docVotes = (allVotes || []).filter(v => v.doc_id === doc.id);
     const upCount = docVotes.filter(v => v.direction === 'up').length;
@@ -1004,7 +1004,7 @@ app.get('/api/documents/download/:docId', async (req, res) => {
   const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
 
-  const isAuthor = doc.author.toLowerCase() === normalizedName;
+  const isAuthor = doc.author?.toLowerCase() === normalizedName;
   const { data: hasUnlocked } = await supabase.from('unlocked_docs').select('doc_id').eq('username', normalizedName).eq('doc_id', docId).maybeSingle();
   const { data: viewerProfile } = await supabase.from('users').select('admin').eq('username', normalizedName).maybeSingle();
   const isAdmin = viewerProfile && viewerProfile.admin === true;
@@ -1029,7 +1029,7 @@ app.delete('/api/documents/delete/:docId', async (req, res) => {
   const normalizedName = req.user;
   const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
-  if (doc.author.toLowerCase() !== normalizedName) return res.status(403).json({ error: "Only the author can delete this document." });
+  if (doc.author?.toLowerCase() !== normalizedName) return res.status(403).json({ error: "Only the author can delete this document." });
 
   const fileName = doc.file_path?.split('/').pop();
   if (fileName) {
