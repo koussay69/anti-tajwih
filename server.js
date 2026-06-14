@@ -11,6 +11,13 @@ const nodemailer = require('nodemailer');
 const { Resend } = require('resend');
 const dns = require('dns');
 const fs = require('fs');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
+
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
+const BCRYPT_ROUNDS = 12;
 const BANNED_IPS_PATH = path.join(__dirname, 'banned_ips.json');
 const USER_IPS_PATH = path.join(__dirname, 'user_ips.json');
 function loadJson(p) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return {}; } }
@@ -120,6 +127,12 @@ function broadcast(event, data) {
   const msg = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   sseClients.forEach(res => res.write(msg));
 }
+// Periodic cleanup of stale SSE connections
+setInterval(() => {
+  for (let i = sseClients.length - 1; i >= 0; i--) {
+    if (sseClients[i].destroyed) sseClients.splice(i, 1);
+  }
+}, 60000);
 
 app.set('trust proxy', 1);
 
@@ -132,6 +145,7 @@ const ALLOWED_ORIGINS = [
 
 app.use(cors({
   origin: function (origin, callback) {
+    if (origin === 'null') return callback(null, false);
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
@@ -148,12 +162,12 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      fontSrc: ["'self'"],
       imgSrc: ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'", 'https://*.supabase.co'],
       frameAncestors: ["'none'"],
-      upgradeInsecureRequests: null
+      upgradeInsecureRequests: []
     }
   },
   crossOriginEmbedderPolicy: false,
@@ -162,6 +176,47 @@ app.use(helmet({
 }));
 
 app.use(express.json());
+app.use(cookieParser());
+
+// Rate limiters
+const globalLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, message: { error: 'Too many requests, slow down.' } });
+const loginLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, message: { error: 'Too many login attempts.' } });
+const registerLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: { error: 'Too many registrations from this IP.' } });
+const bountyLimiter = rateLimit({ windowMs: 60 * 1000, max: 5, message: { error: 'Too many bounty actions.' } });
+app.use(globalLimiter);
+
+// Auth middleware — verifies JWT from cookie or Authorization header
+function authMiddleware(req, res, next) {
+  const token = req.cookies?.token || req.headers?.authorization?.replace('Bearer ', '');
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.user = decoded.username;
+      req.isAdmin = decoded.admin === true;
+    } catch {
+      req.user = null;
+      req.isAdmin = false;
+    }
+  } else {
+    req.user = null;
+    req.isAdmin = false;
+  }
+  next();
+}
+app.use(authMiddleware);
+
+// Helper to set token cookie on response
+function setAuthCookie(res, username, admin) {
+  const token = jwt.sign({ username, admin: !!admin }, JWT_SECRET, { expiresIn: '7d' });
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  });
+  return token;
+}
+
 app.get('/google86b2930c731ec5e2.html', (req, res) => {
   res.type('html').send('google-site-verification: google86b2930c731ec5e2.html');
 });
@@ -216,11 +271,25 @@ app.get('/api/debug-smtp', async (req, res) => {
     });
     res.json({ ok: true, from: FROM_EMAIL, provider: mailerSendToken ? 'mailersend' : resendApiKey ? 'resend' : mailTransporter ? 'smtp' : null });
   } catch (e) {
-    res.json({ ok: false, error: e.message, stack: e.stack, code: e.code });
+    res.json({ ok: false, error: e.message });
   }
 });
 
 // Google OAuth callback (redirect flow)
+// Logout — clear auth cookie
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'strict' });
+  res.json({ success: true });
+});
+
+// Current user from token
+app.get('/api/auth/me', async (req, res) => {
+  if (!req.user) return res.json({ user: null });
+  const profile = await getUserProfile(req.user);
+  if (!profile) return res.json({ user: null });
+  res.json({ user: profile.username, admin: !!profile.admin, avatar_url: profile.avatar_url, tokens: profile.tokens });
+});
+
 app.get('/api/auth/google/callback', async (req, res) => {
   const { code, state } = req.query;
   if (!code) return res.redirect('/?google_error=no_code');
@@ -260,7 +329,8 @@ app.get('/api/auth/google/callback', async (req, res) => {
     }
     if (existingUser) {
       if (existingUser.banned) return res.redirect('/?google_error=banned');
-      return res.redirect('/?google_user=' + encodeURIComponent(existingUser.username));
+      setAuthCookie(res, existingUser.username, existingUser.admin);
+      return res.redirect('/?google_auth=1');
     }
 
     // New Google user — redirect to sign-up with email pre-filled
@@ -285,10 +355,8 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  const user = req.query.user || req.body?.user;
-  if (user && typeof user === 'string' && user.trim()) {
-    const normalized = user.trim().toLowerCase();
-    supabase.from('users').update({ last_active: new Date().toISOString() }).eq('username', normalized).then().catch(() => {});
+  if (req.user) {
+    supabase.from('users').update({ last_active: new Date().toISOString() }).eq('username', req.user).then().catch(() => {});
   }
   next();
 });
@@ -396,7 +464,7 @@ async function getBounties() {
 }
 
 // --- AUTH ---
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', registerLimiter, async (req, res) => {
   try {
     const { username, password, email } = req.body;
     if (!username || !password) {
@@ -427,21 +495,24 @@ app.post('/api/auth/register', async (req, res) => {
       }
     }
 
-    const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0 });
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
 
     const userIps = loadJson(USER_IPS_PATH);
     userIps[normalizedName] = clientIp;
     saveJson(USER_IPS_PATH, userIps);
 
-    res.json({ success: true });
+    const profile = await getUserProfile(normalizedName);
+    const token = setAuthCookie(res, normalizedName, profile?.admin);
+    res.json({ success: true, token, username: normalizedName });
   } catch (err) {
     console.error('Register error:', err?.message || err);
     res.status(500).json({ error: 'Registration failed.' });
   }
 });
 
-app.post('/api/auth/register-google', async (req, res) => {
+app.post('/api/auth/register-google', registerLimiter, async (req, res) => {
   const { email, username, password } = req.body;
   if (!email || !username || !password) {
     return res.status(400).json({ error: "Email, username, and password are required." });
@@ -468,27 +539,39 @@ app.post('/api/auth/register-google', async (req, res) => {
     return res.status(403).json({ error: "This email is blocked." });
   }
 
-  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password, tokens: 0, uploadsCount: 0 });
+  const hashedPassword = password ? await bcrypt.hash(password, BCRYPT_ROUNDS) : '';
+  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0 });
   if (insertErr) return res.status(500).json({ error: "Failed to create account: " + insertErr.message });
   const userIps = loadJson(USER_IPS_PATH);
   userIps[normalizedName] = clientIp;
   saveJson(USER_IPS_PATH, userIps);
-  res.json({ success: true, username: normalizedName });
+  const token = setAuthCookie(res, normalizedName, false);
+  res.json({ success: true, username: normalizedName, token });
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   const rawInput = username.trim().toLowerCase();
 
   const { data: user } = await supabase.from('users').select('*').or(`username.eq.${rawInput},email.eq.${rawInput}`).maybeSingle();
 
-  if (!user || user.password !== password) {
-    return res.status(401).json({ error: "Invalid username/email or password." });
+  if (!user) return res.status(401).json({ error: "Invalid username/email or password." });
+
+  let passwordMatch = false;
+  try {
+    passwordMatch = await bcrypt.compare(password, user.password);
+  } catch {}
+  if (!passwordMatch && user.password === password) {
+    passwordMatch = true;
+    const hashed = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    await supabase.from('users').update({ password: hashed }).eq('username', user.username);
   }
-  if (user.banned) {
-    return res.status(403).json({ error: "Your account has been banned." });
-  }
-  res.json({ success: true, username: user.username });
+  if (!passwordMatch) return res.status(401).json({ error: "Invalid username/email or password." });
+
+  if (user.banned) return res.status(403).json({ error: "Your account has been banned." });
+
+  const token = setAuthCookie(res, user.username, user.admin);
+  res.json({ success: true, username: user.username, token });
 });
 
 // Email verification
@@ -502,7 +585,7 @@ app.get('/api/auth/verify-email', async (req, res) => {
     if (!entry || entry.token !== token) return res.send('<p>Invalid or expired verification link.</p>');
     delete v[normalizedName];
     saveVerifications(v);
-    res.send('<p>Account <strong>' + normalizedName + '</strong> verified! You can now <a href="/">sign in</a>.</p>');
+    res.send('<p>Account <strong>' + normalizedName.replace(/[&<>"]/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]; }) + '</strong> verified! You can now <a href="/">sign in</a>.</p>');
   } catch { res.send('<p>Verification failed. Please try again.</p>'); }
 });
 
@@ -572,7 +655,8 @@ app.post('/api/auth/google', async (req, res) => {
       user = await getUserProfile(newName);
     }
     if (user.banned) return res.status(403).json({ error: "Your account has been banned." });
-    res.json({ success: true, username: user.username });
+    const token = setAuthCookie(res, user.username, user.admin);
+    res.json({ success: true, username: user.username, token });
   } catch {
     res.status(500).json({ error: "Google authentication failed." });
   }
@@ -580,9 +664,10 @@ app.post('/api/auth/google', async (req, res) => {
 
 // --- CHANGE USERNAME ---
 app.post('/api/auth/change-username', async (req, res) => {
-  const { user, newUsername } = req.body;
-  if (!user || !newUsername) return res.status(400).json({ error: "Current username and new username required." });
-  const oldName = user.trim().toLowerCase();
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
+  const { newUsername } = req.body;
+  if (!newUsername) return res.status(400).json({ error: "New username required." });
+  const oldName = req.user;
   const newName = newUsername.trim().toLowerCase();
   if (oldName === newName) return res.status(400).json({ error: "New username is the same as current." });
 
@@ -606,24 +691,27 @@ app.post('/api/auth/change-username', async (req, res) => {
 
 // --- CHANGE PASSWORD ---
 app.post('/api/auth/change-password', async (req, res) => {
-  const { user, currentPassword, newPassword } = req.body;
-  if (!user || !currentPassword || !newPassword) return res.status(400).json({ error: "All fields required." });
-  const normalizedName = user.trim().toLowerCase();
-  const profile = await getUserProfile(normalizedName);
+  const { currentPassword, newPassword } = req.body;
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
+  if (!currentPassword || !newPassword) return res.status(400).json({ error: "All fields required." });
+  const profile = await getUserProfile(req.user);
   if (!profile) return res.status(404).json({ error: "User not found." });
-  if (profile.password !== currentPassword) return res.status(400).json({ error: "Current password is incorrect." });
-  await supabase.from('users').update({ password: newPassword }).eq('username', normalizedName);
+  let valid = false;
+  try { valid = await bcrypt.compare(currentPassword, profile.password); } catch {}
+  if (!valid && profile.password === currentPassword) valid = true;
+  if (!valid) return res.status(400).json({ error: "Current password is incorrect." });
+  const hashed = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+  await supabase.from('users').update({ password: hashed }).eq('username', req.user);
   res.json({ success: true });
 });
 
 // --- AVATAR UPLOAD ---
 app.post('/api/auth/avatar', upload.single('avatar'), async (req, res) => {
-  const { user } = req.body;
-  if (!user) return res.status(401).json({ error: "Authentication required." });
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
   if (!req.file) return res.status(400).json({ error: "JPG file is required." });
   if (req.file.mimetype !== 'image/jpeg') return res.status(400).json({ error: "Only JPG images are allowed." });
 
-  const normalizedName = user.trim().toLowerCase();
+  const normalizedName = req.user;
   const ext = 'jpg';
   const fileName = `avatar-${normalizedName}.${ext}`;
   const { error: uploadError } = await supabase.storage.from('documents').upload(fileName, req.file.buffer, { contentType: 'image/jpeg', upsert: true });
@@ -637,17 +725,18 @@ app.post('/api/auth/avatar', upload.single('avatar'), async (req, res) => {
 // --- USER PROFILE ---
 app.get('/api/users/:username/profile', async (req, res) => {
   const { username } = req.params;
-  const { user } = req.query;
   const normalizedName = username.trim().toLowerCase();
   const profile = await getUserProfile(normalizedName);
   if (!profile) return res.status(404).json({ error: "User not found." });
 
+  const isOwner = req.user && req.user === normalizedName;
+
   // Track visit if viewer is not the profile owner
-  if (!user || user.trim().toLowerCase() !== normalizedName) {
+  if (!isOwner) {
     await supabase.from('users').update({ profile_visits: (profile.profile_visits || 0) + 1 }).eq('username', normalizedName);
   }
 
-  const docs = await getDocumentsWithLockState(user ? user.trim().toLowerCase() : null);
+  const docs = await getDocumentsWithLockState(req.user);
   const userDocs = docs.filter(d => d.author?.toLowerCase() === normalizedName);
 
   // Compute vote stats across all user's documents
@@ -666,11 +755,11 @@ app.get('/api/users/:username/profile', async (req, res) => {
 
   res.json({
     username: profile.username,
-    email: profile.email,
+    email: isOwner ? profile.email : undefined,
     avatar_url: profile.avatar_url,
     uploadsCount: userDocs.length,
-    tokens: profile.tokens,
-    profile_visits: (profile.profile_visits || 0) + (user && user.trim().toLowerCase() !== normalizedName ? 1 : 0),
+    tokens: isOwner ? profile.tokens : undefined,
+    profile_visits: (profile.profile_visits || 0) + (isOwner ? 0 : 1),
     totalUpvotes,
     totalDownvotes,
     totalDownloads,
@@ -680,8 +769,7 @@ app.get('/api/users/:username/profile', async (req, res) => {
 
 // --- VAULT DATA ---
 app.get('/api/vault-data', async (req, res) => {
-  const { user } = req.query;
-  const normalizedName = user ? user.trim().toLowerCase() : null;
+  const normalizedName = req.user;
   const profile = await getUserProfile(normalizedName);
 
   if (profile && profile.banned) {
@@ -831,10 +919,9 @@ Set isAcademic to false if content doesn't match the declared metadata or is non
 
 // --- TEST ENDPOINT for AI key ---
 app.get('/api/admin/ai-test', async (req, res) => {
-  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const key = process.env.GROQ_API_KEY;
   if (!key) return res.json({ ok: false, error: 'GROQ_API_KEY not set on server' });
-  const keyPreview = key.length > 8 ? key.substring(0, 4) + '...' + key.substring(key.length - 4) : '(too short)';
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -842,23 +929,24 @@ app.get('/api/admin/ai-test', async (req, res) => {
       body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: 'Reply with just the word WORKING' }], temperature: 0.1 })
     });
     const json = await response.json();
-    if (!response.ok) return res.json({ ok: false, status: response.status, error: json.error?.message || JSON.stringify(json), key: keyPreview, full: json.error || json });
+    if (!response.ok) return res.json({ ok: false, error: 'API request failed' });
     const text = json?.choices?.[0]?.message?.content || '';
-    res.json({ ok: text === 'WORKING', response: text, key: keyPreview });
+    res.json({ ok: text === 'WORKING', response: text });
   } catch (err) {
-    res.json({ ok: false, error: err.message, key: keyPreview });
+    res.json({ ok: false, error: 'API test failed' });
   }
 });
 
 // --- UPLOAD DOCUMENT ---
 app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
-  const { title, subject, author, filiere, niveau, matiere, type } = req.body;
-  if (!author) return res.status(401).json({ error: "Authentication required." });
+  const { title, subject, filiere, niveau, matiere, type } = req.body;
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
 
-  const normalizedName = author.trim().toLowerCase();
+  const normalizedName = req.user;
   const profile = await getUserProfile(normalizedName);
   if (!profile) return res.status(404).json({ error: "User not found." });
   if (!req.file) return res.status(400).json({ error: "PDF file is required." });
+  if (req.file.buffer.slice(0, 5).toString() !== '%PDF-') return res.status(400).json({ error: "Only PDF files are allowed." });
 
   const fileHash = crypto.createHash('sha256').update(req.file.buffer).digest('hex');
   const { data: existing } = await supabase.from('documents').select('id').eq('file_hash', fileHash).eq('author', normalizedName).maybeSingle();
@@ -924,10 +1012,9 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
 // --- DOWNLOAD DOCUMENT ---
 app.get('/api/documents/download/:docId', async (req, res) => {
   const { docId } = req.params;
-  const { user } = req.query;
-  if (!user) return res.status(401).json({ error: "Authentication required." });
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
 
-  const normalizedName = user.trim().toLowerCase();
+  const normalizedName = req.user;
   const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
 
@@ -951,10 +1038,9 @@ app.get('/api/documents/download/:docId', async (req, res) => {
 // --- DELETE DOCUMENT ---
 app.delete('/api/documents/delete/:docId', async (req, res) => {
   const { docId } = req.params;
-  const { user } = req.query;
-  if (!user) return res.status(401).json({ error: "Authentication required." });
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
 
-  const normalizedName = user.trim().toLowerCase();
+  const normalizedName = req.user;
   const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
   if (doc.author.toLowerCase() !== normalizedName) return res.status(403).json({ error: "Only the author can delete this document." });
@@ -976,10 +1062,10 @@ app.delete('/api/documents/delete/:docId', async (req, res) => {
 
 // --- UNLOCK DOCUMENT ---
 app.post('/api/documents/unlock', async (req, res) => {
-  const { docId, user } = req.body;
-  if (!user) return res.status(401).json({ error: "Authentication required." });
+  const { docId } = req.body;
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
 
-  const normalizedName = user.trim().toLowerCase();
+  const normalizedName = req.user;
   const profile = await getUserProfile(normalizedName);
   if (!profile) return res.status(404).json({ error: "User not found." });
   if (profile.tokens < 1) return res.status(400).json({ error: "Insufficient tokens." });
@@ -996,13 +1082,13 @@ app.post('/api/documents/unlock', async (req, res) => {
 
 // --- COMMENT (upsert + delete) ---
 app.post('/api/documents/comment', async (req, res) => {
-  const { docId, text, user, rating } = req.body;
+  const { docId, text, rating } = req.body;
   if (!docId) return res.status(400).json({ error: "docId required." });
   const { data: doc } = await supabase.from('documents').select('id').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
 
   const r = Math.max(0, Math.min(5, parseInt(rating) || 0));
-  const commentUser = user || "Anonymous";
+  const commentUser = req.user || "Anonymous";
 
   const { data: existing } = await supabase.from('comments').select('id').eq('doc_id', docId).eq('user', commentUser).maybeSingle();
 
@@ -1014,31 +1100,29 @@ app.post('/api/documents/comment', async (req, res) => {
     if (insErr) return res.status(500).json({ error: "Failed to save comment." });
   }
 
-  const normalizedName = user ? user.trim().toLowerCase() : null;
-  res.json({ success: true, documents: await getDocumentsWithLockState(normalizedName) });
+  res.json({ success: true, documents: await getDocumentsWithLockState(req.user) });
 });
 
 app.delete('/api/documents/comment', async (req, res) => {
-  const { docId, user } = req.query;
-  if (!user) return res.status(401).json({ error: "Authentication required." });
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
+  const { docId } = req.query;
   if (!docId) return res.status(400).json({ error: "docId required." });
 
   const { data: doc } = await supabase.from('documents').select('id').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
 
-  const { error: delErr } = await supabase.from('comments').delete().eq('doc_id', docId).eq('user', user);
+  const { error: delErr } = await supabase.from('comments').delete().eq('doc_id', docId).eq('user', req.user);
   if (delErr) return res.status(500).json({ error: "Failed to delete comment." });
 
-  const normalizedName = user.trim().toLowerCase();
-  res.json({ success: true, documents: await getDocumentsWithLockState(normalizedName) });
+  res.json({ success: true, documents: await getDocumentsWithLockState(req.user) });
 });
 
 // --- VOTE ---
 app.post('/api/documents/vote', async (req, res) => {
-  const { docId, user, direction } = req.body;
-  if (!user) return res.status(401).json({ error: "Authentication required." });
+  const { docId, direction } = req.body;
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
 
-  const normalizedName = user.trim().toLowerCase();
+  const normalizedName = req.user;
 
   if (direction === null) {
     await supabase.from('votes').delete().eq('doc_id', docId).eq('username', normalizedName);
@@ -1050,9 +1134,10 @@ app.post('/api/documents/vote', async (req, res) => {
 });
 
 // --- CREATE BOUNTY ---
-app.post('/api/bounties/create', async (req, res) => {
-  const { title, subject, desc, fileName, author, type, filiere, niveau, matiere } = req.body;
-  const normalizedName = author.trim().toLowerCase();
+app.post('/api/bounties/create', bountyLimiter, async (req, res) => {
+  const { title, subject, desc, fileName, type, filiere, niveau, matiere } = req.body;
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
+  const normalizedName = req.user;
   const profile = await getUserProfile(normalizedName);
   if (!profile) return res.status(404).json({ error: "User not found." });
   if (profile.tokens < 3) return res.status(400).json({ error: "Insufficient tokens." });
@@ -1061,7 +1146,7 @@ app.post('/api/bounties/create', async (req, res) => {
 
   const prefix = type === 'course' ? 'course' : 'bounty';
   const bountyId = `${prefix}-${Date.now()}`;
-  await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc, file_name: fileName || '', author, filiere: filiere || '', niveau: niveau || '', matiere: matiere || '' });
+  await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc, file_name: fileName || '', author: normalizedName, filiere: filiere || '', niveau: niveau || '', matiere: matiere || '' });
 
   const updatedProfile = await getUserProfile(normalizedName);
   res.json({ success: true, tokens: updatedProfile.tokens, bounties: await getBounties() });
@@ -1069,8 +1154,9 @@ app.post('/api/bounties/create', async (req, res) => {
 
 // --- FULFILL BOUNTY (submit answer, no tokens yet) ---
 app.post('/api/bounties/fulfill', upload.single('file'), async (req, res) => {
-  const { bountyId, text, user } = req.body;
-  const normalizedName = user.trim().toLowerCase();
+  const { bountyId, text } = req.body;
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
+  const normalizedName = req.user;
 
   const { data: bounty } = await supabase.from('bounties').select('id, settled').eq('id', bountyId).maybeSingle();
   if (!bounty) return res.status(404).json({ error: "Bounty not found." });
@@ -1086,7 +1172,7 @@ app.post('/api/bounties/fulfill', upload.single('file'), async (req, res) => {
     }
   }
 
-  await supabase.from('answers').insert({ bounty_id: bountyId, user, text, file_name: fileUrl });
+  await supabase.from('answers').insert({ bounty_id: bountyId, user: normalizedName, text, file_name: fileUrl });
 
   const profile = await getUserProfile(normalizedName);
   res.json({ success: true, tokens: profile ? profile.tokens : 0, bounties: await getBounties() });
@@ -1095,8 +1181,9 @@ app.post('/api/bounties/fulfill', upload.single('file'), async (req, res) => {
 // --- ACCEPT ANSWER (author picks winner, +3 tokens to answerer) ---
 app.post('/api/bounties/accept', async (req, res) => {
   try {
-    const { bountyId, answerId, user } = req.body;
-    const normalizedName = user.trim().toLowerCase();
+    const { bountyId, answerId } = req.body;
+    if (!req.user) return res.status(401).json({ error: "Authentication required." });
+    const normalizedName = req.user;
 
     const { data: bounty } = await supabase.from('bounties').select('*').eq('id', bountyId).maybeSingle();
     if (!bounty) return res.status(404).json({ error: "Bounty not found." });
@@ -1124,9 +1211,9 @@ app.post('/api/bounties/accept', async (req, res) => {
 
 // --- DELETE BOUNTY (author or admin) ---
 app.post('/api/bounties/delete', async (req, res) => {
-  const { bountyId, user } = req.body;
-  if (!user) return res.status(401).json({ error: "Authentication required." });
-  const normalizedName = user.trim().toLowerCase();
+  const { bountyId } = req.body;
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
+  const normalizedName = req.user;
   const { data: bounty } = await supabase.from('bounties').select('*').eq('id', bountyId).maybeSingle();
   if (!bounty) return res.status(404).json({ error: "Bounty not found." });
   const profile = await getUserProfile(normalizedName);
@@ -1138,9 +1225,9 @@ app.post('/api/bounties/delete', async (req, res) => {
 
 // --- REPORT BOUNTY ---
 app.post('/api/bounties/report', async (req, res) => {
-  const { bountyId, user, reason, customReview } = req.body;
-  if (!user) return res.status(401).json({ error: "Authentication required." });
-  const normalizedName = user.trim().toLowerCase();
+  const { bountyId, reason, customReview } = req.body;
+  if (!req.user) return res.status(401).json({ error: "Authentication required." });
+  const normalizedName = req.user;
   const { data: bounty } = await supabase.from('bounties').select('id, author').eq('id', bountyId).maybeSingle();
   if (!bounty) return res.status(404).json({ error: "Bounty not found." });
   if (bounty.author.toLowerCase() === normalizedName) return res.status(400).json({ error: "You cannot report your own bounty." });
@@ -1155,14 +1242,8 @@ app.post('/api/bounties/report', async (req, res) => {
 });
 
 // --- ADMIN ROUTES ---
-async function requireAdmin(user) {
-  if (!user) return false;
-  const profile = await getUserProfile(user.trim().toLowerCase());
-  return profile && profile.admin === true;
-}
-
 app.get('/api/admin/users', async (req, res) => {
-  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { data: users } = await supabase.from('users').select('*').order('username');
   const enriched = [];
   for (const u of users || []) {
@@ -1175,7 +1256,7 @@ app.get('/api/admin/users', async (req, res) => {
 });
 
 app.get('/api/admin/stats', async (req, res) => {
-  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
   const { count: totalDocs } = await supabase.from('documents').select('*', { count: 'exact', head: true });
   const { count: totalBounties } = await supabase.from('bounties').select('*', { count: 'exact', head: true }).eq('settled', false);
@@ -1183,20 +1264,20 @@ app.get('/api/admin/stats', async (req, res) => {
 });
 
 app.get('/api/admin/online-count', async (req, res) => {
-  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
   const { count } = await supabase.from('users').select('*', { count: 'exact', head: true }).gte('last_active', thirtyMinAgo);
   res.json({ online: count || 0 });
 });
 
 app.get('/api/admin/pending-docs', async (req, res) => {
-  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { data: docs } = await supabase.from('documents').select('*').eq('approved', false).order('id', { ascending: false });
   res.json(docs || []);
 });
 
 app.post('/api/admin/documents/:docId/approve', async (req, res) => {
-  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { docId } = req.params;
   const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
@@ -1213,8 +1294,7 @@ app.post('/api/admin/documents/:docId/approve', async (req, res) => {
 });
 
 app.delete('/api/admin/documents/:docId', async (req, res) => {
-  const { user } = req.query;
-  if (!await requireAdmin(user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { docId } = req.params;
   const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
   if (!doc) return res.status(404).json({ error: "Document not found." });
@@ -1235,7 +1315,7 @@ app.delete('/api/admin/documents/:docId', async (req, res) => {
 });
 
 app.delete('/api/admin/bounties/:bountyId', async (req, res) => {
-  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { bountyId } = req.params;
   await supabase.from('answers').delete().eq('bounty_id', bountyId);
   await supabase.from('bounties').delete().eq('id', bountyId);
@@ -1243,7 +1323,7 @@ app.delete('/api/admin/bounties/:bountyId', async (req, res) => {
 });
 
 app.post('/api/admin/users/tokens', async (req, res) => {
-  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { targetUser, amount } = req.body;
   if (!targetUser || amount === undefined) return res.status(400).json({ error: "targetUser and amount required." });
   const profile = await getUserProfile(targetUser.trim().toLowerCase());
@@ -1253,7 +1333,7 @@ app.post('/api/admin/users/tokens', async (req, res) => {
 });
 
 app.post('/api/admin/users/ban', async (req, res) => {
-  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { targetUser, banned } = req.body;
   if (!targetUser) return res.status(400).json({ error: "targetUser required." });
   const profile = await getUserProfile(targetUser.trim().toLowerCase());
@@ -1273,7 +1353,7 @@ app.post('/api/admin/users/ban', async (req, res) => {
 });
 
 app.post('/api/admin/users/cleanup', async (req, res) => {
-  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { dryRun } = req.body;
   const { data: users, error } = await supabase.from('users').select('*');
   if (error) return res.status(500).json({ error: error.message });
@@ -1300,7 +1380,7 @@ app.post('/api/admin/users/cleanup', async (req, res) => {
 });
 
 app.delete('/api/admin/users/:username/documents', async (req, res) => {
-  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { username } = req.params;
   const { data: docs } = await supabase.from('documents').select('id, file_path').eq('author', username);
   for (const doc of docs || []) {
@@ -1320,7 +1400,7 @@ app.delete('/api/admin/users/:username/documents', async (req, res) => {
 
 // --- ADMIN DELETE USER ACCOUNT ---
 app.post('/api/admin/users/delete', async (req, res) => {
-  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { targetUser } = req.body;
   if (!targetUser) return res.status(400).json({ error: "Target user required." });
   const { data: profile } = await supabase.from('users').select('*').eq('username', targetUser).maybeSingle();
@@ -1374,7 +1454,7 @@ app.post('/api/documents/report', async (req, res) => {
 });
 
 app.get('/api/admin/flagged-docs', async (req, res) => {
-  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   // Get doc IDs with >= 5 reports, grouped
   const { data: reportCounts } = await supabase.from('reports').select('document_id');
   if (!reportCounts) return res.json([]);
@@ -1393,7 +1473,7 @@ app.get('/api/admin/flagged-docs', async (req, res) => {
 });
 
 app.get('/api/admin/flagged-authors', async (req, res) => {
-  if (!await requireAdmin(req.query.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   // Get docs with >= 5 reports
   const { data: reportCounts } = await supabase.from('reports').select('document_id');
   if (!reportCounts) return res.json([]);
@@ -1421,7 +1501,7 @@ app.get('/api/admin/flagged-authors', async (req, res) => {
 });
 
 app.post('/api/admin/flagged-docs/:docId/resolve', async (req, res) => {
-  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
   const { docId } = req.params;
 
   const { data: doc } = await supabase.from('documents').select('*').eq('id', docId).maybeSingle();
