@@ -453,12 +453,7 @@
                     <!-- FIXED: Added id="form-upload-file" for script file-parsing reference -->
                     <input type="file" id="form-upload-file" accept=".pdf" required class="dashed-file-input">
                 </div>
-                <div class="upload-progress" id="upload-progress" style="display:none">
-                    <div class="upload-progress-track">
-                        <div class="upload-progress-bar" id="upload-progress-bar"></div>
-                    </div>
-                    <span class="upload-progress-text" id="upload-progress-text">0%</span>
-                </div>
+                <progress id="upload-progress" value="0" max="100" style="display:none;width:100%;height:10px;border-radius:5px;margin:8px 0"></progress>
                 <button type="submit" class="modal-submit-btn" data-i18n="upload.submit">Submit & Earn 5 Tokens</button>
             </form>
         </div>

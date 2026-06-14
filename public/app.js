@@ -1547,9 +1547,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const progressEl = document.getElementById('upload-progress');
-            const progressBar = document.getElementById('upload-progress-bar');
-            const progressText = document.getElementById('upload-progress-text');
-            if (progressEl) { progressEl.style.display = 'flex'; }
+            if (progressEl) { progressEl.style.display = 'block'; }
             const formData = new FormData();
             formData.append('title', titleVal);
             formData.append('subject', subjectVal);
@@ -1566,10 +1564,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     xhr.open('POST', `${API_URL}/documents/upload`);
                     xhr.withCredentials = true;
                     xhr.upload.onprogress = (e) => {
-                        if (e.lengthComputable) {
-                            const pct = Math.round((e.loaded / e.total) * 100);
-                            progressBar.style.width = pct + '%';
-                            progressText.textContent = pct + '%';
+                        if (e.lengthComputable && progressEl) {
+                            progressEl.value = Math.round((e.loaded / e.total) * 100);
                         }
                     };
                     xhr.onload = () => {
@@ -1605,8 +1601,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uploadSubmitBtn.disabled = false;
                     uploadSubmitBtn.innerText = uploadBtnOriginalText;
                 }
-                if (progressEl) progressEl.style.display = 'none';
-                if (progressBar) progressBar.style.width = '0%';
+                if (progressEl) { progressEl.style.display = 'none'; progressEl.value = 0; }
             }
         });
     }
