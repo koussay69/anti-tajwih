@@ -1317,6 +1317,9 @@ body {
     .navbar {
         padding: 0 10px;
     }
+    .logo {
+        font-size: 13px;
+    }
     .nav-links {
         gap: 8px;
     }
@@ -1365,6 +1368,9 @@ body {
 @media (max-width: 420px) {
     .navbar {
         padding: 0 6px;
+    }
+    .logo {
+        font-size: 11px;
     }
     .nav-actions {
         gap: 2px;
