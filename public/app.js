@@ -367,13 +367,13 @@ function translatePage() {
   if (btn) btn.textContent = t('lang.' + window.currentLang.toLowerCase());
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
     // --- APP STATE ENGINE ---
     let state = {
         tokens: 0,
         uploadsCount: 0,
-        user: localStorage.getItem('p2p-vault-user') || null,
+        user: null,
         admin: false,
         avatar_url: null,
         profile_visits: 0,
@@ -381,6 +381,18 @@ document.addEventListener('DOMContentLoaded', () => {
         totalDownvotes: 0,
         totalDownloads: 0
     };
+
+    // Restore session from auth cookie
+    try {
+        const meResp = await fetch(window.location.origin + '/api/auth/me');
+        const meData = await meResp.json();
+        if (meData.user) {
+            state.user = meData.user;
+            state.admin = meData.admin;
+            state.avatar_url = meData.avatar_url;
+            state.tokens = meData.tokens || 0;
+        }
+    } catch {} /* no session */
 
     let activeTicketForAnswer = null;
     let topDocIds = [];
@@ -392,6 +404,8 @@ document.addEventListener('DOMContentLoaded', () => {
         topDocIds = sorted.map(d => d.id);
     }
 
+    function esc(str) { return String(str).replace(/[&<>"']/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+
     async function loadVaultData() {
         try {
             if (state.user) {
@@ -400,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (profileHeader) profileHeader.innerText = state.user;
             }
 
-            const response = await fetch(`${API_URL}/vault-data?user=${encodeURIComponent(state.user || '')}`);
+            const response = await fetch(`${API_URL}/vault-data`);
             if (!response.ok) throw new Error("Server communication degradation.");
             const data = await response.json();
 
@@ -989,19 +1003,19 @@ document.addEventListener('DOMContentLoaded', () => {
             })();
             card.innerHTML = `
                 <div class="card-meta-top">
-                    <span class="doc-subject">${doc.subject}</span>
+                    <span class="doc-subject">${esc(doc.subject)}</span>
                     ${!doc.approved ? `<span class="lock-indicator status-text" style="color:orange;">${pendingTxt}</span>` : `<span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? lockedTxt : unlockedTxt}</span>`}
                 </div>
-                <h3 class="doc-title">${doc.title}</h3>
-                <p class="doc-author">${t('card.by')} <a href="#" class="author-link" data-author="${doc.author}">${doc.author}</a> • ${renderStars(doc.avgRating)} ${doc.avgRating ? doc.avgRating.toFixed(1) + '/5 (' + doc.comments.length + ' ' + t('card.reviews') + ')' : t('card.noReviews')}</p>
-                <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}${doc.type ? `<span class="tag tag-type">${doc.type}</span>` : ''}</div>
+                <h3 class="doc-title">${esc(doc.title)}</h3>
+                <p class="doc-author">${t('card.by')} <a href="#" class="author-link" data-author="${esc(doc.author)}">${esc(doc.author)}</a> • ${renderStars(doc.avgRating)} ${doc.avgRating ? doc.avgRating.toFixed(1) + '/5 (' + doc.comments.length + ' ' + t('card.reviews') + ')' : t('card.noReviews')}</p>
+                <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${esc(doc.filiere)}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${esc(doc.niveau)}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${esc(doc.matiere)}</span>` : ''}${doc.type ? `<span class="tag tag-type">${esc(doc.type)}</span>` : ''}</div>
                 <button class="toggle-comments-btn">${t('card.viewReviews', {count: doc.comments ? doc.comments.length : 0})}</button>
                 <div class="card-comments-tray hidden">
                     <div class="comments-list">
                         ${doc.comments ? doc.comments.map(c => {
                             const isOwn = state.user && c.user === state.user;
-                            return `<div class="comment-item" data-comment-user="${c.user}">
-                                <strong>${isOwn ? t('card.you') : c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}
+                            return `<div class="comment-item" data-comment-user="${esc(c.user)}">
+                                <strong>${isOwn ? t('card.you') : esc(c.user)}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${esc(c.text)}
                                 ${isOwn ? `<span style="margin-left:8px; white-space:nowrap;">
                                     <button class="edit-comment-btn unlock-action-btn" style="padding:2px 8px; font-size:11px;">${t('card.edit')}</button>
                                     <button class="delete-comment-btn unlock-action-btn" style="padding:2px 8px; font-size:11px; background:#dc3545;">${t('card.deleteComment')}</button>
@@ -1123,28 +1137,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ticketCard.innerHTML = `
                 <div class="ticket-top">
-                    <span class="ticket-badge-tag">${bounty.subject}</span>
+                    <span class="ticket-badge-tag">${esc(bounty.subject)}</span>
                     <span class="ticket-bounty">${bounty.settled ? t('bounty.settled') : t('bounty.placed')}</span>
                 </div>
-                <h3 class="ticket-title">${bounty.title}</h3>
-                <p class="ticket-desc">${bounty.desc}</p>
-                <div class="doc-tags">${bounty.filiere ? `<span class="tag tag-filiere">${bounty.filiere}</span>` : ''}${bounty.niveau ? `<span class="tag tag-niveau">${bounty.niveau}</span>` : ''}${bounty.matiere ? `<span class="tag tag-matiere">${bounty.matiere}</span>` : ''}</div>
+                <h3 class="ticket-title">${esc(bounty.title)}</h3>
+                <p class="ticket-desc">${esc(bounty.desc)}</p>
+                <div class="doc-tags">${bounty.filiere ? `<span class="tag tag-filiere">${esc(bounty.filiere)}</span>` : ''}${bounty.niveau ? `<span class="tag tag-niveau">${esc(bounty.niveau)}</span>` : ''}${bounty.matiere ? `<span class="tag tag-matiere">${esc(bounty.matiere)}</span>` : ''}</div>
                 <div class="ticket-answers-list">
                     ${bounty.answers ? bounty.answers.map(ans => `
                         <div class="comment-item" style="padding: 12px; background: var(--bg-tray); border-left: 3px solid ${ans.winner ? 'green' : 'var(--glow-secondary)'}; margin-top: 10px;${ans.winner ? ' border-left-width: 5px;' : ''}">
-                            <strong>${ans.user}:</strong> ${ans.text}
-                            <div style="font-size:12px; margin-top:6px; color:var(--text-main); font-weight:500;">${t('bounty.sharedAnswer')} ${ans.fileName && ans.fileName.startsWith('http') ? `<a href="${ans.fileName}" target="_blank" style="color:var(--glow-color); text-decoration:underline;">${ans.fileName.split('/').pop()}</a>` : `<span style="color:var(--glow-color);">${ans.fileName || 'No file'}</span>`}</div>
+                            <strong>${esc(ans.user)}:</strong> ${esc(ans.text)}
+                            <div style="font-size:12px; margin-top:6px; color:var(--text-main); font-weight:500;">${t('bounty.sharedAnswer')} ${ans.fileName && ans.fileName.startsWith('http') ? `<a href="${ans.fileName}" target="_blank" style="color:var(--glow-color); text-decoration:underline;">${esc(ans.fileName.split('/').pop())}</a>` : `<span style="color:var(--glow-color);">${esc(ans.fileName) || 'No file'}</span>`}</div>
                             ${ans.winner ? `<span style="color:green; font-size:12px; display:block; margin-top:6px; font-weight:700;">${t('bounty.bestAnswer')}</span>` : ''}
-                            ${!bounty.settled && isAuthor ? `<button class="accept-answer-btn unlock-action-btn" data-answer-id="${ans.id}" style="margin-top:8px; width:100%;">${t('bounty.selectBest')}</button>` : ''}
+                            ${!bounty.settled && isAuthor ? `<button class="accept-answer-btn unlock-action-btn" data-answer-id="${esc(ans.id)}" style="margin-top:8px; width:100%;">${t('bounty.selectBest')}</button>` : ''}
                         </div>
                     `).join('') : ''}
                 </div>
                 <div class="ticket-footer">
-                    <span class="ticket-user">${t('bounty.by')} ${bounty.author === state.user ? t('bounty.you') : bounty.author}</span>
+                    <span class="ticket-user">${t('bounty.by')} ${bounty.author === state.user ? t('bounty.you') : esc(bounty.author)}</span>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
                         ${!bounty.settled ? `<button class="unlock-action-btn provide-answer-trigger">${t('bounty.provideAnswer')}</button>` : ''}
-                        ${state.user && !isAuthor ? `<button class="report-bounty-btn unlock-action-btn" data-bounty-id="${bounty.id}" style="background:var(--alert-red);border-color:var(--alert-red);color:#fff;">${t('card.report')}</button>` : ''}
-                        ${isAuthor || state.admin ? `<button class="delete-bounty-btn unlock-action-btn" data-bounty-id="${bounty.id}" style="background:#555;border-color:#555;color:#fff;">${t('card.delete')}</button>` : ''}
+                        ${state.user && !isAuthor ? `<button class="report-bounty-btn unlock-action-btn" data-bounty-id="${esc(bounty.id)}" style="background:var(--alert-red);border-color:var(--alert-red);color:#fff;">${t('card.report')}</button>` : ''}
+                        ${isAuthor || state.admin ? `<button class="delete-bounty-btn unlock-action-btn" data-bounty-id="${esc(bounty.id)}" style="background:#555;border-color:#555;color:#fff;">${t('card.delete')}</button>` : ''}
                     </div>
                 </div>
             `;
@@ -1993,7 +2007,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const avatarInput = document.getElementById('form-auth-avatar');
                     if (avatarInput && avatarInput.files[0]) {
                         const avatarForm = new FormData();
-                        avatarForm.append('user', loggedInName);
                         avatarForm.append('avatar', avatarInput.files[0]);
                         await fetch(`${API_URL}/auth/avatar`, { method: 'POST', body: avatarForm });
                     }
@@ -2037,24 +2050,31 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = url;
       });
     }
-    // --- LINK GOOGLE ACCOUNT (in account page) ---
+    // --- URL PARAM HANDLING ---
     const urlParams = new URLSearchParams(window.location.search);
-    const googleUser = urlParams.get('google_user');
     const googleEmail = urlParams.get('google_email');
     const googleError = urlParams.get('google_error');
+    const googleAuth = urlParams.get('google_auth');
     if (googleError) {
       showToast('Google sign-in failed: ' + googleError, 'error');
       window.history.replaceState({}, '', window.location.pathname);
     }
-    if (googleUser && !state.user) {
-      state.user = googleUser;
-      localStorage.setItem('p2p-vault-user', googleUser);
-      if (navAuthBtn) navAuthBtn.innerText = `Hi, ${googleUser}`;
-      const profileHeader = document.querySelector('.account-user-name');
-      if (profileHeader) profileHeader.innerText = googleUser;
-      showToast(t('toast.loggedIn', {user: googleUser}), 'info');
-      loadVaultData();
+    if (googleAuth && !state.user) {
       window.history.replaceState({}, '', window.location.pathname);
+      fetch(window.location.origin + '/api/auth/me').then(r => r.json()).then(d => {
+        if (d.user) {
+          state.user = d.user;
+          state.admin = d.admin;
+          state.avatar_url = d.avatar_url;
+          state.tokens = d.tokens || 0;
+          localStorage.setItem('p2p-vault-user', d.user);
+          if (navAuthBtn) navAuthBtn.innerText = `Hi, ${d.user}`;
+          const profileHeader = document.querySelector('.account-user-name');
+          if (profileHeader) profileHeader.innerText = d.user;
+          showToast(t('toast.loggedIn', {user: d.user}), 'info');
+          loadVaultData();
+        }
+      });
     }
     if (googleEmail) {
       window.history.replaceState({}, '', window.location.pathname);
@@ -2069,9 +2089,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (logoutMockBtn) {
-        logoutMockBtn.addEventListener('click', () => {
+        logoutMockBtn.addEventListener('click', async () => {
             state.user = null;
             localStorage.removeItem('p2p-vault-user');
+            await fetch(window.location.origin + '/api/auth/logout', { method: 'POST' });
 
             if (navAuthBtn) navAuthBtn.innerText = t('nav.signIn');
             const profileHeader = document.querySelector('.account-user-name');
@@ -2200,19 +2221,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 })();
                 card.innerHTML = `
                     <div class="card-meta-top">
-                        <span class="doc-subject">${doc.subject}</span>
+                        <span class="doc-subject">${esc(doc.subject)}</span>
                         <span class="lock-indicator status-text" style="${!isDocLockedForSession ? 'color: green;' : ''}">${isDocLockedForSession ? aLockedTxt : aUnlockedTxt}</span>
                     </div>
-                    <h3 class="doc-title">${doc.title}</h3>
-                    <p class="doc-author">${t('card.by')} ${doc.author} • ${renderStars(doc.avgRating)} ${doc.avgRating ? doc.avgRating.toFixed(1) + '/5 (' + doc.comments.length + ' ' + t('card.reviews') + ')' : t('card.noReviews')}</p>
-                    <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${doc.filiere}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${doc.niveau}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${doc.matiere}</span>` : ''}${doc.type ? `<span class="tag tag-type">${doc.type}</span>` : ''}</div>
+                    <h3 class="doc-title">${esc(doc.title)}</h3>
+                    <p class="doc-author">${t('card.by')} ${esc(doc.author)} • ${renderStars(doc.avgRating)} ${doc.avgRating ? doc.avgRating.toFixed(1) + '/5 (' + doc.comments.length + ' ' + t('card.reviews') + ')' : t('card.noReviews')}</p>
+                    <div class="doc-tags">${doc.filiere ? `<span class="tag tag-filiere">${esc(doc.filiere)}</span>` : ''}${doc.niveau ? `<span class="tag tag-niveau">${esc(doc.niveau)}</span>` : ''}${doc.matiere ? `<span class="tag tag-matiere">${esc(doc.matiere)}</span>` : ''}${doc.type ? `<span class="tag tag-type">${esc(doc.type)}</span>` : ''}</div>
                     <button class="toggle-comments-btn">${t('card.viewReviews', {count: doc.comments ? doc.comments.length : 0})}</button>
                     <div class="card-comments-tray hidden">
                         <div class="comments-list">
                         ${doc.comments ? doc.comments.map(c => {
                             const isOwn = state.user && c.user === state.user;
-                            return `<div class="comment-item" data-comment-user="${c.user}">
-                                <strong>${isOwn ? t('card.you') : c.user}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${c.text}
+                            return `<div class="comment-item" data-comment-user="${esc(c.user)}">
+                                <strong>${isOwn ? t('card.you') : esc(c.user)}:</strong> ${c.rating ? renderStars(c.rating) + ' ' : ''}${esc(c.text)}
                                 ${isOwn ? `<span style="margin-left:8px; white-space:nowrap;">
                                     <button class="edit-comment-btn unlock-action-btn" style="padding:2px 8px; font-size:11px;">${t('card.edit')}</button>
                                     <button class="delete-comment-btn unlock-action-btn" style="padding:2px 8px; font-size:11px; background:#dc3545;">${t('card.deleteComment')}</button>
@@ -2246,7 +2267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button class="vote-arrow down${downActive}">▼</button>
                         </div>
                         ${isDocLockedForSession ? `<button class="buy-document-trigger unlock-action-btn">${t('card.unlockBtn')}</button>` : ''}
-                        ${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}?user=${encodeURIComponent(state.user || '')}" target="_blank" style="text-decoration:none; display:inline-block;">${t('card.download')}</a>` : ''}
+${!isDocLockedForSession && doc.hasFile ? `<a class="unlock-action-btn download-btn" href="${API_URL}/documents/download/${doc.id}" target="_blank" style="text-decoration:none; display:inline-block;">${t('card.download')}</a>` : ''}
                         ${state.user && (doc.author === state.user || state.admin) ? `<button class="delete-doc-btn unlock-action-btn" style="background:var(--light-error, #dc3545); margin-left:6px;">${t('card.delete')}</button>` : ''}
 ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button class="report-doc-btn unlock-action-btn" style="margin-left:6px;" data-docid="${doc.id}">${t('card.report')}</button>` : ''}
                     </div>
