@@ -346,18 +346,6 @@ body {
     font-weight: 700;
     margin-bottom: 15px;
 }
-#hero-logo {
-    max-width: 280px;
-    height: auto;
-    display: block;
-    margin: 0 auto;
-}
-#hero-logo-text {
-    margin-top: 10px;
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text-main);
-}
 
 .brackets {
     color: var(--text-muted);
@@ -1119,12 +1107,6 @@ body {
     .brand-logo-placeholder {
         font-size: 24px;
     }
-    #hero-logo {
-        max-width: 200px;
-    }
-    #hero-logo-text {
-        font-size: 22px;
-    }
 
     .hero p {
         font-size: 13px;
@@ -1379,12 +1361,6 @@ body {
 
     .brand-logo-placeholder {
         font-size: 20px;
-    }
-    #hero-logo {
-        max-width: 140px;
-    }
-    #hero-logo-text {
-        font-size: 18px;
     }
 
     .section-header h2 {
