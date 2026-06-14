@@ -1549,7 +1549,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const progressWrap = document.getElementById('upload-progress-wrap');
             const progressBar = document.getElementById('upload-progress-bar');
             const progressText = document.getElementById('upload-progress-text');
-            if (progressWrap) { progressWrap.style.display = 'block'; }
             if (progressText) progressText.textContent = '0%';
             if (progressBar) progressBar.style.width = '0%';
             const formData = new FormData();
@@ -1607,7 +1606,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uploadSubmitBtn.disabled = false;
                     uploadSubmitBtn.innerText = uploadBtnOriginalText;
                 }
-                if (progressWrap) progressWrap.style.display = 'none';
+                if (progressText) progressText.textContent = '0%';
+                if (progressBar) progressBar.style.width = '0%';
             }
         });
     }
