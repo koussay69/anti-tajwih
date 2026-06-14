@@ -32,7 +32,7 @@ window.translations = {
     "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Select PDF File",
     "upload.submit":"Submit & Earn 5 Tokens","upload.select":"-- Select --",
     "help.title":"SOS FORM","help.heading":"Request Emergency Assistance",
-    "help.submit":"Post Request (-3 Tokens)","help.topic":"Problem Topic or Class","help.summary":"Problem Brief Summary","help.details":"Detailed Question Requirements","help.file":"Upload Problem / Reference PDF","help.tabProblems":"Problems","help.tabCourses":"Course Requests",
+    "help.submit":"Post Request (-3 Tokens)","help.topic":"Problem Topic or Class","help.summary":"Problem Brief Summary","help.file":"Upload Problem / Reference PDF","help.tabProblems":"Problems","help.tabCourses":"Course Requests",
     "course.title":"COURSE REQUEST","course.heading":"Request Course Materials",
     "course.postRequest":"Request a Course (-3 Tokens)","course.courseName":"Course Name","course.details":"What materials do you need?","course.submit":"Request Course (-3 Tokens)","course.empty":"No course requests yet. Be the first to request one!",
     "answer.title":"PROVIDE SOLUTION","answer.heading":"Fulfill Bounty Request",
@@ -148,7 +148,7 @@ window.translations = {
     "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Choisir un PDF",
     "upload.submit":"Publier et Gagner 5 Jetons","upload.select":"-- Sélectionner --",
     "help.title":"SOS FORMULAIRE","help.heading":"Demander de l'Aide",
-    "help.submit":"Publier la Demande (-3 Jetons)","help.topic":"Sujet du Problème","help.summary":"Résumé du Problème","help.details":"Détails de la Question","help.file":"Joindre le PDF du Problème","help.tabProblems":"Problèmes","help.tabCourses":"Demandes de Cours",
+    "help.submit":"Publier la Demande (-3 Jetons)","help.topic":"Sujet du Problème","help.summary":"Résumé du Problème","help.file":"Joindre le PDF du Problème","help.tabProblems":"Problèmes","help.tabCourses":"Demandes de Cours",
     "course.title":"DEMANDE DE COURS","course.heading":"Demander des Supports de Cours",
     "course.postRequest":"Demander un Cours (-3 Jetons)","course.courseName":"Nom du Cours","course.details":"De quels matériels avez-vous besoin ?","course.submit":"Demander le Cours (-3 Jetons)","course.empty":"Aucune demande de cours pour l'instant. Soyez le premier à en faire une !",
     "answer.title":"PROPOSER UNE SOLUTION","answer.heading":"Répondre à la Demande",
@@ -258,7 +258,7 @@ window.translations = {
     "upload.filiere":"الشعبة","upload.niveau":"المستوى","upload.matiere":"المادة","upload.typeFile":"نوع الملف","upload.file":"اختيار ملف PDF",
     "upload.submit":"نشر وربح 5 نقاط","upload.select":"-- اختر --",
     "help.title":"طلب مساعدة","help.heading":"طلب مساعدة عاجلة",
-    "help.submit":"نشر الطلب (-3 نقاط)","help.topic":"موضوع المشكلة","help.summary":"ملخص المشكلة","help.details":"تفاصيل السؤال","help.file":"رفع ملف المشكلة","help.tabProblems":"مشاكل","help.tabCourses":"طلبات المقررات",
+    "help.submit":"نشر الطلب (-3 نقاط)","help.topic":"موضوع المشكلة","help.summary":"ملخص المشكلة","help.file":"رفع ملف المشكلة","help.tabProblems":"مشاكل","help.tabCourses":"طلبات المقررات",
     "course.title":"طلب مادة دراسية","course.heading":"طلب مواد دراسية",
     "course.postRequest":"اطلب مقرراً (-3 نقاط)","course.courseName":"اسم المقرر","course.details":"ما المواد التي تحتاجها؟","course.submit":"طلب المقرر (-3 نقاط)","course.empty":"لا توجد طلبات مقررات بعد. كن أول من يطلب!",
     "answer.title":"تقديم حل","answer.heading":"الرد على الطلب",
@@ -1610,7 +1610,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const hSubject = document.getElementById('form-help-subject').value;
             const hTitle = document.getElementById('form-help-title').value;
-            const hDesc = document.getElementById('form-help-desc').value;
             const hFileInput = document.getElementById('form-help-file');
             const hFiliere = document.getElementById('form-help-filiere').value;
             const hNiveau = document.getElementById('form-help-niveau').value;
@@ -1626,7 +1625,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({
                         title: hTitle,
                         subject: hSubject,
-                        desc: hDesc,
                         fileName: fileName,
                         author: userDisplay,
                         type: 'problem',
