@@ -1279,6 +1279,30 @@ app.delete('/api/admin/users/:username/documents', async (req, res) => {
   res.json({ success: true, deleted: docs?.length || 0, totalDocs, totalUsers, totalBounties });
 });
 
+// --- ADMIN DELETE USER ACCOUNT ---
+app.post('/api/admin/users/delete', async (req, res) => {
+  if (!await requireAdmin(req.body.user)) return res.status(403).json({ error: "Admin access required." });
+  const { targetUser } = req.body;
+  if (!targetUser) return res.status(400).json({ error: "Target user required." });
+  const { data: profile } = await supabase.from('users').select('*').eq('username', targetUser).maybeSingle();
+  if (!profile) return res.status(404).json({ error: "User not found." });
+  if (profile.admin) return res.status(400).json({ error: "Cannot delete admin accounts." });
+  const { data: docs } = await supabase.from('documents').select('id, file_path').eq('author', targetUser);
+  for (const doc of docs || []) {
+    const fileName = doc.file_path?.split('/').pop();
+    if (fileName) await supabase.storage.from('documents').remove([fileName]);
+    await supabase.from('votes').delete().eq('doc_id', doc.id);
+    await supabase.from('comments').delete().eq('doc_id', doc.id);
+    await supabase.from('unlocked_docs').delete().eq('doc_id', doc.id);
+  }
+  await supabase.from('documents').delete().eq('author', targetUser);
+  await supabase.from('votes').delete().eq('username', targetUser);
+  await supabase.from('bounties').delete().eq('author', targetUser);
+  await supabase.from('answers').delete().eq('user', targetUser);
+  await supabase.from('users').delete().eq('username', targetUser);
+  res.json({ success: true });
+});
+
 // --- REPORTING SYSTEM ---
 app.post('/api/documents/report', async (req, res) => {
   const { docId, user, reason, customReview } = req.body;

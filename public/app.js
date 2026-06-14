@@ -49,7 +49,7 @@ window.translations = {
     "account.logOut":"Log Out","account.signInPrompt":"Sign in to view your account.",
     "admin.users":"Users:","admin.documents":"Documents:","admin.bounties":"Bounties:","admin.online":"🟢 Online (30m):",
     "admin.noPending":"No documents pending review.","admin.searchUsers":"Search users by username...",
-    "admin.adjust":"Adjust","admin.unban":"Unban","admin.ban":"Ban","admin.deleteAllDocs":"Delete All Docs",
+    "admin.adjust":"Adjust","admin.unban":"Unban","admin.ban":"Ban","admin.deleteAllDocs":"Delete All Docs","admin.deleteAccount":"Delete Account",
     "admin.approve":"✅ Approve","admin.reject":"🗑 Reject",
     "admin.noFlaggedDocs":"No flagged documents.","admin.noFlaggedAuthors":"No flagged accounts.",
     "admin.flaggedDocCount":"reports","admin.flaggedDocCount2":"Flagged doc","admin.resolve":"🗑 Resolve & Refund",
@@ -161,7 +161,7 @@ window.translations = {
     "account.logOut":"Déconnexion","account.signInPrompt":"Connectez-vous pour voir votre compte.",
     "admin.users":"Utilisateurs :","admin.documents":"Documents :","admin.bounties":"Demandes :","admin.online":"🟢 En ligne (30m) :",
     "admin.noPending":"Aucun document en attente.","admin.searchUsers":"Rechercher par nom d'utilisateur...",
-    "admin.adjust":"Ajuster","admin.unban":"Débannir","admin.ban":"Bannir","admin.deleteAllDocs":"Tout Supprimer",
+    "admin.adjust":"Ajuster","admin.unban":"Débannir","admin.ban":"Bannir","admin.deleteAllDocs":"Tout Supprimer","admin.deleteAccount":"Supprimer le Compte",
     "admin.approve":"✅ Approuver","admin.reject":"🗑 Rejeter",
     "admin.noFlaggedDocs":"Aucun document signalé.","admin.noFlaggedAuthors":"Aucun compte signalé.",
     "admin.flaggedDocCount":"signalements","admin.flaggedDocCount2":"Doc signalé","admin.resolve":"🗑 Résoudre & Rembourser",
@@ -271,7 +271,7 @@ window.translations = {
     "account.logOut":"تسجيل الخروج","account.signInPrompt":"سجل الدخول لعرض حسابك.",
     "admin.users":"المستخدمون :","admin.documents":"الوثائق :","admin.bounties":"الطلبات :","admin.online":"🟢 متصل (30د) :",
     "admin.noPending":"لا توجد وثائق قيد المراجعة.","admin.searchUsers":"ابحث باسم المستخدم...",
-    "admin.adjust":"تعديل","admin.unban":"إلغاء الحظر","admin.ban":"حظر","admin.deleteAllDocs":"حذف الكل",
+    "admin.adjust":"تعديل","admin.unban":"إلغاء الحظر","admin.ban":"حظر","admin.deleteAllDocs":"حذف الكل","admin.deleteAccount":"حذف الحساب",
     "admin.approve":"✅ موافقة","admin.reject":"🗑 رفض",
     "admin.noFlaggedDocs":"لا توجد وثائق مُبلغ عنها.","admin.noFlaggedAuthors":"لا توجد حسابات مُبلغ عنها.",
     "admin.flaggedDocCount":"بلاغات","admin.flaggedDocCount2":"وثيقة مُبلغ عنها","admin.resolve":"🗑 حل & استرداد",
@@ -653,6 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="unlock-action-btn admin-token-btn" data-user="${u.username}">${t('admin.adjust')}</button>
                         <button class="unlock-action-btn admin-ban-btn" data-user="${u.username}" data-banned="${u.banned}" style="${u.banned ? 'background:green;' : 'background:#dc3545;'}">${u.banned ? t('admin.unban') : t('admin.ban')}</button>
                         <button class="unlock-action-btn admin-delete-docs-btn" data-user="${u.username}" style="background:#dc3545;">${t('admin.deleteAllDocs')}</button>
+                        <button class="unlock-action-btn admin-delete-account-btn" data-user="${u.username}" style="background:#8b0000;">${t('admin.deleteAccount')}</button>
                     </div>
                 </div>
             `).join('');
@@ -698,6 +699,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     } catch {
                         showToast(t('toast.networkError'), "error");
                     }
+                    loadAdminPanel();
+                });
+            });
+
+            usersDiv.querySelectorAll('.admin-delete-account-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const targetUser = btn.dataset.user;
+                    if (!confirm(`Delete account "${targetUser}" and all their data permanently?`)) return;
+                    const res = await fetch(`${API_URL}/admin/users/delete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user: state.user, targetUser })
+                    });
+                    const data = await res.json();
+                    showToast(data.success ? 'Account deleted.' : data.error || t('toast.networkError'), data.success ? 'success' : 'error');
                     loadAdminPanel();
                 });
             });
