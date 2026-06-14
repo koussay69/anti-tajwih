@@ -138,7 +138,7 @@ app.set('trust proxy', 1);
 
 const ALLOWED_ORIGINS = [
   'https://anti-tajwih.onrender.com',
-  'https://antitajwih.onrender.com',
+  'https://anti-tajwih.onrender.com',
   'http://localhost:3000',
   'http://localhost:' + PORT
 ];
@@ -221,14 +221,14 @@ app.get('/google86b2930c731ec5e2.html', (req, res) => {
   res.type('html').send('google-site-verification: google86b2930c731ec5e2.html');
 });
 app.get('/robots.txt', (req, res) => {
-  res.type('text').send('User-agent: *\nAllow: /\nSitemap: https://antitajwih.onrender.com/sitemap.xml\n');
+  res.type('text').send('User-agent: *\nAllow: /\nSitemap: https://anti-tajwih.onrender.com/sitemap.xml\n');
 });
 app.get('/sitemap.xml', async (req, res) => {
-  const base = 'https://antitajwih.onrender.com';
+  const base = 'https://anti-tajwih.onrender.com';
   const client = supabaseAdmin || supabase;
   const { data: docs, error } = await client.from('documents').select('id, updated_at').order('updated_at', { ascending: false }).limit(500);
   if (error) console.error('sitemap query error:', error);
-  let urls = `<url><loc>${base}/</loc><priority>1.0</priority></url>`;
+  let urls = `<url><loc>${base}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`;
   for (const d of docs || []) {
     const lastmod = d.updated_at ? d.updated_at.split('T')[0] : '';
     urls += `<url><loc>${base}/?doc=${encodeURIComponent(d.id)}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}<priority>0.8</priority></url>`;
