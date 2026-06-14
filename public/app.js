@@ -1562,22 +1562,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             formData.append('file', file);
 
             try {
+                let processingInterval = null;
                 const data = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', `${API_URL}/documents/upload`);
                     xhr.withCredentials = true;
                     xhr.upload.onprogress = (e) => {
                         if (e.lengthComputable) {
-                            const pct = Math.round((e.loaded / e.total) * 100);
+                            const pct = Math.round((e.loaded / e.total) * 70);
                             if (progressBar) progressBar.style.width = pct + '%';
                             if (progressText) progressText.textContent = pct + '%';
                         }
                     };
                     xhr.onload = () => {
-                        try { resolve({ ok: xhr.status >= 200 && xhr.status < 300, json: JSON.parse(xhr.responseText) }); }
-                        catch { reject(new Error('Invalid response')); }
+                        let pct = 70;
+                        processingInterval = setInterval(() => {
+                            pct += 2;
+                            if (pct > 95) pct = 95;
+                            if (progressBar) progressBar.style.width = pct + '%';
+                            if (progressText) progressText.textContent = pct + '%';
+                        }, 150);
+                        try {
+                            const json = JSON.parse(xhr.responseText);
+                            clearInterval(processingInterval);
+                            if (progressBar) progressBar.style.width = '100%';
+                            if (progressText) progressText.textContent = '100%';
+                            resolve({ ok: xhr.status >= 200 && xhr.status < 300, json });
+                        }
+                        catch {
+                            clearInterval(processingInterval);
+                            reject(new Error('Invalid response'));
+                        }
                     };
-                    xhr.onerror = () => reject(new Error('Network error'));
+                    xhr.onerror = () => { clearInterval(processingInterval); reject(new Error('Network error')); };
                     xhr.send(formData);
                 });
 
@@ -1602,6 +1619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err) {
                 showToast(t('toast.networkError'), "error");
             } finally {
+                clearInterval(processingInterval);
                 if (uploadSubmitBtn) {
                     uploadSubmitBtn.disabled = false;
                     uploadSubmitBtn.innerText = uploadBtnOriginalText;
