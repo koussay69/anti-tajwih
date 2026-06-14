@@ -1131,11 +1131,42 @@ app.post('/api/bounties/create', bountyLimiter, async (req, res) => {
   if (!profile) return res.status(404).json({ error: "User not found." });
   if (profile.tokens < 3) return res.status(400).json({ error: "Insufficient tokens." });
 
+  // AI check the bounty content
+  const groqKey = process.env.GROQ_API_KEY;
+  if (groqKey) {
+    const aiPrompt = `You are a moderator for an academic study platform. A user posted a ${type === 'course' ? 'course material request' : 'help request'} with:
+- Subject: "${subject}"
+- Title: "${title}"
+- Description: "${desc || 'N/A'}"
+
+Determine if this is a legitimate academic request. Reject if it's spam, advertising, harassment, off-topic, or non-academic.
+Reply with ONLY a JSON object: {"isAcademic": true/false, "reason": "brief one-line explanation"}`;
+
+    try {
+      const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: [{ role: 'user', content: aiPrompt }], temperature: 0.1 })
+      });
+      const groqJson = await groqResp.json();
+      const content = groqJson?.choices?.[0]?.message?.content || '';
+      const jsonMatch = content.match(/\{.*\}/s);
+      if (jsonMatch) {
+        const aiResult = JSON.parse(jsonMatch[0]);
+        if (aiResult.isAcademic === false) {
+          return res.status(400).json({ error: 'Request rejected: ' + (aiResult.reason || 'Not academic.') });
+        }
+      }
+    } catch (e) {
+      console.error('Bounty AI check error:', e.message);
+    }
+  }
+
   await supabase.from('users').update({ tokens: profile.tokens - 3 }).eq('username', normalizedName);
 
   const prefix = type === 'course' ? 'course' : 'bounty';
   const bountyId = `${prefix}-${Date.now()}`;
-  const { error: insertErr } = await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc, file_name: fileName || '', author: normalizedName, filiere: filiere || '', niveau: niveau || '', matiere: matiere || '', settled: false });
+  const { error: insertErr } = await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc || '', file_name: fileName || '', author: normalizedName, filiere: filiere || '', niveau: niveau || '', matiere: matiere || '', settled: false });
   if (insertErr) {
     console.error('bounty insert error:', insertErr);
     await supabase.from('users').update({ tokens: profile.tokens }).eq('username', normalizedName);
