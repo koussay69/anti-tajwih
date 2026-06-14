@@ -1147,7 +1147,12 @@ app.post('/api/bounties/create', bountyLimiter, async (req, res) => {
 
   const prefix = type === 'course' ? 'course' : 'bounty';
   const bountyId = `${prefix}-${Date.now()}`;
-  await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc, file_name: fileName || '', author: normalizedName, filiere: filiere || '', niveau: niveau || '', matiere: matiere || '' });
+  const { error: insertErr } = await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc, file_name: fileName || '', author: normalizedName, filiere: filiere || '', niveau: niveau || '', matiere: matiere || '', settled: false });
+  if (insertErr) {
+    console.error('bounty insert error:', insertErr);
+    await supabase.from('users').update({ tokens: profile.tokens }).eq('username', normalizedName);
+    return res.status(500).json({ error: 'Failed to create bounty: ' + insertErr.message });
+  }
 
   const updatedProfile = await getUserProfile(normalizedName);
   res.json({ success: true, tokens: updatedProfile.tokens, bounties: await getBounties() });
