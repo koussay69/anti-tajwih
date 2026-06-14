@@ -400,7 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (profileHeader) profileHeader.innerText = state.user;
             }
 
-            // FIXED: Fired dynamic matching query parameters with context signatures
             const response = await fetch(`${API_URL}/vault-data?user=${encodeURIComponent(state.user || '')}`);
             if (!response.ok) throw new Error("Server communication degradation.");
             const data = await response.json();

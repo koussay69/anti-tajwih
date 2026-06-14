@@ -1,11 +1,12 @@
 require('dotenv').config();
 const express = require('express');
+const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
-const pdfjsLib = require('pdfjs-dist');
+const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
 const nodemailer = require('nodemailer');
 const { Resend } = require('resend');
 const dns = require('dns');
@@ -121,7 +122,45 @@ function broadcast(event, data) {
 }
 
 app.set('trust proxy', 1);
-app.use(cors());
+
+const ALLOWED_ORIGINS = [
+  'https://anti-tajwih.onrender.com',
+  'https://antitajwih.onrender.com',
+  'http://localhost:3000',
+  'http://localhost:' + PORT
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
+}));
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", 'https://*.supabase.co'],
+      frameAncestors: ["'none'"],
+      upgradeInsecureRequests: null
+    }
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  frameguard: { action: 'deny' }
+}));
+
 app.use(express.json());
 app.get('/google86b2930c731ec5e2.html', (req, res) => {
   res.type('html').send('google-site-verification: google86b2930c731ec5e2.html');
@@ -138,7 +177,7 @@ app.get('/sitemap.xml', async (req, res) => {
   }
   res.type('xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`);
 });
-app.use(express.static('public', { maxAge: 0, etag: false }));
+app.use(express.static('public', { maxAge: '1d', etag: true, lastModified: true }));
 
 // Track last active timestamp for any request with a user identifier
 // SSE endpoint for real-time updates
