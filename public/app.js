@@ -1567,34 +1567,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', `${API_URL}/documents/upload`);
                     xhr.withCredentials = true;
-                    let smoothTarget = 0;
-                    let smoothCurrent = 0;
-                    function smoothFill() {
-                        if (smoothCurrent < smoothTarget) {
-                            smoothCurrent = Math.min(smoothCurrent + 1.5, smoothTarget);
-                            if (progressBar) progressBar.style.width = smoothCurrent + '%';
-                            if (progressText) progressText.textContent = Math.round(smoothCurrent) + '%';
-                            requestAnimationFrame(smoothFill);
-                        }
-                    }
                     xhr.upload.onprogress = (e) => {
                         if (e.lengthComputable) {
-                            smoothTarget = Math.round((e.loaded / e.total) * 70);
-                            smoothFill();
+                            const pct = Math.round((e.loaded / e.total) * 85);
+                            if (progressBar) progressBar.style.width = pct + '%';
+                            if (progressText) progressText.textContent = pct + '%';
                         }
                     };
                     xhr.onload = () => {
-                        smoothTarget = 95;
-                        smoothFill();
-                        try {
-                            const json = JSON.parse(xhr.responseText);
-                            smoothTarget = 100;
-                            smoothFill();
-                            resolve({ ok: xhr.status >= 200 && xhr.status < 300, json });
-                        }
-                        catch {
-                            reject(new Error('Invalid response'));
-                        }
+                        if (progressBar) progressBar.style.width = '100%';
+                        if (progressText) progressText.textContent = '100%';
+                        try { resolve({ ok: xhr.status >= 200 && xhr.status < 300, json: JSON.parse(xhr.responseText) }); }
+                        catch { reject(new Error('Invalid response')); }
                     };
                     xhr.onerror = () => reject(new Error('Network error'));
                     xhr.send(formData);
