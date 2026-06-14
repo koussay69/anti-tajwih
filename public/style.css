@@ -941,6 +941,40 @@ body {
     background: var(--bg-tray);
 }
 
+.upload-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+.upload-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--border-grey);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+.upload-progress-bar::after {
+    content: '';
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--glow-color), var(--glow-secondary));
+    border-radius: 4px;
+    transition: width 0.2s ease;
+}
+.upload-progress.active .upload-progress-bar::after {
+    width: var(--progress);
+}
+.upload-progress-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 35px;
+    text-align: right;
+}
+
 .account-card-box {
     max-width: 400px;
     margin: 40px auto;

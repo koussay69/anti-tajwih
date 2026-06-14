@@ -1542,6 +1542,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 uploadSubmitBtn.innerText = '⏳ Uploading...';
             }
 
+            const progressEl = document.getElementById('upload-progress');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressText = document.getElementById('upload-progress-text');
+            progressEl.style.display = 'flex';
+
             const formData = new FormData();
             formData.append('title', titleVal);
             formData.append('subject', subjectVal);
@@ -1553,29 +1558,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             formData.append('file', file);
 
             try {
-                const res = await fetch(`${API_URL}/documents/upload`, {
-                    method: 'POST',
-                    body: formData
+                const data = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', `${API_URL}/documents/upload`);
+                    xhr.upload.onprogress = (e) => {
+                        if (e.lengthComputable) {
+                            const pct = Math.round((e.loaded / e.total) * 100);
+                            progressBar.style.width = pct + '%';
+                            progressText.textContent = pct + '%';
+                        }
+                    };
+                    xhr.onload = () => {
+                        try { resolve({ ok: xhr.status >= 200 && xhr.status < 300, json: JSON.parse(xhr.responseText) }); }
+                        catch { reject(new Error('Invalid response')); }
+                    };
+                    xhr.onerror = () => reject(new Error('Network error'));
+                    xhr.send(formData);
                 });
-                const data = await res.json();
 
-                if (res.ok) {
-                    state.tokens = data.tokens;
-                    state.uploadsCount = data.uploadsCount;
+                if (data.ok) {
+                    state.tokens = data.json.tokens;
+                    state.uploadsCount = data.json.uploadsCount;
 
                     updateTokenUI();
-                    if (data.approved) {
+                    if (data.json.approved) {
                     showToast(t('toast.uploadApproved'), "success");
-                    } else if (data.pending) {
-                        const reason = data.aiError ? ` (${data.aiError})` : '';
+                    } else if (data.json.pending) {
+                        const reason = data.json.aiError ? ` (${data.json.aiError})` : '';
                         showToast(t('toast.submittedForReview') + reason, "bounty");
                     }
 
-                    renderDocuments(data.documents);
+                    renderDocuments(data.json.documents);
                     uploadForm.reset();
                     uploadModal.classList.remove('open');
                 } else {
-                    showToast(data.error || t('toast.networkError'), "error");
+                    showToast(data.json.error || t('toast.networkError'), "error");
                 }
             } catch (err) {
                 showToast(t('toast.networkError'), "error");
@@ -1584,6 +1601,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uploadSubmitBtn.disabled = false;
                     uploadSubmitBtn.innerText = uploadBtnOriginalText;
                 }
+                progressEl.style.display = 'none';
+                progressBar.style.width = '0%';
             }
         });
     }
