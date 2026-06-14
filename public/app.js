@@ -2368,6 +2368,7 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
             }
         }
         const particles = [];
+        const isMobile = w < 768;
         function resize() {
             w = canvas.parentElement.offsetWidth;
             h = canvas.parentElement.offsetHeight;
@@ -2378,19 +2379,35 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
             ctx.scale(devicePixelRatio, devicePixelRatio);
         }
         resize();
-        const count = Math.min(80, Math.floor(w * h / 8000));
+        const count = Math.min(isMobile ? 25 : 80, Math.floor(w * h / 8000));
         for (let i = 0; i < count; i++) {
             const p = new MathSymbol();
             p.y = Math.random() * h;
             particles.push(p);
         }
-        let frame;
-        function animate() {
+        let cachedIsDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const themeObserver = new MutationObserver(() => { cachedIsDark = document.documentElement.getAttribute('data-theme') === 'dark'; });
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        const fontCache = {};
+        function getFont(size) { return fontCache[size] || (fontCache[size] = `${size}px serif`); }
+        let frame, lastFrame = 0;
+        function animate(now) {
+            if (now - lastFrame < 32) { frame = requestAnimationFrame(animate); return; }
+            lastFrame = now;
             ctx.clearRect(0, 0, w, h);
-            for (const p of particles) { p.update(); p.draw(); }
+            const color = cachedIsDark ? '200,200,220' : '60,60,80';
+            const baseOpacity = cachedIsDark ? 0 : 0.2;
+            for (const p of particles) {
+                p.y += p.speed;
+                p.x += p.drift;
+                if (p.y > h + 20) { p.reset(); p.y = -20; }
+                ctx.font = getFont(p.size);
+                ctx.fillStyle = `rgba(${color},${p.opacity + baseOpacity})`;
+                ctx.fillText(p.symbol, p.x, p.y);
+            }
             frame = requestAnimationFrame(animate);
         }
-        animate();
+        frame = requestAnimationFrame(animate);
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
