@@ -947,25 +947,19 @@ body {
     gap: 10px;
     margin: 10px 0;
 }
-.upload-progress-bar {
+.upload-progress-track {
     flex: 1;
     height: 8px;
     background: var(--border-grey);
     border-radius: 4px;
     overflow: hidden;
-    position: relative;
 }
-.upload-progress-bar::after {
-    content: '';
-    display: block;
+.upload-progress-bar {
     height: 100%;
     width: 0%;
     background: linear-gradient(90deg, var(--glow-color), var(--glow-secondary));
     border-radius: 4px;
     transition: width 0.2s ease;
-}
-.upload-progress.active .upload-progress-bar::after {
-    width: var(--progress);
 }
 .upload-progress-text {
     font-size: 12px;

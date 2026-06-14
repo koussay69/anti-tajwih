@@ -117,7 +117,7 @@ const supabaseAdmin = SUPABASE_SERVICE_KEY ? createClient(SUPABASE_URL, SUPABASE
   }
 })();
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 
 // SSE broadcast
 const sseClients = [];
@@ -942,12 +942,14 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
 
   const docId = `doc-${Date.now()}`;
 
-  // AI check — sends the PDF directly to Gemini (handles both text and scanned docs)
+  // AI check — skip for large files to avoid timeout, put in pending instead
   let aiResult = null;
   let approved = false;
   let rejectionReason = null;
   let aiError = null;
-  try {
+  if (req.file.size > 5 * 1024 * 1024) {
+    // Large file → skip AI check, goes to pending for manual review
+  } else try {
     aiResult = await checkDocumentContent(req.file.buffer, { subject, filiere, niveau, matiere, type, title });
     if (aiResult) {
       if (aiResult.error) {
@@ -1566,6 +1568,8 @@ app.post('/api/admin/flagged-docs/:docId/resolve', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err?.message || err);
   if (res.headersSent) return;
+  if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'File too large. Maximum 25 MB.' });
+  if (err.type === 'entity.too.large') return res.status(400).json({ error: 'Request too large.' });
   res.status(500).json({ error: 'Server error' });
 });
 

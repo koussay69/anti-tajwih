@@ -1536,6 +1536,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showToast(t('toast.selectPdf'), "error");
                 return;
             }
+            if (file.size > 25 * 1024 * 1024) {
+                showToast('File too large. Maximum 25 MB.', "error");
+                return;
+            }
 
             if (uploadSubmitBtn) {
                 uploadSubmitBtn.disabled = true;
@@ -1561,6 +1565,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', `${API_URL}/documents/upload`);
+                    xhr.withCredentials = true;
                     xhr.upload.onprogress = (e) => {
                         if (e.lengthComputable) {
                             const pct = Math.round((e.loaded / e.total) * 100);
