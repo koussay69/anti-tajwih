@@ -1085,7 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <h3 class="ticket-title">${bounty.title}</h3>
                 <p class="ticket-desc">${bounty.desc}</p>
-                <div class="ticket-attachment-badge">${t('bounty.refAttached')} <strong>${bounty.fileName || 'Specs_Attached.pdf'}</strong></div>
+                <div class="doc-tags">${bounty.filiere ? `<span class="tag tag-filiere">${bounty.filiere}</span>` : ''}${bounty.niveau ? `<span class="tag tag-niveau">${bounty.niveau}</span>` : ''}${bounty.matiere ? `<span class="tag tag-matiere">${bounty.matiere}</span>` : ''}${bounty.doc_type ? `<span class="tag tag-type">${bounty.doc_type}</span>` : ''}</div>
                 <div class="ticket-answers-list">
                     ${bounty.answers ? bounty.answers.map(ans => `
                         <div class="comment-item" style="padding: 12px; background: var(--bg-tray); border-left: 3px solid ${ans.winner ? 'green' : 'var(--glow-secondary)'}; margin-top: 10px;${ans.winner ? ' border-left-width: 5px;' : ''}">
@@ -1510,6 +1510,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const hTitle = document.getElementById('form-help-title').value;
             const hDesc = document.getElementById('form-help-desc').value;
             const hFileInput = document.getElementById('form-help-file');
+            const hFiliere = document.getElementById('form-help-filiere').value;
+            const hNiveau = document.getElementById('form-help-niveau').value;
+            const hMatiere = document.getElementById('form-help-matiere').value;
+            const hType = document.getElementById('form-help-type').value;
 
             const fileName = hFileInput.files[0] ? hFileInput.files[0].name : "Specs_Attached.pdf";
             const userDisplay = state.user;
@@ -1524,7 +1528,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         desc: hDesc,
                         fileName: fileName,
                         author: userDisplay,
-                        type: 'problem'
+                        type: 'problem',
+                        filiere: hFiliere,
+                        niveau: hNiveau,
+                        matiere: hMatiere,
+                        doc_type: hType
                     })
                 });
                 const data = await res.json();
@@ -1573,6 +1581,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const cSubject = document.getElementById('form-course-subject').value;
             const cDesc = document.getElementById('form-course-desc').value;
+            const cFiliere = document.getElementById('form-course-filiere').value;
+            const cNiveau = document.getElementById('form-course-niveau').value;
+            const cMatiere = document.getElementById('form-course-matiere').value;
+            const cType = document.getElementById('form-course-type').value;
             const userDisplay = state.user;
 
             try {
@@ -1584,7 +1596,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         subject: cSubject,
                         desc: cDesc,
                         author: userDisplay,
-                        type: 'course'
+                        type: 'course',
+                        filiere: cFiliere,
+                        niveau: cNiveau,
+                        matiere: cMatiere,
+                        doc_type: cType
                     })
                 });
                 const data = await res.json();
