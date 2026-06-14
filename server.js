@@ -225,10 +225,13 @@ app.get('/robots.txt', (req, res) => {
 });
 app.get('/sitemap.xml', async (req, res) => {
   const base = 'https://antitajwih.onrender.com';
-  const { data: docs } = await supabase.from('documents').select('id, updated_at').order('updated_at', { ascending: false }).limit(500);
+  const client = supabaseAdmin || supabase;
+  const { data: docs, error } = await client.from('documents').select('id, updated_at').order('updated_at', { ascending: false }).limit(500);
+  if (error) console.error('sitemap query error:', error);
   let urls = `<url><loc>${base}/</loc><priority>1.0</priority></url>`;
   for (const d of docs || []) {
-    urls += `<url><loc>${base}/?doc=${d.id}</loc><lastmod>${(d.updated_at || '').split('T')[0]}</lastmod><priority>0.8</priority></url>`;
+    const lastmod = d.updated_at ? d.updated_at.split('T')[0] : '';
+    urls += `<url><loc>${base}/?doc=${encodeURIComponent(d.id)}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}<priority>0.8</priority></url>`;
   }
   res.type('xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`);
 });
