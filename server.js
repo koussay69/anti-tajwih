@@ -271,6 +271,9 @@ app.use((req, res, next) => {
   try {
     await supabase.rpc('exec_sql', { sql: "ALTER TABLE bounties ADD COLUMN IF NOT EXISTS matiere TEXT DEFAULT ''" });
   } catch (_) {}
+  try {
+    await supabase.rpc('exec_sql', { sql: "CREATE TABLE IF NOT EXISTS bounty_reports ( id SERIAL PRIMARY KEY, bounty_id TEXT NOT NULL, user_id TEXT NOT NULL, reason TEXT DEFAULT '', custom_review TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT NOW() )" });
+  } catch (_) {}
 })();
 
 // --- HELPERS ---
@@ -1078,6 +1081,38 @@ app.post('/api/bounties/accept', async (req, res) => {
     console.error('Accept error:', err.message);
     res.status(500).json({ error: 'Server error: ' + err.message });
   }
+});
+
+// --- DELETE BOUNTY (author or admin) ---
+app.post('/api/bounties/delete', async (req, res) => {
+  const { bountyId, user } = req.body;
+  if (!user) return res.status(401).json({ error: "Authentication required." });
+  const normalizedName = user.trim().toLowerCase();
+  const { data: bounty } = await supabase.from('bounties').select('*').eq('id', bountyId).maybeSingle();
+  if (!bounty) return res.status(404).json({ error: "Bounty not found." });
+  const profile = await getUserProfile(normalizedName);
+  if (bounty.author.toLowerCase() !== normalizedName && !profile?.admin) return res.status(403).json({ error: "Only the author or admin can delete." });
+  await supabase.from('answers').delete().eq('bounty_id', bountyId);
+  await supabase.from('bounties').delete().eq('id', bountyId);
+  res.json({ success: true, bounties: await getBounties() });
+});
+
+// --- REPORT BOUNTY ---
+app.post('/api/bounties/report', async (req, res) => {
+  const { bountyId, user, reason, customReview } = req.body;
+  if (!user) return res.status(401).json({ error: "Authentication required." });
+  const normalizedName = user.trim().toLowerCase();
+  const { data: bounty } = await supabase.from('bounties').select('id, author').eq('id', bountyId).maybeSingle();
+  if (!bounty) return res.status(404).json({ error: "Bounty not found." });
+  if (bounty.author.toLowerCase() === normalizedName) return res.status(400).json({ error: "You cannot report your own bounty." });
+  try {
+    const { data: existing } = await supabase.from('bounty_reports').select('id').eq('bounty_id', bountyId).eq('user_id', normalizedName).maybeSingle();
+    if (existing) return res.status(400).json({ error: "You have already reported this bounty." });
+    await supabase.from('bounty_reports').insert({ bounty_id: bountyId, user_id: normalizedName, reason: reason || '', custom_review: customReview || '' });
+  } catch (_) {
+    // table may not exist yet
+  }
+  res.json({ success: true });
 });
 
 // --- ADMIN ROUTES ---

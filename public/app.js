@@ -864,7 +864,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closeHelp) closeHelp.addEventListener('click', () => helpModal.classList.remove('open'));
     if (closeCourse) closeCourse.addEventListener('click', () => courseModal.classList.remove('open'));
     if (closeAnswer) closeAnswer.addEventListener('click', () => answerModal.classList.remove('open'));
-    if (closeReport) closeReport.addEventListener('click', () => { reportModal.classList.remove('open'); reportModal._currentDocId = null; });
+    if (closeReport) closeReport.addEventListener('click', () => { reportModal.classList.remove('open'); reportModal._currentDocId = null; reportModal._currentBountyId = null; });
 
     window.addEventListener('click', (e) => {
         if (e.target === authModal) authModal.classList.remove('open');
@@ -872,7 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === helpModal) helpModal.classList.remove('open');
         if (e.target === courseModal) courseModal.classList.remove('open');
         if (e.target === answerModal) answerModal.classList.remove('open');
-        if (e.target === reportModal) { reportModal.classList.remove('open'); reportModal._currentDocId = null; }
+        if (e.target === reportModal) { reportModal.classList.remove('open'); reportModal._currentDocId = null; reportModal._currentBountyId = null; }
     });
 
     function switchHelpTab(type) {
@@ -1126,7 +1126,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="ticket-footer">
                     <span class="ticket-user">${t('bounty.by')} ${bounty.author === state.user ? t('bounty.you') : bounty.author}</span>
-                    ${!bounty.settled ? `<button class="unlock-action-btn provide-answer-trigger">${t('bounty.provideAnswer')}</button>` : ''}
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        ${!bounty.settled ? `<button class="unlock-action-btn provide-answer-trigger">${t('bounty.provideAnswer')}</button>` : ''}
+                        ${state.user && !isAuthor ? `<button class="report-bounty-btn unlock-action-btn" data-bounty-id="${bounty.id}" style="background:var(--alert-red);border-color:var(--alert-red);color:#fff;">${t('card.report')}</button>` : ''}
+                        ${isAuthor || state.admin ? `<button class="delete-bounty-btn unlock-action-btn" data-bounty-id="${bounty.id}" style="background:#555;border-color:#555;color:#fff;">${t('card.delete')}</button>` : ''}
+                    </div>
                 </div>
             `;
             setupHelpTicketInteractions(ticketCard);
@@ -1439,6 +1443,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+
+        const reportBtn = ticket.querySelector('.report-bounty-btn');
+        if (reportBtn) {
+            reportBtn.addEventListener('click', () => {
+                if (!state.user) {
+                    showToast(t('report.loginToReport'), 'error');
+                    authModal.classList.add('open');
+                    return;
+                }
+                reportModal._currentBountyId = reportBtn.dataset.bountyId;
+                reportModal._currentDocId = null;
+                document.getElementById('report-reason').value = '';
+                document.getElementById('report-custom-review').value = '';
+                reportModal.classList.add('open');
+            });
+        }
+
+        const deleteBtn = ticket.querySelector('.delete-bounty-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async () => {
+                if (!state.user) return;
+                if (!confirm('Delete this request permanently?')) return;
+                const bountyId = ticket.dataset.id;
+                try {
+                    const res = await fetch(`${API_URL}/bounties/delete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bountyId, user: state.user })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        renderBounties(data.bounties);
+                        showToast(t('toast.deleted'), "info");
+                    } else {
+                        showToast(data.error || t('toast.networkError'), "error");
+                    }
+                } catch {
+                    showToast(t('toast.networkError'), "error");
+                }
+            });
+        }
     }
 
     // --- SHARE MATERIAL SUBMITTER ENGINE ---
@@ -1716,7 +1761,8 @@ document.addEventListener('DOMContentLoaded', () => {
         reportForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const docId = reportModal._currentDocId;
-            if (!docId || !state.user) return;
+            const bountyId = reportModal._currentBountyId;
+            if ((!docId && !bountyId) || !state.user) return;
 
             if (reportSubmitBtn) {
                 reportSubmitBtn.disabled = true;
@@ -1727,10 +1773,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const customReview = document.getElementById('report-custom-review').value;
 
             try {
-                const res = await fetch(`${API_URL}/documents/report`, {
+                const url = bountyId ? `${API_URL}/bounties/report` : `${API_URL}/documents/report`;
+                const body = bountyId ? { bountyId, user: state.user, reason, customReview } : { docId, user: state.user, reason, customReview };
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ docId, user: state.user, reason, customReview })
+                    body: JSON.stringify(body)
                 });
                 const data = await res.json();
                 if (res.ok) {
@@ -1738,6 +1786,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     reportForm.reset();
                     reportModal.classList.remove('open');
                     reportModal._currentDocId = null;
+                    reportModal._currentBountyId = null;
                 } else {
                     showToast(data.error || t('toast.reportFailed'), 'error');
                 }
