@@ -465,10 +465,10 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
     }
 
     const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
-    const { data: bannedIp } = await supabaseAdmin.from('banned_ips').select('ip_address').eq('ip_address', clientIp).maybeSingle();
-    if (bannedIp) {
-      return res.status(403).json({ error: "Registration blocked." });
-    }
+    try {
+      const { data: bannedIp } = await supabaseAdmin.from('banned_ips').select('ip_address').eq('ip_address', clientIp).maybeSingle();
+      if (bannedIp) return res.status(403).json({ error: "Registration blocked." });
+    } catch (_) { /* banned_ips table may not exist */ }
 
     const normalizedEmail = email ? email.trim().toLowerCase() : null;
     if (normalizedEmail) {
@@ -483,7 +483,7 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0, last_ip: clientIp });
+    const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0 });
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
 
     const profile = await getUserProfile(normalizedName);
@@ -513,17 +513,17 @@ app.post('/api/auth/register-google', registerLimiter, async (req, res) => {
   if (existing) return res.status(400).json({ error: "Username '" + normalizedName + "' is already taken." });
 
   const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
-  const { data: bannedIp } = await supabaseAdmin.from('banned_ips').select('ip_address').eq('ip_address', clientIp).maybeSingle();
-  if (bannedIp) {
-    return res.status(403).json({ error: "Registration blocked." });
-  }
+  try {
+    const { data: bannedIp } = await supabaseAdmin.from('banned_ips').select('ip_address').eq('ip_address', clientIp).maybeSingle();
+    if (bannedIp) return res.status(403).json({ error: "Registration blocked." });
+  } catch (_) { /* banned_ips table may not exist */ }
   const { data: bannedEmailUser } = await supabase.from('users').select('banned').eq('email', normalizedEmail).eq('banned', true).maybeSingle();
   if (bannedEmailUser) {
     return res.status(403).json({ error: "This email is blocked." });
   }
 
   const hashedPassword = password ? await bcrypt.hash(password, BCRYPT_ROUNDS) : '';
-  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0, last_ip: clientIp });
+  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0 });
   if (insertErr) return res.status(500).json({ error: "Failed to create account: " + insertErr.message });
   const token = setAuthCookie(res, normalizedName, false);
   res.json({ success: true, username: normalizedName, token });
@@ -1363,10 +1363,12 @@ app.post('/api/admin/users/ban', async (req, res) => {
   if (profile.admin) return res.status(400).json({ error: "Cannot ban another admin." });
   await supabase.from('users').update({ banned: !!banned }).eq('username', targetUser.trim().toLowerCase());
   if (banned) {
-    const { data: user } = await supabase.from('users').select('last_ip').eq('username', targetUser.trim().toLowerCase()).maybeSingle();
-    if (user && user.last_ip) {
-      await supabaseAdmin.from('banned_ips').upsert({ ip_address: user.last_ip }, { onConflict: 'ip_address' }).catch(() => {});
-    }
+    try {
+      const { data: user } = await supabase.from('users').select('last_ip').eq('username', targetUser.trim().toLowerCase()).maybeSingle();
+      if (user?.last_ip) {
+        await supabaseAdmin.from('banned_ips').upsert({ ip_address: user.last_ip }, { onConflict: 'ip_address' }).catch(() => {});
+      }
+    } catch (_) { /* banned_ips or last_ip column may not exist */ }
   }
   res.json({ success: true, banned: !!banned });
 });
