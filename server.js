@@ -18,10 +18,6 @@ const rateLimit = require('express-rate-limit');
 
 const JWT_SECRET = process.env.JWT_SECRET || (() => { try { const p = path.join(__dirname, '.jwt_secret'); if (fs.existsSync(p)) return fs.readFileSync(p, 'utf8').trim(); const s = crypto.randomBytes(64).toString('hex'); fs.writeFileSync(p, s); return s; } catch { return crypto.randomBytes(64).toString('hex'); } })();
 const BCRYPT_ROUNDS = 12;
-const BANNED_IPS_PATH = path.join(__dirname, 'banned_ips.json');
-const USER_IPS_PATH = path.join(__dirname, 'user_ips.json');
-function loadJson(p) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return {}; } }
-function saveJson(p, d) { fs.writeFileSync(p, JSON.stringify(d), 'utf8'); }
 let mailTransporter = null;
 const mailerSendToken = (process.env.MAILERSEND_TOKEN || '').trim();
 const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
@@ -114,8 +110,10 @@ const supabaseAdmin = SUPABASE_SERVICE_KEY ? createClient(SUPABASE_URL, SUPABASE
 (async () => {
   try {
     await supabaseAdmin.rpc('execute_sql', { sql: 'ALTER TABLE comments ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()' });
+    await supabaseAdmin.rpc('execute_sql', { sql: `CREATE TABLE IF NOT EXISTS banned_ips (ip_address TEXT PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW())` });
+    await supabaseAdmin.rpc('execute_sql', { sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip TEXT DEFAULT ''` });
   } catch (e) {
-    // RPC function may not exist — column was already added manually or migration not possible
+    // RPC function may not exist — migration not possible
   }
 })();
 
@@ -467,8 +465,8 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
     }
 
     const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
-    const bannedIps = loadJson(BANNED_IPS_PATH);
-    if (bannedIps[clientIp]) {
+    const { data: bannedIp } = await supabaseAdmin.from('banned_ips').select('ip_address').eq('ip_address', clientIp).maybeSingle();
+    if (bannedIp) {
       return res.status(403).json({ error: "Registration blocked." });
     }
 
@@ -485,12 +483,8 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0 });
+    const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0, last_ip: clientIp });
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
-
-    const userIps = loadJson(USER_IPS_PATH);
-    userIps[normalizedName] = clientIp;
-    saveJson(USER_IPS_PATH, userIps);
 
     const profile = await getUserProfile(normalizedName);
     const token = setAuthCookie(res, normalizedName, profile?.admin);
@@ -519,8 +513,8 @@ app.post('/api/auth/register-google', registerLimiter, async (req, res) => {
   if (existing) return res.status(400).json({ error: "Username '" + normalizedName + "' is already taken." });
 
   const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
-  const bannedIps = loadJson(BANNED_IPS_PATH);
-  if (bannedIps[clientIp]) {
+  const { data: bannedIp } = await supabaseAdmin.from('banned_ips').select('ip_address').eq('ip_address', clientIp).maybeSingle();
+  if (bannedIp) {
     return res.status(403).json({ error: "Registration blocked." });
   }
   const { data: bannedEmailUser } = await supabase.from('users').select('banned').eq('email', normalizedEmail).eq('banned', true).maybeSingle();
@@ -529,11 +523,8 @@ app.post('/api/auth/register-google', registerLimiter, async (req, res) => {
   }
 
   const hashedPassword = password ? await bcrypt.hash(password, BCRYPT_ROUNDS) : '';
-  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0 });
+  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0, last_ip: clientIp });
   if (insertErr) return res.status(500).json({ error: "Failed to create account: " + insertErr.message });
-  const userIps = loadJson(USER_IPS_PATH);
-  userIps[normalizedName] = clientIp;
-  saveJson(USER_IPS_PATH, userIps);
   const token = setAuthCookie(res, normalizedName, false);
   res.json({ success: true, username: normalizedName, token });
 });
@@ -1366,12 +1357,9 @@ app.post('/api/admin/users/ban', async (req, res) => {
   if (profile.admin) return res.status(400).json({ error: "Cannot ban another admin." });
   await supabase.from('users').update({ banned: !!banned }).eq('username', targetUser.trim().toLowerCase());
   if (banned) {
-    const userIps = loadJson(USER_IPS_PATH);
-    const ip = userIps[targetUser.trim().toLowerCase()];
-    if (ip) {
-      const bannedIps = loadJson(BANNED_IPS_PATH);
-      bannedIps[ip] = true;
-      saveJson(BANNED_IPS_PATH, bannedIps);
+    const { data: user } = await supabase.from('users').select('last_ip').eq('username', targetUser.trim().toLowerCase()).maybeSingle();
+    if (user && user.last_ip) {
+      await supabaseAdmin.from('banned_ips').upsert({ ip_address: user.last_ip }, { onConflict: 'ip_address' }).catch(() => {});
     }
   }
   res.json({ success: true, banned: !!banned });
