@@ -941,21 +941,7 @@ body {
     background: var(--bg-tray);
 }
 
-.upload-progress {
-    margin: 8px 0;
-}
-.upload-progress::-webkit-progress-bar {
-    background: var(--border-grey);
-    border-radius: 5px;
-}
-.upload-progress::-webkit-progress-value {
-    background: linear-gradient(90deg, var(--glow-color), var(--glow-secondary));
-    border-radius: 5px;
-}
-.upload-progress::-moz-progress-bar {
-    background: linear-gradient(90deg, var(--glow-color), var(--glow-secondary));
-    border-radius: 5px;
-}
+
 
 .account-card-box {
     max-width: 400px;

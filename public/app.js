@@ -1546,8 +1546,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 uploadSubmitBtn.innerText = '⏳ Uploading...';
             }
 
-            const progressEl = document.getElementById('upload-progress');
-            if (progressEl) { progressEl.style.display = 'block'; }
+            const progressWrap = document.getElementById('upload-progress-wrap');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressText = document.getElementById('upload-progress-text');
+            if (progressWrap) { progressWrap.style.display = 'block'; }
+            if (progressText) progressText.textContent = '0%';
+            if (progressBar) progressBar.style.width = '0%';
             const formData = new FormData();
             formData.append('title', titleVal);
             formData.append('subject', subjectVal);
@@ -1564,8 +1568,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     xhr.open('POST', `${API_URL}/documents/upload`);
                     xhr.withCredentials = true;
                     xhr.upload.onprogress = (e) => {
-                        if (e.lengthComputable && progressEl) {
-                            progressEl.value = Math.round((e.loaded / e.total) * 100);
+                        if (e.lengthComputable) {
+                            const pct = Math.round((e.loaded / e.total) * 100);
+                            if (progressBar) progressBar.style.width = pct + '%';
+                            if (progressText) progressText.textContent = pct + '%';
                         }
                     };
                     xhr.onload = () => {
@@ -1601,7 +1607,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uploadSubmitBtn.disabled = false;
                     uploadSubmitBtn.innerText = uploadBtnOriginalText;
                 }
-                if (progressEl) { progressEl.style.display = 'none'; progressEl.value = 0; }
+                if (progressWrap) progressWrap.style.display = 'none';
             }
         });
     }
