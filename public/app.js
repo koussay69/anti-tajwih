@@ -1549,6 +1549,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const progressWrap = document.getElementById('upload-progress-wrap');
             const progressBar = document.getElementById('upload-progress-bar');
             const progressText = document.getElementById('upload-progress-text');
+            if (progressWrap) progressWrap.style.display = 'block';
             if (progressText) progressText.textContent = '0%';
             if (progressBar) progressBar.style.width = '0%';
             const formData = new FormData();
@@ -1562,39 +1563,40 @@ document.addEventListener('DOMContentLoaded', async () => {
             formData.append('file', file);
 
             try {
-                let processingInterval = null;
                 const data = await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', `${API_URL}/documents/upload`);
                     xhr.withCredentials = true;
+                    let smoothTarget = 0;
+                    let smoothCurrent = 0;
+                    function smoothFill() {
+                        if (smoothCurrent < smoothTarget) {
+                            smoothCurrent = Math.min(smoothCurrent + 1.5, smoothTarget);
+                            if (progressBar) progressBar.style.width = smoothCurrent + '%';
+                            if (progressText) progressText.textContent = Math.round(smoothCurrent) + '%';
+                            requestAnimationFrame(smoothFill);
+                        }
+                    }
                     xhr.upload.onprogress = (e) => {
                         if (e.lengthComputable) {
-                            const pct = Math.round((e.loaded / e.total) * 70);
-                            if (progressBar) progressBar.style.width = pct + '%';
-                            if (progressText) progressText.textContent = pct + '%';
+                            smoothTarget = Math.round((e.loaded / e.total) * 70);
+                            smoothFill();
                         }
                     };
                     xhr.onload = () => {
-                        let pct = 70;
-                        processingInterval = setInterval(() => {
-                            pct += 2;
-                            if (pct > 95) pct = 95;
-                            if (progressBar) progressBar.style.width = pct + '%';
-                            if (progressText) progressText.textContent = pct + '%';
-                        }, 150);
+                        smoothTarget = 95;
+                        smoothFill();
                         try {
                             const json = JSON.parse(xhr.responseText);
-                            clearInterval(processingInterval);
-                            if (progressBar) progressBar.style.width = '100%';
-                            if (progressText) progressText.textContent = '100%';
+                            smoothTarget = 100;
+                            smoothFill();
                             resolve({ ok: xhr.status >= 200 && xhr.status < 300, json });
                         }
                         catch {
-                            clearInterval(processingInterval);
                             reject(new Error('Invalid response'));
                         }
                     };
-                    xhr.onerror = () => { clearInterval(processingInterval); reject(new Error('Network error')); };
+                    xhr.onerror = () => reject(new Error('Network error'));
                     xhr.send(formData);
                 });
 
@@ -1619,11 +1621,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err) {
                 showToast(t('toast.networkError'), "error");
             } finally {
-                clearInterval(processingInterval);
                 if (uploadSubmitBtn) {
                     uploadSubmitBtn.disabled = false;
                     uploadSubmitBtn.innerText = uploadBtnOriginalText;
                 }
+                if (progressWrap) progressWrap.style.display = 'none';
                 if (progressText) progressText.textContent = '0%';
                 if (progressBar) progressBar.style.width = '0%';
             }
