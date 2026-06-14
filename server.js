@@ -364,24 +364,12 @@ app.use((req, res, next) => {
 
 // Run migration on startup
 (async () => {
-  try {
-    await supabase.rpc('exec_sql', { sql: 'ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active TIMESTAMPTZ' });
-  } catch (_) {}
-  try {
-    await supabase.rpc('exec_sql', { sql: "ALTER TABLE documents ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT false" });
-  } catch (_) {}
-  try {
-    await supabase.rpc('exec_sql', { sql: "ALTER TABLE bounties ADD COLUMN IF NOT EXISTS filiere TEXT DEFAULT ''" });
-  } catch (_) {}
-  try {
-    await supabase.rpc('exec_sql', { sql: "ALTER TABLE bounties ADD COLUMN IF NOT EXISTS niveau TEXT DEFAULT ''" });
-  } catch (_) {}
-  try {
-    await supabase.rpc('exec_sql', { sql: "ALTER TABLE bounties ADD COLUMN IF NOT EXISTS matiere TEXT DEFAULT ''" });
-  } catch (_) {}
-  try {
-    await supabase.rpc('exec_sql', { sql: "CREATE TABLE IF NOT EXISTS bounty_reports ( id SERIAL PRIMARY KEY, bounty_id TEXT NOT NULL, user_id TEXT NOT NULL, reason TEXT DEFAULT '', custom_review TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT NOW() )" });
-  } catch (_) {}
+  const migrate = async (sql) => {
+    try { await supabaseAdmin.rpc('execute_sql', { sql }); } catch (_) {}
+  };
+  await migrate("ALTER TABLE bounties ADD COLUMN IF NOT EXISTS filiere TEXT DEFAULT ''");
+  await migrate("ALTER TABLE bounties ADD COLUMN IF NOT EXISTS niveau TEXT DEFAULT ''");
+  await migrate("ALTER TABLE bounties ADD COLUMN IF NOT EXISTS matiere TEXT DEFAULT ''");
 })();
 
 // --- HELPERS ---
@@ -1147,7 +1135,7 @@ app.post('/api/bounties/create', bountyLimiter, async (req, res) => {
 
   const prefix = type === 'course' ? 'course' : 'bounty';
   const bountyId = `${prefix}-${Date.now()}`;
-  const { error: insertErr } = await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc, file_name: fileName || '', author: normalizedName, settled: false });
+  const { error: insertErr } = await supabase.from('bounties').insert({ id: bountyId, subject, title, desc: desc, file_name: fileName || '', author: normalizedName, filiere: filiere || '', niveau: niveau || '', matiere: matiere || '', settled: false });
   if (insertErr) {
     console.error('bounty insert error:', insertErr);
     await supabase.from('users').update({ tokens: profile.tokens }).eq('username', normalizedName);
