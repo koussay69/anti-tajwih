@@ -1107,6 +1107,12 @@ body {
     .brand-logo-placeholder {
         font-size: 24px;
     }
+    #hero-logo {
+        max-width: 180px !important;
+    }
+    .brand-logo-placeholder div:last-child {
+        font-size: 20px !important;
+    }
 
     .hero p {
         font-size: 13px;
@@ -1362,6 +1368,12 @@ body {
     .brand-logo-placeholder {
         font-size: 20px;
     }
+    #hero-logo {
+        max-width: 140px !important;
+    }
+    .brand-logo-placeholder div:last-child {
+        font-size: 18px !important;
+    }
 
     .section-header h2 {
         font-size: 16px;
@@ -1377,6 +1389,12 @@ body {
     }
     .logo img {
         height: 20px !important;
+    }
+    #hero-logo {
+        max-width: 110px !important;
+    }
+    .brand-logo-placeholder div:last-child {
+        font-size: 16px !important;
     }
     .nav-actions {
         gap: 2px;
