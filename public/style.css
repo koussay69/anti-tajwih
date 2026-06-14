@@ -762,7 +762,22 @@ body {
     color: var(--text-main);
 }
 
-.help-grid-layout {
+.help-filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.help-filter-bar .filter-select {
+    min-width: 130px;
+}
+
+.help-filter-bar .clear-filters-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+}
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 25px;
@@ -1167,6 +1182,15 @@ body {
         text-align: center;
     }
 
+    .help-filter-bar .filter-select {
+        min-width: 100%;
+        flex: 1;
+    }
+
+    .help-filter-bar {
+        flex-direction: column;
+    }
+
     .toast-container {
         bottom: 16px;
         right: 16px;
@@ -1251,6 +1275,9 @@ body {
     flex-direction: row-reverse;
 }
 [dir="rtl"] .ticket-footer {
+    flex-direction: row-reverse;
+}
+[dir="rtl"] .help-filter-bar {
     flex-direction: row-reverse;
 }
 [dir="rtl"] .help-desk-header-flex {

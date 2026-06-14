@@ -187,6 +187,35 @@
                 <button class="ask-help-trigger-btn" id="open-help-modal-btn" data-i18n="bounty.postProblem">Post a Problem (-3 Tokens)</button>
                 <button class="ask-help-trigger-btn" id="open-course-modal-btn" style="display:none" data-i18n="course.postRequest">Request a Course (-3 Tokens)</button>
             </div>
+            <div class="help-filter-bar">
+                <select id="help-filter-filiere" class="filter-select">
+                    <option value="" data-i18n="filter.filiere">Filière (all)</option>
+                    <option>MP</option>
+                    <option>PT</option>
+                    <option>PC</option>
+                    <option>BG</option>
+                </select>
+                <select id="help-filter-niveau" class="filter-select">
+                    <option value="" data-i18n="filter.niveau">Niveau (all)</option>
+                    <option>1ère</option>
+                    <option>2ème</option>
+                </select>
+                <select id="help-filter-matiere" class="filter-select">
+                    <option value="" data-i18n="filter.matiere">Matière (all)</option>
+                    <option>Analyse</option>
+                    <option>Algèbre</option>
+                    <option>MSI</option>
+                    <option>Auto</option>
+                    <option>CM</option>
+                    <option>FM</option>
+                    <option>Physique</option>
+                    <option>Chimie</option>
+                    <option>Informatique</option>
+                    <option>Français</option>
+                    <option>Anglais</option>
+                </select>
+                <button id="help-clear-filters" class="clear-filters-btn" data-i18n="filter.clear">Clear</button>
+            </div>
             <div id="help-board-grid" class="help-grid-layout"></div>
         </main>
     </div>

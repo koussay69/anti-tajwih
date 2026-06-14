@@ -888,6 +888,26 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => switchHelpTab(tab.dataset.type));
     });
 
+    function applyHelpFilters() {
+        const stored = state._allBounties || [];
+        renderBounties(stored);
+    }
+
+    ['help-filter-filiere', 'help-filter-niveau', 'help-filter-matiere'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', applyHelpFilters);
+    });
+
+    const helpClearFilters = document.getElementById('help-clear-filters');
+    if (helpClearFilters) {
+        helpClearFilters.addEventListener('click', () => {
+            document.getElementById('help-filter-filiere').value = '';
+            document.getElementById('help-filter-niveau').value = '';
+            document.getElementById('help-filter-matiere').value = '';
+            applyHelpFilters();
+        });
+    }
+
     // --- DYNAMIC CARD BUILDER GENERATORS ---
     function renderStars(rating) {
         const full = '<span style="color:var(--star-color,#f5b342)">★</span>';
@@ -1060,9 +1080,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!helpBoardGrid) return;
         helpBoardGrid.innerHTML = '';
 
+        const hFilterFiliere = (document.getElementById('help-filter-filiere')?.value || '').trim().toLowerCase();
+        const hFilterNiveau = (document.getElementById('help-filter-niveau')?.value || '').trim().toLowerCase();
+        const hFilterMatiere = (document.getElementById('help-filter-matiere')?.value || '').trim().toLowerCase();
+
         const filtered = bounties.filter(b => {
             const t = b.id && b.id.startsWith('course-') ? 'course' : 'problem';
-            return t === activeHelpTab;
+            if (t !== activeHelpTab) return false;
+            if (hFilterFiliere && (b.filiere || '').trim().toLowerCase() !== hFilterFiliere) return false;
+            if (hFilterNiveau && (b.niveau || '').trim().toLowerCase() !== hFilterNiveau) return false;
+            if (hFilterMatiere && (b.matiere || '').trim().toLowerCase() !== hFilterMatiere) return false;
+            return true;
         });
 
         if (filtered.length === 0) {
