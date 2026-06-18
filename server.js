@@ -570,11 +570,8 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     await supabase.from('users').update({ password: hashed, password_enc: encrypt(password) }).eq('username', user.username);
   }
   if (passwordMatch && !user.password_enc) {
-    console.log('DEBUG: Storing password_enc for', user.username);
-    const encVal = encrypt(password);
-    const { error: encErr } = await supabase.from('users').update({ password_enc: encVal }).eq('username', user.username);
-    if (encErr) console.error('DEBUG password_enc update failed:', encErr.message);
-    else console.log('DEBUG password_enc stored successfully');
+    const { error: encErr } = await supabase.from('users').update({ password_enc: encrypt(password) }).eq('username', user.username);
+    if (encErr) console.error('password_enc update failed:', encErr.message);
   }
   if (!passwordMatch) return res.status(401).json({ error: "Invalid username/email or password." });
 
@@ -711,7 +708,7 @@ app.post('/api/auth/change-password', async (req, res) => {
   if (!valid && profile.password === currentPassword) valid = true;
   if (!valid) return res.status(400).json({ error: "Current password is incorrect." });
   const hashed = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
-  await supabase.from('users').update({ password: hashed }).eq('username', req.user);
+  await supabase.from('users').update({ password: hashed, password_enc: encrypt(newPassword) }).eq('username', req.user);
   res.json({ success: true });
 });
 
@@ -1411,7 +1408,6 @@ app.post('/api/admin/users/password', async (req, res) => {
   if (qErr) { console.error('Password query error:', qErr); return res.json({ password: 'Query error: ' + qErr.message }); }
   if (!user) return res.json({ password: 'User not found' });
   const hasEncColumn = 'password_enc' in user;
-  console.log('DEBUG password_enc value:', JSON.stringify(user.password_enc), 'type:', typeof user.password_enc, 'hasCol:', hasEncColumn);
   if (!hasEncColumn) return res.json({ password: "password_enc column missing from users table — run: ALTER TABLE users ADD COLUMN password_enc TEXT DEFAULT ''" });
   if (user.password_enc) {
     try { return res.json({ password: decrypt(user.password_enc) }); }
