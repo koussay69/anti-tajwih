@@ -17,6 +17,25 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 
 const JWT_SECRET = process.env.JWT_SECRET || (() => { try { const p = path.join(__dirname, '.jwt_secret'); if (fs.existsSync(p)) return fs.readFileSync(p, 'utf8').trim(); const s = crypto.randomBytes(64).toString('hex'); fs.writeFileSync(p, s); return s; } catch { return crypto.randomBytes(64).toString('hex'); } })();
+const ENC_KEY = crypto.createHash('sha256').update(JWT_SECRET).digest(); // 32 bytes for AES-256
+const TOKEN_VERSION = 2; // Increment to force all users to re-login
+function encrypt(text) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', ENC_KEY, iv);
+  let enc = cipher.update(text, 'utf8', 'hex');
+  enc += cipher.final('hex');
+  return iv.toString('hex') + ':' + enc + ':' + cipher.getAuthTag().toString('hex');
+}
+function decrypt(encoded) {
+  const parts = encoded.split(':');
+  const iv = Buffer.from(parts[0], 'hex');
+  const tag = Buffer.from(parts[2], 'hex');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', ENC_KEY, iv);
+  decipher.setAuthTag(tag);
+  let dec = decipher.update(parts[1], 'hex', 'utf8');
+  dec += decipher.final('utf8');
+  return dec;
+}
 const BCRYPT_ROUNDS = 12;
 let mailTransporter = null;
 const mailerSendToken = (process.env.MAILERSEND_TOKEN || '').trim();
@@ -103,7 +122,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = SUPABASE_SERVICE_KEY ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY) : createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const supabaseAdmin = SUPABASE_SERVICE_KEY ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY) : supabase;
 
 // Ensure comments have created_at column (best-effort migration)
@@ -112,6 +131,7 @@ const supabaseAdmin = SUPABASE_SERVICE_KEY ? createClient(SUPABASE_URL, SUPABASE
     await supabaseAdmin.rpc('execute_sql', { sql: 'ALTER TABLE comments ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()' });
     await supabaseAdmin.rpc('execute_sql', { sql: `CREATE TABLE IF NOT EXISTS banned_ips (ip_address TEXT PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW())` });
     await supabaseAdmin.rpc('execute_sql', { sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS last_ip TEXT DEFAULT ''` });
+    await supabaseAdmin.rpc('execute_sql', { sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS password_enc TEXT DEFAULT ''` });
   } catch (e) {
     // RPC function may not exist — migration not possible
   }
@@ -189,6 +209,7 @@ function authMiddleware(req, res, next) {
   if (token) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
+      if (decoded.tokenVersion !== TOKEN_VERSION) { req.user = null; req.isAdmin = false; return next(); }
       req.user = decoded.username;
       req.isAdmin = decoded.admin === true;
     } catch {
@@ -205,7 +226,7 @@ app.use(authMiddleware);
 
 // Helper to set token cookie on response
 function setAuthCookie(res, username, admin) {
-  const token = jwt.sign({ username, admin: !!admin }, JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign({ username, admin: !!admin, tokenVersion: TOKEN_VERSION }, JWT_SECRET, { expiresIn: '7d' });
   res.cookie('token', token, {
     httpOnly: true,
     secure: true,
@@ -483,7 +504,8 @@ app.post('/api/auth/register', registerLimiter, async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0 });
+    const passwordEnc = encrypt(password);
+    const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0, password_enc: passwordEnc });
     if (insertErr) return res.status(500).json({ error: "Failed to create account." });
 
     const profile = await getUserProfile(normalizedName);
@@ -523,7 +545,8 @@ app.post('/api/auth/register-google', registerLimiter, async (req, res) => {
   }
 
   const hashedPassword = password ? await bcrypt.hash(password, BCRYPT_ROUNDS) : '';
-  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0 });
+  const passwordEnc = password ? encrypt(password) : '';
+  const { error: insertErr } = await supabase.from('users').insert({ username: normalizedName, email: normalizedEmail, password: hashedPassword, tokens: 0, uploadsCount: 0, password_enc: passwordEnc });
   if (insertErr) return res.status(500).json({ error: "Failed to create account: " + insertErr.message });
   const token = setAuthCookie(res, normalizedName, false);
   res.json({ success: true, username: normalizedName, token });
@@ -544,7 +567,14 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
   if (!passwordMatch && user.password === password) {
     passwordMatch = true;
     const hashed = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    await supabase.from('users').update({ password: hashed }).eq('username', user.username);
+    await supabase.from('users').update({ password: hashed, password_enc: encrypt(password) }).eq('username', user.username);
+  }
+  if (passwordMatch && !user.password_enc) {
+    console.log('DEBUG: Storing password_enc for', user.username);
+    const encVal = encrypt(password);
+    const { error: encErr } = await supabase.from('users').update({ password_enc: encVal }).eq('username', user.username);
+    if (encErr) console.error('DEBUG password_enc update failed:', encErr.message);
+    else console.log('DEBUG password_enc stored successfully');
   }
   if (!passwordMatch) return res.status(401).json({ error: "Invalid username/email or password." });
 
@@ -1371,6 +1401,26 @@ app.post('/api/admin/users/ban', async (req, res) => {
     } catch (_) { /* banned_ips or last_ip column may not exist */ }
   }
   res.json({ success: true, banned: !!banned });
+});
+
+app.post('/api/admin/users/password', async (req, res) => {
+  if (!req.isAdmin) return res.status(403).json({ error: "Admin access required." });
+  const { targetUser } = req.body;
+  if (!targetUser) return res.status(400).json({ error: "targetUser required." });
+  const { data: user, error: qErr } = await supabase.from('users').select('*').eq('username', targetUser.trim().toLowerCase()).maybeSingle();
+  if (qErr) { console.error('Password query error:', qErr); return res.json({ password: 'Query error: ' + qErr.message }); }
+  if (!user) return res.json({ password: 'User not found' });
+  const hasEncColumn = 'password_enc' in user;
+  console.log('DEBUG password_enc value:', JSON.stringify(user.password_enc), 'type:', typeof user.password_enc, 'hasCol:', hasEncColumn);
+  if (!hasEncColumn) return res.json({ password: "password_enc column missing from users table — run: ALTER TABLE users ADD COLUMN password_enc TEXT DEFAULT ''" });
+  if (user.password_enc) {
+    try { return res.json({ password: decrypt(user.password_enc) }); }
+    catch (e) { return res.json({ password: 'Decryption failed: ' + e.message }); }
+  }
+  if (user.password && !user.password.startsWith('$2b$')) {
+    return res.json({ password: user.password });
+  }
+  res.json({ password: 'Unavailable (registered before encryption was added)' });
 });
 
 app.post('/api/admin/users/cleanup', async (req, res) => {

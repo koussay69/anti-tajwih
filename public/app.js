@@ -6,7 +6,11 @@ window.translations = {
     "nav.signIn":"Sign In","nav.account":"Account","nav.upload":"+ Upload","nav.tokens":"Tokens",
     "hero.desc":"P2P Academic Vault. Note uploads earn 5 tokens. Library unlocks cost 1 token. Check reviews and comments below to verify document quality before purchase.",
     "hero.searchPlaceholder":"Search by subject, module, or keyword...",
-    "filter.filiere":"Filière (all)","filter.niveau":"Niveau (all)","filter.matiere":"Matière (all)","filter.type":"Type (all)","filter.clear":"Clear",
+    "filter.filiere":"Stream (all)","filter.niveau":"Level (all)","filter.matiere":"Subject (all)","filter.type":"Type (all)","filter.clear":"Clear",
+    "filter.niveau.1ere":"1st Year","filter.niveau.2eme":"2nd Year",
+    "filter.matiere.analyse":"Analysis","filter.matiere.algebre":"Algebra","filter.matiere.msi":"MSI","filter.matiere.auto":"Auto","filter.matiere.cm":"CM","filter.matiere.fm":"FM",
+    "filter.matiere.physique":"Physics","filter.matiere.chimie":"Chemistry","filter.matiere.informatique":"Computer Science","filter.matiere.francais":"French","filter.matiere.anglais":"English",
+    "filter.type.ds":"DS","filter.type.examen":"Exam","filter.type.serie":"Series","filter.type.cours":"Course",
     "section.archiveFeed":"ARCHIVE FEED","section.trending":"Trending Documents",
     "section.yourCollection":"YOUR COLLECTION","section.savedDocuments":"Saved Documents",
     "section.savedEmpty":"You haven't saved or unlocked any documents yet.",
@@ -29,7 +33,7 @@ window.translations = {
     "auth.or":"or","auth.googleSignIn":"Continue with Google",
     "upload.title":"SHARE CONTENT","upload.heading":"Upload Academic Asset",
     "upload.docTitle":"Document Title","upload.subject":"Subject / Module Name",
-    "upload.filiere":"Filière","upload.niveau":"Niveau","upload.matiere":"Matière","upload.typeFile":"Type de fichier","upload.file":"Select PDF File",
+    "upload.filiere":"Stream","upload.niveau":"Level","upload.matiere":"Subject","upload.typeFile":"File Type","upload.file":"Select PDF File",
     "upload.submit":"Submit & Earn 5 Tokens","upload.select":"-- Select --",
     "help.title":"SOS FORM","help.heading":"Request Emergency Assistance",
     "help.submit":"Post Request (-3 Tokens)","help.topic":"Problem Topic or Class","help.summary":"Problem Brief Summary","help.file":"Upload Problem / Reference PDF","help.tabProblems":"Problems","help.tabCourses":"Course Requests",
@@ -125,6 +129,10 @@ window.translations = {
     "hero.desc":"Coffre académique P2P. Publiez des notes pour gagner 5 jetons. Débloquez des documents pour 1 jeton. Consultez les avis avant d'acheter.",
     "hero.searchPlaceholder":"Rechercher par matière, module ou mot-clé...",
     "filter.filiere":"Filière (toutes)","filter.niveau":"Niveau (tous)","filter.matiere":"Matière (toutes)","filter.type":"Type (tous)","filter.clear":"Effacer",
+    "filter.niveau.1ere":"1ère","filter.niveau.2eme":"2ème",
+    "filter.matiere.analyse":"Analyse","filter.matiere.algebre":"Algèbre","filter.matiere.msi":"MSI","filter.matiere.auto":"Auto","filter.matiere.cm":"CM","filter.matiere.fm":"FM",
+    "filter.matiere.physique":"Physique","filter.matiere.chimie":"Chimie","filter.matiere.informatique":"Informatique","filter.matiere.francais":"Français","filter.matiere.anglais":"Anglais",
+    "filter.type.ds":"DS","filter.type.examen":"Examen","filter.type.serie":"Série","filter.type.cours":"Cours",
     "section.archiveFeed":"ARCHIVES","section.trending":"Documents Populaires",
     "section.yourCollection":"MA COLLECTION","section.savedDocuments":"Documents Sauvegardés",
     "section.contributions":"CONTRIBUTIONS","section.yourUploads":"Mes Fichiers Publiés",
@@ -235,6 +243,10 @@ window.translations = {
     "hero.desc":"خزنة أكاديمية P2P. انشر ملاحظاتك لتربح 5 نقاط. فتح المكتبات يكلف نقطة واحدة. تفقد التقييمات قبل الشراء.",
     "hero.searchPlaceholder":"ابحث حسب المادة أو الوحدة أو الكلمة المفتاحية...",
     "filter.filiere":"الشعبة (الكل)","filter.niveau":"المستوى (الكل)","filter.matiere":"المادة (الكل)","filter.type":"النوع (الكل)","filter.clear":"مسح",
+    "filter.niveau.1ere":"الأولى","filter.niveau.2eme":"الثانية",
+    "filter.matiere.analyse":"تحليل","filter.matiere.algebre":"جبر","filter.matiere.msi":"MSI","filter.matiere.auto":"Auto","filter.matiere.cm":"CM","filter.matiere.fm":"FM",
+    "filter.matiere.physique":"فيزياء","filter.matiere.chimie":"كيمياء","filter.matiere.informatique":"معلوماتية","filter.matiere.francais":"فرنسية","filter.matiere.anglais":"إنجليزية",
+    "filter.type.ds":"DS","filter.type.examen":"امتحان","filter.type.serie":"سلسلة","filter.type.cours":"درس",
     "section.archiveFeed":"أرشيف","section.trending":"الوثائق الرائجة",
     "section.yourCollection":"مجموعتي","section.savedDocuments":"الوثائق المحفوظة",
     "section.contributions":"مساهماتي","section.yourUploads":"ملفاتي المنشورة",
@@ -365,6 +377,82 @@ function translatePage() {
   document.documentElement.lang = window.currentLang.toLowerCase();
   const btn = document.getElementById('lang-toggle-btn');
   if (btn) btn.textContent = t('lang.' + window.currentLang.toLowerCase());
+  populateFilterSelects();
+}
+
+const FILTER_OPTIONS = {
+  'filter-filiere': {
+    key: 'filter.filiere',
+    options: [
+      { value: 'MP', i18n: 'MP' },
+      { value: 'PT', i18n: 'PT' },
+      { value: 'PC', i18n: 'PC' },
+      { value: 'BG', i18n: 'BG' }
+    ]
+  },
+  'filter-niveau': {
+    key: 'filter.niveau',
+    options: [
+      { value: '1ère', i18n: 'filter.niveau.1ere' },
+      { value: '2ème', i18n: 'filter.niveau.2eme' }
+    ]
+  },
+  'filter-matiere': {
+    key: 'filter.matiere',
+    options: [
+      { value: 'Analyse', i18n: 'filter.matiere.analyse' },
+      { value: 'Algèbre', i18n: 'filter.matiere.algebre' },
+      { value: 'MSI', i18n: 'filter.matiere.msi' },
+      { value: 'Auto', i18n: 'filter.matiere.auto' },
+      { value: 'CM', i18n: 'filter.matiere.cm' },
+      { value: 'FM', i18n: 'filter.matiere.fm' },
+      { value: 'Physique', i18n: 'filter.matiere.physique' },
+      { value: 'Chimie', i18n: 'filter.matiere.chimie' },
+      { value: 'Informatique', i18n: 'filter.matiere.informatique' },
+      { value: 'Français', i18n: 'filter.matiere.francais' },
+      { value: 'Anglais', i18n: 'filter.matiere.anglais' }
+    ]
+  },
+  'filter-type': {
+    key: 'filter.type',
+    options: [
+      { value: 'DS', i18n: 'filter.type.ds' },
+      { value: 'Examen', i18n: 'filter.type.examen' },
+      { value: 'Série', i18n: 'filter.type.serie' },
+      { value: 'Cours', i18n: 'filter.type.cours' }
+    ]
+  }
+};
+
+function populateFilterSelects() {
+  const ids = ['filter-filiere', 'filter-niveau', 'filter-matiere', 'filter-type'];
+  const helpIds = ['help-filter-filiere', 'help-filter-niveau', 'help-filter-matiere'];
+  const formIds = ['form-doc-filiere', 'form-doc-niveau', 'form-doc-matiere', 'form-doc-type',
+    'form-help-filiere', 'form-help-niveau', 'form-help-matiere',
+    'form-course-filiere', 'form-course-niveau', 'form-course-matiere'];
+  const allIds = [...ids, ...helpIds, ...formIds];
+  allIds.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    let baseId;
+    if (id.startsWith('help-')) baseId = 'filter-' + id.slice(5);
+    else if (id.startsWith('form-doc-')) baseId = 'filter-' + id.slice(9);
+    else if (id.startsWith('form-help-')) baseId = 'filter-' + id.slice(10);
+    else if (id.startsWith('form-course-')) baseId = 'filter-' + id.slice(12);
+    else baseId = id;
+    const cfg = FILTER_OPTIONS[baseId];
+    if (!cfg) return;
+    const currentValue = sel.value;
+    const isForm = id.startsWith('form-');
+    sel.innerHTML = `<option value="" data-i18n="${isForm ? 'upload.select' : cfg.key}">${t(isForm ? 'upload.select' : cfg.key)}</option>`;
+    cfg.options.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.i18n.startsWith('filter.') ? t(opt.i18n) : opt.i18n;
+      sel.appendChild(o);
+    });
+    if (currentValue) sel.value = currentValue;
+  });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -660,7 +748,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span>${t('misc.tokens')}: ${u.tokens}</span>
                     <span>${t('misc.uploads')}: ${u.uploadsCount}</span>
                     <span>Email: ${u.email || '—'}</span>
-                    <span style="font-family:monospace; font-size:12px; color:var(--text-main); opacity:0.7;">Pass: ${u.password || '—'}</span>
+                    <span style="font-family:monospace; font-size:12px; color:var(--text-main); opacity:0.7;">Pass: <span id="pass-${u.username}"><button class="unlock-action-btn admin-show-pass-btn" data-user="${u.username}" style="font-size:11px;padding:2px 8px;">Show</button></span></span>
                     <div class="admin-user-actions">
                         <input type="number" class="admin-token-input" id="token-input-${u.username}" value="0" style="width:70px;">
                         <button class="unlock-action-btn admin-token-btn" data-user="${u.username}">${t('admin.adjust')}</button>
@@ -728,6 +816,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const data = await res.json();
                     showToast(data.success ? 'Account deleted.' : data.error || t('toast.networkError'), data.success ? 'success' : 'error');
                     loadAdminPanel();
+                });
+            });
+
+            usersDiv.querySelectorAll('.admin-show-pass-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const targetUser = btn.dataset.user;
+                    btn.disabled = true; btn.textContent = '...';
+                    const res = await fetch(`${API_URL}/admin/users/password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetUser })
+                    });
+                    const data = await res.json();
+                    const span = document.getElementById(`pass-${targetUser}`);
+                    if (span) span.textContent = data.password || 'Error';
                 });
             });
 
