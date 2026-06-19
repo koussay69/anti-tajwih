@@ -1067,10 +1067,17 @@ app.delete('/api/documents/delete/:docId', async (req, res) => {
   await supabase.from('comments').delete().eq('doc_id', docId);
   await supabase.from('unlocked_docs').delete().eq('doc_id', docId);
   await supabase.from('documents').delete().eq('id', docId);
-  await supabase.from('users').update({ uploadsCount: supabase.raw('GREATEST(uploadsCount - 1, 0)') }).eq('username', normalizedName);
 
-  const profile = await getUserProfile(normalizedName);
-  res.json({ success: true, tokens: profile ? profile.tokens : 0, documents: await getDocumentsWithLockState(normalizedName) });
+  const { data: profile } = await supabase.from('users').select('tokens, uploadsCount').eq('username', normalizedName).maybeSingle();
+  if (profile) {
+    await supabase.from('users').update({
+      tokens: Math.max(0, profile.tokens - 5),
+      uploadsCount: Math.max(0, profile.uploadsCount - 1)
+    }).eq('username', normalizedName);
+  }
+
+  const updatedProfile = await getUserProfile(normalizedName);
+  res.json({ success: true, tokens: updatedProfile ? updatedProfile.tokens : 0, documents: await getDocumentsWithLockState(normalizedName) });
 });
 
 // --- UNLOCK DOCUMENT ---
