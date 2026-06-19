@@ -1071,7 +1071,7 @@ app.delete('/api/documents/delete/:docId', async (req, res) => {
   const { data: profile } = await supabase.from('users').select('tokens, uploadsCount').eq('username', normalizedName).maybeSingle();
   if (profile) {
     await supabase.from('users').update({
-      tokens: Math.max(0, profile.tokens - 5),
+      tokens: profile.tokens - 5,
       uploadsCount: Math.max(0, profile.uploadsCount - 1)
     }).eq('username', normalizedName);
   }
