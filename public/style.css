@@ -19,7 +19,7 @@
     --blur-strength: 12px;
 
     --transition-speed: 0.3s;
-    --hero-bg: #e6d8c6;
+    --hero-bg: radial-gradient(circle at 50% 30%, #ffffff 0%, #f6f0e8 60%, #eae0d4 100%);
     --star-color: #d49e35;
 }
 
@@ -336,9 +336,11 @@ body {
 /* --- Hero Banner --- */
 .hero {
     text-align: center;
-    padding: 70px 20px;
+    padding: 80px 20px 60px;
     background: var(--hero-bg, #0a0a12);
     border-bottom: 1px solid var(--border-grey);
+    position: relative;
+    box-shadow: inset 0 -20px 30px -20px rgba(0, 0, 0, 0.03);
 }
 
 .brand-logo-placeholder {
@@ -352,14 +354,13 @@ body {
 }
 
 .hero p {
-    color: var(--text-main);
-    max-width: 540px;
-    margin: 0 auto 30px auto;
+    color: var(--text-muted);
+    max-width: 580px;
+    margin: 0 auto 32px auto;
     font-size: 16px;
     line-height: 1.7;
-    font-weight: 400;
+    font-weight: 450;
     letter-spacing: 0.01em;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 [data-theme="dark"] .hero p {
     color: #c8c8d0;
@@ -367,11 +368,21 @@ body {
 }
 
 .search-container {
-    max-width: 500px;
+    max-width: 520px;
     margin: 0 auto;
     display: flex;
-    border: 1px solid var(--text-main);
-    background: var(--bg-body);
+    border: 1px solid var(--border-grey);
+    border-radius: 50px;
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px -5px rgba(75, 60, 53, 0.08);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.search-container:focus-within {
+    border-color: var(--glow-color);
+    box-shadow: 0 10px 30px -5px rgba(125, 104, 89, 0.2);
 }
 
 .search-container input {
@@ -379,7 +390,7 @@ body {
     border: none;
     background: transparent;
     color: var(--text-main);
-    padding: 14px 16px;
+    padding: 14px 20px;
     font-size: 15px;
     outline: none;
     font-weight: 400;
@@ -389,38 +400,61 @@ body {
     background: transparent;
     border: none;
     color: var(--text-main);
-    padding: 0 20px;
+    padding: 0 22px;
     cursor: pointer;
+    border-radius: 0 50px 50px 0;
+    transition: opacity 0.2s ease;
+}
+
+.search-submit:hover {
+    opacity: 0.7;
 }
 
 .filter-bar {
-    max-width: 550px;
-    margin: 12px auto 0;
+    max-width: 600px;
+    margin: 18px auto 0;
     display: flex;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
     justify-content: center;
 }
 
 .filter-select {
-    background: var(--bg-tray);
+    background: var(--bg-card);
     color: var(--text-main);
-    border: 1px solid var(--text-main);
-    padding: 8px 12px;
+    border: 1px solid var(--border-grey);
+    border-radius: 8px;
+    padding: 8px 14px;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     flex: 1;
-    min-width: 100px;
+    min-width: 110px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-select:hover,
+.filter-select:focus {
+    border-color: var(--glow-color);
+    box-shadow: 0 4px 12px rgba(125, 104, 89, 0.15);
+    outline: none;
 }
 
 .clear-filters-btn {
     background: transparent;
     color: var(--alert-red);
     border: 1px solid var(--alert-red);
-    padding: 8px 14px;
+    border-radius: 8px;
+    padding: 8px 16px;
     cursor: pointer;
     font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+    background: var(--alert-red);
+    color: #ffffff;
 }
 
 .doc-tags {
