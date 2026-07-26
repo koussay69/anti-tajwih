@@ -2536,10 +2536,198 @@ ${!isDocLockedForSession && state.user && doc.author !== state.user ? `<button c
         }
         frame = requestAnimationFrame(animate);
         let resizeTimer;
+                    </div>
+                `;
+                docsContainer.appendChild(card);
+                setupDocumentCardInteractions(card);
+            });
+
+            document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('author-view').classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(nl => nl.classList.remove('active'));
+        } catch {
+            showToast(t('toast.loadError'), "error");
+        }
+    });
+
+    // Boot execution sync pipeline
+    translatePage();
+    loadVaultData();
+
+    // Real-time SSE: instant refresh on any change
+    const evtSource = new EventSource('/events');
+    evtSource.addEventListener('data_changed', () => {
+        if (!pollLock) {
+            pollLock = true;
+            loadVaultData().finally(() => { pollLock = false; });
+        }
+        // Reload admin panel if it's visible
+        const adminView = document.getElementById('admin-view');
+        if (adminView && !adminView.classList.contains('hidden') && state.admin) {
+            loadAdminPanel();
+        }
+    });
+    evtSource.addEventListener('connected', () => {
+        // initial connection, no action needed
+    });
+    evtSource.onerror = () => { /* SSE will auto-reconnect */ };
+
+    // Fallback polling every 30s in case SSE drops
+    let pollLock = false;
+    setInterval(async () => {
+        if (pollLock) return;
+        pollLock = true;
+        await loadVaultData();
+        pollLock = false;
+    }, 30000);
+
+    // Refresh also on visibility change (tab switch)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !pollLock) {
+            pollLock = true;
+            loadVaultData().finally(() => { pollLock = false; });
+        }
+    });
+
+    // --- LANGUAGE TOGGLE ---
+    const langToggleBtn = document.getElementById('lang-toggle-btn');
+    if (langToggleBtn) {
+        langToggleBtn.addEventListener('click', () => {
+            const langs = ['EN', 'FR', 'AR'];
+            const idx = langs.indexOf(window.currentLang);
+            window.currentLang = langs[(idx + 1) % langs.length];
+            localStorage.setItem('p2p-lang', window.currentLang);
+            translatePage();
+            showToast(t('toast.langChanged', {lang: t('lang.' + window.currentLang.toLowerCase())}), 'info');
+            loadVaultData();
+        });
+    }
+
+    // --- MATH SYMBOLS ANIMATION ---
+    function initMathAnimation() {
+        const canvas = document.getElementById('math-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let w, h;
+        const symbols = ['π', '√', '∫', 'Σ', '∞', 'θ', 'α', 'β', 'Δ', '∂', '±', '÷', '×', '∑', '∏', '∪', '∩', '⊂', '⊃', '∈', '∀', '∃', '→', '⇒', '⇔', '⊕', '⊗', '∇', 'λ', 'μ', 'Ω', '∂', '∅', '≅', '≈', '≠', '≤', '≥', '∝', '·'];
+        class MathSymbol {
+            constructor() { this.reset(); }
+            reset() {
+                this.symbol = symbols[Math.floor(Math.random() * symbols.length)];
+                this.x = Math.random() * w;
+                this.y = -20;
+                this.size = 20 + Math.random() * 28;
+                this.speed = 0.5 + Math.random() * 1.2;
+                this.drift = (Math.random() - 0.5) * 0.5;
+                this.opacity = 0.15 + Math.random() * 0.35;
+            }
+            update() {
+                this.y += this.speed;
+                this.x += this.drift;
+                if (this.y > h + 20) this.reset();
+            }
+            draw() {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                ctx.font = `${this.size}px serif`;
+                ctx.fillStyle = isDark ? `rgba(200,200,220,${this.opacity})` : `rgba(60,60,80,${this.opacity + 0.2})`;
+                ctx.fillText(this.symbol, this.x, this.y);
+            }
+        }
+        const particles = [];
+        const isMobile = w < 768;
+        function resize() {
+            w = canvas.parentElement.offsetWidth;
+            h = canvas.parentElement.offsetHeight;
+            canvas.width = w * devicePixelRatio;
+            canvas.height = h * devicePixelRatio;
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            ctx.scale(devicePixelRatio, devicePixelRatio);
+        }
+        resize();
+        const count = Math.min(isMobile ? 25 : 80, Math.floor(w * h / 8000));
+        for (let i = 0; i < count; i++) {
+            const p = new MathSymbol();
+            p.y = Math.random() * h;
+            particles.push(p);
+        }
+        let cachedIsDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const themeObserver = new MutationObserver(() => { cachedIsDark = document.documentElement.getAttribute('data-theme') === 'dark'; });
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        const fontCache = {};
+        function getFont(size) { return fontCache[size] || (fontCache[size] = `${size}px serif`); }
+        let frame, lastFrame = 0;
+        function animate(now) {
+            if (now - lastFrame < 32) { frame = requestAnimationFrame(animate); return; }
+            lastFrame = now;
+            ctx.clearRect(0, 0, w, h);
+            const color = cachedIsDark ? '200,200,220' : '60,60,80';
+            const baseOpacity = cachedIsDark ? 0 : 0.2;
+            for (const p of particles) {
+                p.y += p.speed;
+                p.x += p.drift;
+                if (p.y > h + 20) { p.reset(); p.y = -20; }
+                ctx.font = getFont(p.size);
+                ctx.fillStyle = `rgba(${color},${p.opacity + baseOpacity})`;
+                ctx.fillText(p.symbol, p.x, p.y);
+            }
+            frame = requestAnimationFrame(animate);
+        }
+        frame = requestAnimationFrame(animate);
+        let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(resize, 200);
         });
     }
     initMathAnimation();
+
+    // --- DEBOUNCE UTILITY ---
+    window.debounce = function(fn, delay = 150) {
+        let timer;
+        return function(...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    };
+
+    // --- DEBOUNCED SEARCH LISTENER ---
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        const handleSearch = window.debounce(() => {
+            if (typeof filterVaultData === 'function') filterVaultData();
+        }, 150);
+        searchInput.addEventListener('input', handleSearch);
+    }
+
+    // --- MOBILE FLOATING ACTION BUTTON (FAB) ---
+    const mobileFab = document.getElementById('mobile-fab');
+    if (mobileFab) {
+        mobileFab.addEventListener('click', () => {
+            const uploadBtn = document.getElementById('nav-upload-btn');
+            if (uploadBtn) uploadBtn.click();
+        });
+    }
+
+    // --- MOBILE BOTTOM SHEET DRAWER SYSTEM ---
+    window.openMobileSheet = function(htmlContent) {
+        const overlay = document.getElementById('mobile-sheet-overlay');
+        const container = document.getElementById('mobile-sheet-content');
+        if (overlay && container) {
+            container.innerHTML = htmlContent;
+            overlay.classList.add('active');
+        }
+    };
+
+    window.closeMobileSheet = function() {
+        const overlay = document.getElementById('mobile-sheet-overlay');
+        if (overlay) overlay.classList.remove('active');
+    };
+
+    const mobileSheetOverlay = document.getElementById('mobile-sheet-overlay');
+    if (mobileSheetOverlay) {
+        mobileSheetOverlay.addEventListener('click', (e) => {
+            if (e.target === mobileSheetOverlay) window.closeMobileSheet();
+        });
+    }
 });
