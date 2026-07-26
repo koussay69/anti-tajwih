@@ -1,26 +1,26 @@
 /* --- Core Modern Theme Architecture --- */
 :root {
-    --bg-body: #ffffff;
-    --bg-navbar: rgba(255, 255, 255, 0.8);
-    --bg-card: rgba(255, 255, 255, 0.6);
-    --bg-tray: #fafafa;
-    --text-main: #000000;
-    --text-muted: #666666;
-    --border-grey: #e5e5e5;
+    --bg-body: #f8f5f1;
+    --bg-navbar: rgba(248, 245, 241, 0.85);
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --bg-tray: #ebe3d9;
+    --text-main: #231c19;
+    --text-muted: #6e5c51;
+    --border-grey: #d8cdbf;
 
-    --glow-color: #00f2fe;
-    --glow-secondary: #7f00ff;
-    --alert-red: #ff3b30;
+    --glow-color: #7d6859;
+    --glow-secondary: #4b3d36;
+    --alert-red: #d94336;
 
     /* Glassmorphism Variables */
-    --glass-bg: rgba(255, 255, 255, 0.45);
-    --glass-border: rgba(0, 0, 0, 0.08);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(75, 61, 54, 0.14);
+    --glass-shadow: 0 8px 32px 0 rgba(75, 61, 54, 0.07);
     --blur-strength: 12px;
 
     --transition-speed: 0.3s;
-    --hero-bg: #f5f0eb;
-    --star-color: #f5b342;
+    --hero-bg: #e6d8c6;
+    --star-color: #d49e35;
 }
 
 [data-theme="dark"] {
@@ -124,7 +124,7 @@ body {
 .nav-link:hover,
 .nav-link.active {
     color: var(--text-main);
-    text-shadow: 0 0 6px rgba(0, 242, 254, 0.4);
+    text-shadow: 0 0 6px rgba(125, 104, 89, 0.35);
 }
 
 .nav-actions {
@@ -265,7 +265,7 @@ body {
 
 .upload-btn:hover {
     border-color: var(--glow-color);
-    box-shadow: 0 0 15px rgba(0, 242, 254, 0.6);
+    box-shadow: 0 4px 15px rgba(125, 104, 89, 0.35);
     transform: translateY(-1px);
 }
 
@@ -283,7 +283,7 @@ body {
 
 .ask-help-trigger-btn:hover {
     border-color: var(--glow-secondary);
-    box-shadow: 0 0 15px rgba(127, 0, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(75, 61, 54, 0.35);
 }
 
 .modal-submit-btn {
@@ -300,7 +300,7 @@ body {
 
 .modal-submit-btn:hover {
     border-color: var(--glow-color);
-    box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+    box-shadow: 0 4px 15px rgba(125, 104, 89, 0.35);
 }
 
 .auth-btn {
@@ -314,7 +314,7 @@ body {
 }
 
 .auth-btn:hover {
-    text-shadow: 0 0 10px var(--glow-color);
+    text-shadow: 0 0 8px rgba(125, 104, 89, 0.4);
 }
 
 .account-trigger {
